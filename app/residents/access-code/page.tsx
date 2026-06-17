@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const qrRows = [
@@ -32,7 +32,7 @@ const qrRows = [
   "11111110111010101110101",
 ];
 
-export default function AccessCodePage() {
+function AccessCodeContent() {
   const searchParams = useSearchParams();
   const accessCode = searchParams.get("code");
 
@@ -41,8 +41,6 @@ export default function AccessCodePage() {
 
   useEffect(() => {
     async function loadVisitor() {
-      console.log("Access Code:", accessCode);
-
       if (!accessCode) return;
 
       const { data, error } = await supabase
@@ -50,9 +48,6 @@ export default function AccessCodePage() {
         .select("*")
         .eq("access_code", accessCode)
         .single();
-
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
 
       if (error) {
         console.log(error);
@@ -155,5 +150,13 @@ export default function AccessCodePage() {
       </div>
       <ResidentBottomNav />
     </main>
+  );
+}
+
+export default function AccessCodePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AccessCodeContent />
+    </Suspense>
   );
 }
