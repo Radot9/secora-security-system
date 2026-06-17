@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -56,7 +56,7 @@ function StatIcon({ icon, tone }: { icon: string; tone: string }) {
   );
 }
 
-export default function SecurityPage() {
+function SecurityContent() {
   const [accessCode, setAccessCode] = useState("");
   const [visitorName, setVisitorName] = useState("");
   const [visitorPhone, setVisitorPhone] = useState("");
@@ -280,7 +280,7 @@ export default function SecurityPage() {
 
             <button
               type="button"
-              onClick={verifyCode}
+              onClick={() => verifyCode()}
               className="w-full rounded-2xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white"
             >
               Verify Code
@@ -429,5 +429,13 @@ export default function SecurityPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function SecurityPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SecurityContent />
+    </Suspense>
   );
 }
