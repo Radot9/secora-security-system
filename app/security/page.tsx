@@ -72,6 +72,37 @@ function SecurityContent() {
     created_at: string;
   };
 
+  const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
+    null,
+  );
+
+  const statusConfig = {
+    entered: {
+      title: "Valid Pass",
+      message: "Visitor is authorised",
+      color: "text-teal-500",
+      icon: "✓",
+    },
+    exited: {
+      title: "Visitor Checked Out",
+      message: "Visitor has left the estate",
+      color: "text-slate-500",
+      icon: "↗",
+    },
+    revoked: {
+      title: "Access Revoked",
+      message: "Visitor access has been cancelled",
+      color: "text-red-500",
+      icon: "✕",
+    },
+    pending: {
+      title: "Pending Entry",
+      message: "Visitor has not entered yet",
+      color: "text-amber-500",
+      icon: "⏳",
+    },
+  };
+
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   const [stats, setStats] = useState([
@@ -234,6 +265,11 @@ function SecurityContent() {
     alert("Visitor checked out successfully");
   }
 
+  const visitorStatusConfig = selectedVisitor
+    ? statusConfig[selectedVisitor.status as keyof typeof statusConfig] ||
+      statusConfig.pending
+    : statusConfig.pending;
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto flex w-full max-w-md flex-col gap-10">
@@ -387,7 +423,11 @@ function SecurityContent() {
               return (
                 <article
                   key={item.id}
-                  className="flex items-center gap-4 border-b border-slate-200 px-5 py-5 last:border-b-0 dark:border-slate-800"
+                  onClick={() => {
+                    console.log(item);
+                    setSelectedVisitor(item);
+                  }}
+                  className="cursor-pointer flex items-center gap-4 border-b border-slate-200 px-5 py-5 last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
                 >
                   <span
                     className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
@@ -428,6 +468,49 @@ function SecurityContent() {
           </div>
         </section>
       </div>
+
+      {selectedVisitor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedVisitor(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-white p-6 dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div
+                className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full border text-4xl ${visitorStatusConfig.color}`}
+              >
+                {visitorStatusConfig.icon}
+              </div>
+
+              <h2 className="mt-4 text-2xl font-bold">{visitorStatusConfig.title}</h2>
+
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {visitorStatusConfig.message}
+              </p>
+            </div>
+            <div className="mt-6 space-y-4">
+              <div>
+                <p className="text-sm text-slate-500">Visitor</p>
+                <p className="font-semibold">{selectedVisitor.visitor_name}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-500">Access Code</p>
+                <p>{selectedVisitor.access_code}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedVisitor(null)}
+              className="mt-6 w-full rounded-2xl bg-teal-500 px-4 py-3 font-semibold text-white"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
