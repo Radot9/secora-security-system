@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import QRCode from "react-qr-code";
 
 type Visitor = {
   visitor_name: string;
@@ -16,6 +17,7 @@ type Visitor = {
 function AccessCodeContent() {
   const searchParams = useSearchParams();
   const accessCode = searchParams.get("code");
+  const [qrValue, setQrValue] = useState("");
 
   const [visitor, setVisitor] = useState<Visitor | null>(null);
 
@@ -45,14 +47,36 @@ function AccessCodeContent() {
     loadVisitor();
   }, [accessCode]);
 
+  useEffect(() => {
+    if (!accessCode) return;
+
+    setQrValue(`${window.location.origin}/security?code=${accessCode}`);
+  }, [accessCode]);
+
   if (!visitor) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <p className="text-slate-600 dark:text-slate-300">
-          Loading visitor...
-        </p>
+        <p className="text-slate-600 dark:text-slate-300">Loading visitor...</p>
       </main>
     );
+  }
+
+  async function revokeCode() {
+    if (!accessCode) return;
+
+    const { error } = await supabase
+      .from("visitors")
+      .update({
+        status: "revoked",
+      })
+      .eq("access_code", accessCode);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Access code revoked");
   }
 
   return (
@@ -103,9 +127,7 @@ function AccessCodeContent() {
 
           <div className="my-5 h-px bg-slate-300 dark:bg-slate-700" />
 
-          <p className="text-sm text-slate-500 dark:text-slate-300">
-            Expires
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-300">Expires</p>
 
           <p className="mt-2 text-base font-semibold">
             {visitor.expires_at
@@ -123,10 +145,8 @@ function AccessCodeContent() {
             {accessCode}
           </p>
 
-          <div className="mt-8 flex h-60 w-60 items-center justify-center rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500">
-              QR Code Coming Soon
-            </p>
+          <div className="mt-8 rounded-2xl bg-white p-4">
+            <QRCode value={qrValue} size={220} />
           </div>
         </section>
 
@@ -139,7 +159,7 @@ function AccessCodeContent() {
           </button>
 
           <button
-            type="button"
+            type="button" onClick={revokeCode} 
             className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
           >
             Revoke Code
@@ -159,4 +179,3 @@ export default function AccessCodePage() {
     </Suspense>
   );
 }
-

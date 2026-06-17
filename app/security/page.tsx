@@ -1,36 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import activity from "../data/securityActivity.json";
-
-const stats = [
-  {
-    label: "Visitors checked in",
-    value: "18",
-    tone: "teal",
-    icon: "person-plus",
-  },
-  {
-    label: "Visitors checked out",
-    value: "12",
-    tone: "teal",
-    icon: "person-minus",
-  },
-  {
-    label: "Currently inside",
-    value: "6",
-    tone: "teal",
-    icon: "clock",
-  },
-  {
-    label: "Denied entry",
-    value: "2",
-    tone: "red",
-    icon: "shield-x",
-  },
-];
+import { useSearchParams } from "next/navigation";
 
 function StatIcon({ icon, tone }: { icon: string; tone: string }) {
   const isDanger = tone === "red";
@@ -91,12 +64,121 @@ export default function SecurityPage() {
   const [visitorId, setVisitorId] = useState("");
   const [status, setStatus] = useState("");
   const [isExpired, setIsExpired] = useState(false);
+  type ActivityItem = {
+    id: string;
+    visitor_name: string;
+    access_code: string;
+    status: string;
+    created_at: string;
+  };
 
-  async function verifyCode() {
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+
+  const [stats, setStats] = useState([
+    {
+      label: "Visitors checked in",
+      value: "0",
+      tone: "teal",
+      icon: "person-plus",
+    },
+    {
+      label: "Visitors checked out",
+      value: "0",
+      tone: "teal",
+      icon: "person-minus",
+    },
+    {
+      label: "Currently inside",
+      value: "0",
+      tone: "teal",
+      icon: "clock",
+    },
+    {
+      label: "Expired passes",
+      value: "0",
+      tone: "red",
+      icon: "shield-x",
+    },
+  ]);
+
+  const searchParams = useSearchParams();
+  const qrCode = searchParams.get("code");
+
+  useEffect(() => {
+    if (!qrCode) return;
+
+    setAccessCode(qrCode);
+
+    setTimeout(() => {
+      verifyCode(qrCode);
+    }, 100);
+  }, [qrCode]);
+
+  useEffect(() => {
+    async function loadStats() {
+      const { count: checkedIn } = await supabase
+        .from("visitors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "entered");
+
+      const { count: checkedOut } = await supabase
+        .from("visitors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "exited");
+
+      const { count: currentlyInside } = await supabase
+        .from("visitors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "entered");
+
+      const { count: expiredPasses } = await supabase
+        .from("visitors")
+        .select("*", { count: "exact", head: true })
+        .lt("expires_at", new Date().toISOString());
+
+      const { data: visitors } = await supabase
+        .from("visitors")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      setActivity(visitors || []);
+      setStats([
+        {
+          label: "Visitors checked in",
+          value: String(checkedIn ?? 0),
+          tone: "teal",
+          icon: "person-plus",
+        },
+        {
+          label: "Visitors checked out",
+          value: String(checkedOut ?? 0),
+          tone: "teal",
+          icon: "person-minus",
+        },
+        {
+          label: "Currently inside",
+          value: String(currentlyInside ?? 0),
+          tone: "teal",
+          icon: "clock",
+        },
+        {
+          label: "Expired passes",
+          value: String(expiredPasses ?? 0),
+          tone: "red",
+          icon: "shield-x",
+        },
+      ]);
+    }
+
+    loadStats();
+  }, []);
+
+  async function verifyCode(codeToVerify = accessCode) {
     const { data, error } = await supabase
       .from("visitors")
       .select("*")
-      .eq("access_code", accessCode)
+      .eq("access_code", codeToVerify)
       .single();
 
     if (error) {
@@ -129,6 +211,27 @@ export default function SecurityPage() {
     }
     setStatus("entered");
     alert("Visitor checked in successfully");
+  }
+
+  async function checkOutVisitor() {
+    if (!visitorId) return;
+
+    const { error } = await supabase
+      .from("visitors")
+      .update({
+        status: "exited",
+        exit_time: new Date().toISOString(),
+      })
+      .eq("id", visitorId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setStatus("exited");
+
+    alert("Visitor checked out successfully");
   }
 
   return (
@@ -202,6 +305,10 @@ export default function SecurityPage() {
                   <p className="mt-3 text-sm font-medium text-red-600">
                     🔴 Pass Expired
                   </p>
+                ) : status === "revoked" ? (
+                  <p className="mt-3 text-sm font-medium text-red-600">
+                    🔴 Access Revoked
+                  </p>
                 ) : status === "pending" ? (
                   <>
                     <p className="mt-3 text-sm font-medium text-green-600">
@@ -216,9 +323,23 @@ export default function SecurityPage() {
                       Allow Entry
                     </button>
                   </>
+                ) : status === "entered" ? (
+                  <>
+                    <p className="mt-3 text-sm font-medium text-green-600">
+                      🟢 Visitor Already Inside
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={checkOutVisitor}
+                      className="mt-4 w-full rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white"
+                    >
+                      Check Out Visitor
+                    </button>
+                  </>
                 ) : (
-                  <p className="mt-3 text-sm font-medium text-green-600">
-                    🟢 Visitor Already Inside
+                  <p className="mt-3 text-sm font-medium text-slate-600">
+                    ⚪ Visitor Has Left
                   </p>
                 )}
               </div>
@@ -261,7 +382,7 @@ export default function SecurityPage() {
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/10">
             {activity.map((item) => {
-              const isDenied = item.result === "denied";
+              const isDenied = item.status === "expired";
 
               return (
                 <article
@@ -289,14 +410,17 @@ export default function SecurityPage() {
                       )}
                     </svg>
                   </span>
+
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold">{item.name}</h3>
+                    <h3 className="font-bold">{item.visitor_name}</h3>
+
                     <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">
-                      Code: {item.code} &nbsp;•&nbsp; {item.status}
+                      Code: {item.access_code} • {item.status}
                     </p>
                   </div>
+
                   <time className="text-sm text-slate-600 dark:text-slate-300">
-                    {item.time}
+                    {new Date(item.created_at).toLocaleTimeString()}
                   </time>
                 </article>
               );
