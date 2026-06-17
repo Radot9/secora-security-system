@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "Orlando Diggs",
+    "phoneNumber": "08123456789",
+    "timeIn": "10:30",
+    "timeOut": "14:45"
+  },
+  {
+    "id": 2,
+    "name": "Mike Jonathan",
+    "phoneNumber": "07023456789",
+    "timeIn": "12:15",
+    "timeOut": "18:45"
+  },
+  {
+    "id": 3,
+    "name": "Ariyo Segunfunmi",
+    "phoneNumber": "09123456789",
+    "timeIn": "13:40",
+    "timeOut": "17:35"
+  },
+  {
+    "id": 4,
+    "name": "Candice Baker",
+    "phoneNumber": "08123456789",
+    "timeIn": "13:42",
+    "timeOut": "17:47"
+  },
+  {
+    "id": 5,
+    "name": "Kate Morrison",
+    "phoneNumber": "08023456789",
+    "timeIn": "15:30",
+    "timeOut": "19:20"
+  }
+]

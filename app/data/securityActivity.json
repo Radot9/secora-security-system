@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "name": "Orlando Diggs",
+    "code": "GIW-4959T",
+    "status": "Checked in",
+    "time": "10:31",
+    "result": "approved"
+  },
+  {
+    "id": 2,
+    "name": "Maya Lin",
+    "code": "YTR-8342P",
+    "status": "Checked out",
+    "time": "11:04",
+    "result": "approved"
+  },
+  {
+    "id": 3,
+    "name": "Jamal Thompson",
+    "code": "BNL-2387X",
+    "status": "Checked in",
+    "time": "11:15",
+    "result": "approved"
+  },
+  {
+    "id": 4,
+    "name": "Musa Thompson",
+    "code": "BNL-2387X",
+    "status": "Access Denied",
+    "time": "11:15",
+    "result": "denied"
+  }
+]
