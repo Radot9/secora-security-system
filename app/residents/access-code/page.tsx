@@ -1,5 +1,10 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const qrRows = [
   "11111110010101101111111",
@@ -28,6 +33,39 @@ const qrRows = [
 ];
 
 export default function AccessCodePage() {
+  const searchParams = useSearchParams();
+  const accessCode = searchParams.get("code");
+
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorPhone, setVisitorPhone] = useState("");
+
+  useEffect(() => {
+    async function loadVisitor() {
+      console.log("Access Code:", accessCode);
+
+      if (!accessCode) return;
+
+      const { data, error } = await supabase
+        .from("visitors")
+        .select("*")
+        .eq("access_code", accessCode)
+        .single();
+
+      console.log("DATA:", data);
+      console.log("ERROR:", error);
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setVisitorName(data.visitor_name);
+      setVisitorPhone(data.visitor_phone);
+    }
+
+    loadVisitor();
+  }, [accessCode]);
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto flex w-full max-w-md lg:max-w-3xl flex-col gap-8">
@@ -56,8 +94,11 @@ export default function AccessCodePage() {
           <p className="text-sm text-slate-500 dark:text-slate-300">
             Visitor&apos;s access code
           </p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            {visitorPhone}
+          </p>
           <h2 className="mt-6 text-3xl font-semibold tracking-tight">
-            Christopher James
+            {visitorName || "Loading..."}
           </h2>
           <span className="mt-2 inline-flex rounded-md bg-teal-500 px-3 py-1.5 text-xs font-medium text-white">
             Authorised visitor
@@ -75,19 +116,24 @@ export default function AccessCodePage() {
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Access code
           </p>
-          <p className="mt-5 text-3xl font-bold tracking-wide">GIW-4959T</p>
+          <p className="mt-5 text-3xl font-bold tracking-wide">
+            {" "}
+            {accessCode}{" "}
+          </p>
 
           <div
             aria-label="QR code for access code GIW-4959T"
             className="mt-7 grid aspect-square w-60 grid-cols-[repeat(23,minmax(0,1fr))] gap-0 bg-white p-0"
           >
             {qrRows.flatMap((row, rowIndex) =>
-              row.split("").map((cell, columnIndex) => (
-                <span
-                  key={`${rowIndex}-${columnIndex}`}
-                  className={cell === "1" ? "bg-black" : "bg-white"}
-                />
-              )),
+              row
+                .split("")
+                .map((cell, columnIndex) => (
+                  <span
+                    key={`${rowIndex}-${columnIndex}`}
+                    className={cell === "1" ? "bg-black" : "bg-white"}
+                  />
+                )),
             )}
           </div>
         </section>

@@ -1,7 +1,9 @@
-'use client'
+"use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import visitors from "../../data/visitors.json";
 
@@ -9,6 +11,33 @@ export default function GenerateCodePage() {
   const [visitorName, setVisitorName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
+
+  async function handleGenerateCode() {
+    setLoading(true);
+
+    const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const { error } = await supabase.from("visitors").insert({
+      visitor_name: visitorName,
+      visitor_phone: phoneNumber,
+      plate_number: plateNumber,
+      resident_name: "Michael",
+      access_code: accessCode,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+
+    setLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    router.push(`/residents/access-code?code=${accessCode}`);
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -37,7 +66,10 @@ export default function GenerateCodePage() {
         <section className="rounded-[2rem] bg-teal-50 p-5 dark:bg-teal-950/20">
           <form className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="visitor-name" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              <label
+                htmlFor="visitor-name"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
                 Visitor&apos;s name
               </label>
               <input
@@ -52,7 +84,10 @@ export default function GenerateCodePage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="visitor-phone" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              <label
+                htmlFor="visitor-phone"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
                 Visitor&apos;s phone number
               </label>
               <input
@@ -67,7 +102,10 @@ export default function GenerateCodePage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="plate-number" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              <label
+                htmlFor="plate-number"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
                 Visitor&apos;s vehicle plate number
               </label>
               <input
@@ -80,12 +118,14 @@ export default function GenerateCodePage() {
               />
             </div>
 
-            <Link
-              href="/residents/access-code"
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            <button
+              type="button"
+              onClick={handleGenerateCode}
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50"
             >
-              Generate Code
-            </Link>
+              {loading ? "Generating..." : "Generate Code"}
+            </button>
           </form>
         </section>
 
