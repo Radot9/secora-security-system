@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ResidentBottomNav } from "../components/ResidentBottomNav";
 import visitors from "../data/visitors.json";
+import { AppShell } from "../components/ui/AppShell";
+import { Card } from "../components/ui/Card";
 
 const quickActions = [
   {
@@ -17,7 +19,7 @@ const quickActions = [
 
 export default function ResidentsPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <AppShell maxWidth="xl">
       <div className="mx-auto flex w-full max-w-md lg:max-w-5xl flex-col gap-8">
         <header className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-base font-bold text-teal-700 shadow-sm shadow-teal-100/70 dark:bg-teal-950/20 dark:text-teal-300">
@@ -48,22 +50,20 @@ export default function ResidentsPage() {
 
         <section className="grid gap-4 lg:grid-cols-2">
           {quickActions.map((action) => (
-            <Link
-              key={action.label}
-              href={action.href}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/50 transition hover:border-teal-300 hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-400 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/10 dark:hover:bg-teal-950/20"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold">{action.label}</h3>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {action.description}
-                  </p>
+            <Link key={action.label} href={action.href}>
+              <Card className="transition hover:border-teal-300 hover:bg-teal-50">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold">{action.label}</h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                      {action.description}
+                    </p>
+                  </div>
+                  <span className="text-2xl text-teal-500" aria-hidden="true">
+                    +
+                  </span>
                 </div>
-                <span className="text-2xl text-teal-500" aria-hidden="true">
-                  +
-                </span>
-              </div>
+              </Card>
             </Link>
           ))}
         </section>
@@ -101,6 +101,6 @@ export default function ResidentsPage() {
         </section>
       </div>
       <ResidentBottomNav />
-    </main>
+    </AppShell>
   );
 }

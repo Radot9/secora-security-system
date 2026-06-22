@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Card } from "@/app/components/ui/Card";
+import { StatusBadge } from "@/app/components/ui/StatusBadge";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { AppShell } from "@/app/components/ui/AppShell";
 
 type Visitor = {
   id: string;
@@ -9,17 +13,10 @@ type Visitor = {
   visitor_phone: string;
   plate_number: string;
   entry_time: string;
+  status: string;
 };
 
 export default function CurrentlyInsidePage() {
-  const quickActions = [
-    {
-      label: "Currently Inside",
-      href: "/admin/currently-inside",
-      description: "View visitors currently inside the estate",
-    },
-  ];
-
   const [visitors, setVisitors] = useState<Visitor[]>([]);
 
   useEffect(() => {
@@ -42,26 +39,45 @@ export default function CurrentlyInsidePage() {
   }, []);
 
   return (
-    <main className="p-10">
+    <AppShell maxWidth="lg">
       <h1 className="mb-6 text-2xl font-bold">Currently Inside</h1>
 
       <div className="space-y-4">
-        {visitors.map((visitor) => (
-          <div key={visitor.id} className="rounded-xl border p-4">
-            <h2 className="font-semibold">{visitor.visitor_name}</h2>
+        {visitors.length === 0 ? (
+          <EmptyState
+            title="No Visitors Inside"
+            description="There are currently no visitors inside the estate."
+          />
+        ) : (
+          visitors.map((visitor) => (
+            <Card key={visitor.id}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {visitor.visitor_name}
+                  </h2>
 
-            <p className="text-sm text-slate-600">{visitor.visitor_phone}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {visitor.visitor_phone}
+                  </p>
+                </div>
 
-            <p className="text-sm text-slate-600">
-              Plate: {visitor.plate_number || "N/A"}
-            </p>
+                <StatusBadge status={visitor.status} />
+              </div>
 
-            <p className="text-sm text-slate-600">
-              Entered: {new Date(visitor.entry_time).toLocaleString()}
-            </p>
-          </div>
-        ))}
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-slate-600">
+                  Plate: {visitor.plate_number || "N/A"}
+                </p>
+
+                <p className="text-sm text-slate-600">
+                  Entered: {new Date(visitor.entry_time).toLocaleString()}
+                </p>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
-    </main>
+    </AppShell>
   );
 }
