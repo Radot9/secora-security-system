@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { CheckCircle2, Clock3, ShieldX, LogOut } from "lucide-react";
 
 function StatIcon({ icon, tone }: { icon: string; tone: string }) {
   const isDanger = tone === "red";
@@ -64,12 +65,19 @@ function SecurityContent() {
   const [visitorId, setVisitorId] = useState("");
   const [status, setStatus] = useState("");
   const [isExpired, setIsExpired] = useState(false);
+
   type ActivityItem = {
     id: string;
     visitor_name: string;
+    visitor_phone?: string;
+    plate_number?: string;
+    resident_name?: string;
     access_code: string;
     status: string;
     created_at: string;
+    entry_time?: string;
+    exit_time?: string;
+    expires_at?: string;
   };
 
   const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
@@ -80,29 +88,38 @@ function SecurityContent() {
     entered: {
       title: "Valid Pass",
       message: "Visitor is authorised",
-      color: "text-teal-500",
-      icon: "✓",
+      color: "text-green-500",
+      icon: CheckCircle2,
     },
+
+    pending: {
+      title: "Pending Entry",
+      message: "Visitor has not entered yet",
+      color: "text-blue-500",
+      icon: Clock3,
+    },
+
     exited: {
       title: "Visitor Checked Out",
       message: "Visitor has left the estate",
       color: "text-slate-500",
-      icon: "↗",
+      icon: LogOut,
     },
+
+    expired: {
+      title: "Pass Expired",
+      message: "Visitor pass is no longer valid",
+      color: "text-amber-500",
+      icon: Clock3,
+    },
+
     revoked: {
       title: "Access Revoked",
       message: "Visitor access has been cancelled",
       color: "text-red-500",
-      icon: "✕",
-    },
-    pending: {
-      title: "Pending Entry",
-      message: "Visitor has not entered yet",
-      color: "text-amber-500",
-      icon: "⏳",
+      icon: ShieldX,
     },
   };
-
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   const [stats, setStats] = useState([
@@ -265,10 +282,25 @@ function SecurityContent() {
     alert("Visitor checked out successfully");
   }
 
+  function getVisitorStatus(visitor: ActivityItem) {
+    if (
+      visitor.status === "pending" &&
+      visitor.expires_at &&
+      new Date(visitor.expires_at) < new Date()
+    ) {
+      return "expired";
+    }
+
+    return visitor.status;
+  }
+
   const visitorStatusConfig = selectedVisitor
-    ? statusConfig[selectedVisitor.status as keyof typeof statusConfig] ||
-      statusConfig.pending
+    ? statusConfig[
+        getVisitorStatus(selectedVisitor) as keyof typeof statusConfig
+      ] || statusConfig.pending
     : statusConfig.pending;
+
+  const StatusIcon = visitorStatusConfig.icon;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -418,7 +450,22 @@ function SecurityContent() {
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/10">
             {activity.map((item) => {
-              const isDenied = item.status === "expired";
+              const displayStatus = getVisitorStatus(item);
+
+              const isDenied =
+                displayStatus === "expired" || displayStatus === "revoked";
+
+              function getActivityStatus(item: ActivityItem) {
+                if (
+                  item.status === "pending" &&
+                  item.expires_at &&
+                  new Date(item.expires_at) < new Date()
+                ) {
+                  return "expired";
+                }
+
+                return item.status;
+              }
 
               return (
                 <article
@@ -455,7 +502,22 @@ function SecurityContent() {
                     <h3 className="font-bold">{item.visitor_name}</h3>
 
                     <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">
-                      Code: {item.access_code} • {item.status}
+                      Code: {item.access_code} •{" "}
+                      <span
+                        className={
+                          displayStatus === "entered"
+                            ? "text-green-600 font-semibold"
+                            : displayStatus === "pending"
+                              ? "text-blue-600 font-semibold"
+                              : displayStatus === "expired"
+                                ? "text-amber-600 font-semibold"
+                                : displayStatus === "revoked"
+                                  ? "text-red-600 font-semibold"
+                                  : "text-slate-600 font-semibold"
+                        }
+                      >
+                        {displayStatus}
+                      </span>
                     </p>
                   </div>
 
@@ -475,31 +537,87 @@ function SecurityContent() {
           onClick={() => setSelectedVisitor(null)}
         >
           <div
-            className="w-full max-w-md rounded-3xl bg-white p-6 dark:bg-slate-900"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center">
               <div
-                className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full border text-4xl ${visitorStatusConfig.color}`}
+                className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full border ${visitorStatusConfig.color}`}
               >
-                {visitorStatusConfig.icon}
+                <StatusIcon className="h-10 w-10" />
               </div>
 
-              <h2 className="mt-4 text-2xl font-bold">{visitorStatusConfig.title}</h2>
+              <h2 className="mt-4 text-2xl font-bold">
+                {visitorStatusConfig.title}
+              </h2>
 
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {visitorStatusConfig.message}
               </p>
             </div>
-            <div className="mt-6 space-y-4">
-              <div>
-                <p className="text-sm text-slate-500">Visitor</p>
-                <p className="font-semibold">{selectedVisitor.visitor_name}</p>
-              </div>
+            <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+              <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Visitor</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.visitor_name}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-sm text-slate-500">Access Code</p>
-                <p>{selectedVisitor.access_code}</p>
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Phone Number</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.visitor_phone || "N/A"}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Plate Number</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.plate_number || "N/A"}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Resident</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.resident_name || "N/A"}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Access Code</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.access_code}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Entry Time</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.entry_time
+                      ? new Date(selectedVisitor.entry_time).toLocaleString()
+                      : "Not entered"}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Exit Time</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.exit_time
+                      ? new Date(selectedVisitor.exit_time).toLocaleString()
+                      : "Still inside"}
+                  </p>
+                </div>
+
+                <div className="px-5 py-4">
+                  <p className="text-sm text-slate-500">Expires</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedVisitor.expires_at
+                      ? new Date(selectedVisitor.expires_at).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
               </div>
             </div>
             <button
