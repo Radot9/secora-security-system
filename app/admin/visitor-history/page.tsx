@@ -71,7 +71,7 @@ export default function VisitorHistoryPage() {
   }
 
   return (
-    <AppShell maxWidth="xl">
+    <AppShell size="default">
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Visitor History"

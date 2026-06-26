@@ -39,7 +39,7 @@ export default function CurrentlyInsidePage() {
   }, []);
 
   return (
-    <AppShell maxWidth="lg">
+    <AppShell size="wide">
       <h1 className="mb-6 text-2xl font-bold">Currently Inside</h1>
 
       <div className="space-y-4">

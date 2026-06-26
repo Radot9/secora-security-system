@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Visitor } from "@/types/visitors";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
-import visitors from "../../data/visitors.json";
 
 export default function GenerateCodePage() {
   const [visitorName, setVisitorName] = useState("");
@@ -13,29 +13,95 @@ export default function GenerateCodePage() {
   const [plateNumber, setPlateNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+
   const router = useRouter();
 
+  async function loadVisitors() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data: resident } = await supabase
+      .from("residents")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!resident) return;
+
+    const { data, error } = await supabase
+      .from("visitors")
+      .select("*")
+      .eq("resident_id", resident.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setVisitors(data);
+    }
+  }
+
+  useEffect(() => {
+    loadVisitors();
+  }, []);
+
   async function handleGenerateCode() {
+    if (!visitorName || !phoneNumber) {
+      alert("Visitor name and phone number are required.");
+      return;
+    }
     setLoading(true);
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Please log in again.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: resident, error: residentError } = await supabase
+      .from("residents")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (residentError || !resident) {
+      console.log("Logged in user:", user.id);
+      console.log("Resident:", resident);
+      console.log("Resident Error:", residentError);
+      setLoading(false);
+      return;
+    }
+    console.log("Resident:", resident);
     const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     const { error } = await supabase.from("visitors").insert({
       visitor_name: visitorName,
       visitor_phone: phoneNumber,
       plate_number: plateNumber,
-      resident_name: "Michael",
+
+      resident_id: resident.id,
+      resident_name: resident.full_name, // <-- temporary
+
       access_code: accessCode,
+      status: "pending",
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       alert(error.message);
       return;
     }
-
+    await loadVisitors();
+    setVisitorName("");
+    setPhoneNumber("");
+    setPlateNumber("");
     router.push(`/residents/access-code?code=${accessCode}`);
   }
 
@@ -154,16 +220,20 @@ export default function GenerateCodePage() {
                 {visitors.map((visitor) => (
                   <tr key={visitor.id}>
                     <td className="whitespace-nowrap px-4 py-4 text-slate-700 dark:text-slate-200">
-                      {visitor.name}
+                      {visitor.visitor_name}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-slate-700 dark:text-slate-200">
-                      {visitor.phoneNumber}
+                      {visitor.visitor_phone}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-slate-700 dark:text-slate-200">
-                      {visitor.timeIn}
+                      {visitor.entry_time
+                        ? new Date(visitor.entry_time).toLocaleTimeString()
+                        : "--"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-slate-700 dark:text-slate-200">
-                      {visitor.timeOut}
+                      {visitor.exit_time
+                        ? new Date(visitor.exit_time).toLocaleTimeString()
+                        : "--"}
                     </td>
                   </tr>
                 ))}

@@ -3,24 +3,31 @@ import { ResidentBottomNav } from "../components/ResidentBottomNav";
 import visitors from "../data/visitors.json";
 import { AppShell } from "../components/ui/AppShell";
 import { Card } from "../components/ui/Card";
+import { PageSection } from "../components/ui/PageSection";
+import { SectionHeader } from "../components/ui/SectionHeader";
+import { CardSection } from "../components/ui/CardSection";
+import { UserPlus, QrCode } from "lucide-react";
+import { ActionCard } from "../components/ui/ActionCard";
 
 const quickActions = [
   {
-    label: "Add visitor",
+    title: "Add Visitor",
     href: "/residents/generate-code",
     description: "Create and share a visitor access code",
+    icon: <UserPlus className="h-6 w-6" />,
   },
   {
-    label: "Access codes",
+    title: "Access Codes",
     href: "/residents/access-code",
     description: "View the latest generated visitor pass",
+    icon: <QrCode className="h-6 w-6" />,
   },
 ];
 
 export default function ResidentsPage() {
   return (
-    <AppShell maxWidth="xl">
-      <div className="mx-auto flex w-full max-w-md lg:max-w-5xl flex-col gap-8">
+    <AppShell size="default">
+      <div className="flex flex-col gap-8">
         <header className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-base font-bold text-teal-700 shadow-sm shadow-teal-100/70 dark:bg-teal-950/20 dark:text-teal-300">
             MM
@@ -35,70 +42,65 @@ export default function ResidentsPage() {
           </div>
         </header>
 
-        <section className="rounded-[2rem] bg-teal-50 p-6 dark:bg-teal-950/20">
-          <p className="text-sm font-medium text-teal-700 dark:text-teal-300">
-            Resident portal
-          </p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">
-            Manage your estate visitors
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Add expected visitors, share access codes, and keep track of who has
-            checked in or out.
-          </p>
-        </section>
+        <Card className="border-0 bg-teal-50 dark:bg-teal-950/20">
+          <PageSection spacing="md">
+            <p className="text-sm font-medium text-teal-700 dark:text-teal-300">
+              Resident Portal
+            </p>
+
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                Manage your estate visitors
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Add expected visitors, share access codes, and keep track of who
+                has checked in or out.
+              </p>
+            </div>
+          </PageSection>
+        </Card>
+
+        {/* Quick Actions */}
 
         <section className="grid gap-4 lg:grid-cols-2">
           {quickActions.map((action) => (
-            <Link key={action.label} href={action.href}>
-              <Card className="transition hover:border-teal-300 hover:bg-teal-50">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold">{action.label}</h3>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      {action.description}
-                    </p>
-                  </div>
-                  <span className="text-2xl text-teal-500" aria-hidden="true">
-                    +
-                  </span>
-                </div>
-              </Card>
-            </Link>
+            <ActionCard
+              key={action.title}
+              title={action.title}
+              description={action.description}
+              href={action.href}
+              icon={action.icon}
+            />
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/10">
-          <div className="flex items-center justify-between px-4 py-5">
-            <h2 className="text-lg font-semibold tracking-tight">
-              Recent visitors
-            </h2>
-            <Link
-              href="/residents/visitors"
-              className="text-sm font-medium text-teal-600 transition hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200"
-            >
-              View all
-            </Link>
-          </div>
-
+        <CardSection
+          title="Recent Visitors"
+          actionLabel="View all"
+          actionHref="/residents/visitors"
+        >
           <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {visitors.slice(0, 3).map((visitor) => (
-              <article key={visitor.id} className="px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold">{visitor.name}</h3>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      {visitor.phoneNumber}
-                    </p>
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {visitor.timeIn}
+              <article
+                key={visitor.id}
+                className="flex items-start justify-between px-8 py-5"
+              >
+                <div>
+                  <h3 className="font-semibold">{visitor.name}</h3>
+
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                    {visitor.phoneNumber}
                   </p>
                 </div>
+
+                <time className="text-sm text-slate-600 dark:text-slate-300">
+                  {visitor.timeIn}
+                </time>
               </article>
             ))}
           </div>
-        </section>
+        </CardSection>
       </div>
       <ResidentBottomNav />
     </AppShell>

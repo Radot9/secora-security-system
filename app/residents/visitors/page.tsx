@@ -5,7 +5,7 @@ import visitors from "../../data/visitors.json";
 export default function VisitorsPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-md lg:max-w-5xl flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <header className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Visitors</h1>

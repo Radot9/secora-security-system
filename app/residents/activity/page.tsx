@@ -6,7 +6,7 @@ import { Card } from "../../components/ui/Card";
 
 export default function ActivityPage() {
   return (
-    <AppShell maxWidth="lg">
+    <AppShell size="default">
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Activity Logs"
