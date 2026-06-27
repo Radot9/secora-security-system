@@ -324,7 +324,7 @@ function SecurityContent() {
           </p>
 
           <Link
-            href="/security/valid-pass"
+            href="#"
             className="mx-auto mt-6 flex h-32 w-32 flex-col items-center justify-center rounded-3xl bg-teal-400 text-slate-800 transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
             aria-label="Scan QR Code"
           >
