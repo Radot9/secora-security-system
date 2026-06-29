@@ -312,8 +312,6 @@ function SecurityContent() {
 
   const StatusIcon = visitorStatusConfig.icon;
 
-  
-
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="flex flex-col gap-8">
@@ -645,12 +643,24 @@ function SecurityContent() {
       <ScannerModal
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onScan={async (code) => {
+        onScan={async (value) => {
+          let scannedCode = value;
+
+          // If the QR contains a URL, extract ?code=
+          if (value.startsWith("http")) {
+            try {
+              const url = new URL(value);
+              scannedCode = url.searchParams.get("code") || "";
+            } catch {
+              // Ignore invalid URLs
+            }
+          }
+
+          setAccessCode(scannedCode);
+
+          await verifyCode(scannedCode);
+
           setScannerOpen(false);
-
-          setAccessCode(code);
-
-          await verifyCode(code);
         }}
       />
     </main>
