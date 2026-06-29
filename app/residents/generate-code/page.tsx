@@ -71,9 +71,6 @@ export default function GenerateCodePage() {
       .maybeSingle();
 
     if (residentError || !resident) {
-      console.log("Logged in user:", user.id);
-      console.log("Resident:", resident);
-      console.log("Resident Error:", residentError);
       setLoading(false);
       return;
     }
@@ -99,9 +96,13 @@ export default function GenerateCodePage() {
       return;
     }
     await loadVisitors();
+
     setVisitorName("");
     setPhoneNumber("");
     setPlateNumber("");
+
+    setLoading(false);
+
     router.push(`/residents/access-code?code=${accessCode}`);
   }
 

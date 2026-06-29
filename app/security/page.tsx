@@ -4,8 +4,16 @@ import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Clock3, ShieldX, LogOut } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock3,
+  ShieldX,
+  LogOut,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
 
+import ScannerModal from "./components/ScannerModal";
 
 function StatIcon({ icon, tone }: { icon: string; tone: string }) {
   const isDanger = tone === "red";
@@ -66,6 +74,7 @@ function SecurityContent() {
   const [visitorId, setVisitorId] = useState("");
   const [status, setStatus] = useState("");
   const [isExpired, setIsExpired] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   type ActivityItem = {
     id: string;
@@ -303,6 +312,8 @@ function SecurityContent() {
 
   const StatusIcon = visitorStatusConfig.icon;
 
+  
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="flex flex-col gap-8">
@@ -323,8 +334,9 @@ function SecurityContent() {
             Scan QR code or enter access code to verify visitor.
           </p>
 
-          <Link
-            href="#"
+          <button
+            type="button"
+            onClick={() => setScannerOpen(true)}
             className="mx-auto mt-6 flex h-32 w-32 flex-col items-center justify-center rounded-3xl bg-teal-400 text-slate-800 transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
             aria-label="Scan QR Code"
           >
@@ -334,7 +346,7 @@ function SecurityContent() {
               <span className="absolute bottom-0 left-0 h-5 w-5 rounded-bl-md border-b-4 border-l-4 border-slate-700" />
               <span className="absolute bottom-0 right-0 h-5 w-5 rounded-br-md border-b-4 border-r-4 border-slate-700" />
             </span>
-          </Link>
+          </button>
           <p className="mt-4 text-center text-base font-semibold">
             Scan QR Code
           </p>
@@ -630,6 +642,17 @@ function SecurityContent() {
           </div>
         </div>
       )}
+      <ScannerModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={async (code) => {
+          setScannerOpen(false);
+
+          setAccessCode(code);
+
+          await verifyCode(code);
+        }}
+      />
     </main>
   );
 }

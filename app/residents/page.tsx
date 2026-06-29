@@ -1,6 +1,7 @@
+"use client";
+
 import Link from "next/link";
 import { ResidentBottomNav } from "../components/ResidentBottomNav";
-import visitors from "../data/visitors.json";
 import { AppShell } from "../components/ui/AppShell";
 import { Card } from "../components/ui/Card";
 import { PageSection } from "../components/ui/PageSection";
@@ -8,6 +9,9 @@ import { SectionHeader } from "../components/ui/SectionHeader";
 import { CardSection } from "../components/ui/CardSection";
 import { UserPlus, QrCode } from "lucide-react";
 import { ActionCard } from "../components/ui/ActionCard";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Visitor } from "@/types/visitors";
 
 const quickActions = [
   {
@@ -25,6 +29,39 @@ const quickActions = [
 ];
 
 export default function ResidentsPage() {
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+
+  async function loadVisitors() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data: resident } = await supabase
+      .from("residents")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!resident) return;
+
+    const { data, error } = await supabase
+      .from("visitors")
+      .select("*")
+      .eq("resident_id", resident.id)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (!error && data) {
+      setVisitors(data);
+    }
+  }
+
+  useEffect(() => {
+    loadVisitors();
+  }, []);
+
   return (
     <AppShell size="default">
       <div className="flex flex-col gap-8">
@@ -87,15 +124,17 @@ export default function ResidentsPage() {
                 className="flex items-start justify-between px-8 py-5"
               >
                 <div>
-                  <h3 className="font-semibold">{visitor.name}</h3>
+                  <h3 className="font-semibold">{visitor.visitor_name}</h3>
 
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {visitor.phoneNumber}
+                    {visitor.visitor_phone}
                   </p>
                 </div>
 
                 <time className="text-sm text-slate-600 dark:text-slate-300">
-                  {visitor.timeIn}
+                  {visitor.entry_time
+                    ? new Date(visitor.entry_time).toLocaleTimeString()
+                    : "Pending"}
                 </time>
               </article>
             ))}
