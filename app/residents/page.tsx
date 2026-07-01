@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+
 import { ResidentBottomNav } from "../components/ResidentBottomNav";
 import { AppShell } from "../components/ui/AppShell";
 import { Card } from "../components/ui/Card";
 import { PageSection } from "../components/ui/PageSection";
-import { SectionHeader } from "../components/ui/SectionHeader";
+
 import { CardSection } from "../components/ui/CardSection";
 import { UserPlus, QrCode } from "lucide-react";
 import { ActionCard } from "../components/ui/ActionCard";
@@ -36,20 +36,25 @@ export default function ResidentsPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+   
 
-    const { data: resident } = await supabase
+    const { data: residentData, error: residentError } = await supabase
       .from("residents")
-      .select("id")
+      .select("id, full_name, house_number, street")
       .eq("user_id", user.id)
       .single();
+
+    if (residentError || !residentData) return;
+
+    // Save resident information for the dashboard
+    setResident(residentData);
 
     if (!resident) return;
 
     const { data, error } = await supabase
       .from("visitors")
       .select("*")
-      .eq("resident_id", resident.id)
+      .eq("resident_id", residentData.id)
       .order("created_at", { ascending: false })
       .limit(3);
 
@@ -57,6 +62,14 @@ export default function ResidentsPage() {
       setVisitors(data);
     }
   }
+
+  // Logged-in resident information
+  const [resident, setResident] = useState<{
+    
+    full_name: string;
+    house_number: string;
+    street: string;
+  } | null>(null);
 
   useEffect(() => {
     loadVisitors();
@@ -67,14 +80,21 @@ export default function ResidentsPage() {
       <div className="flex flex-col gap-8">
         <header className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-base font-bold text-teal-700 shadow-sm shadow-teal-100/70 dark:bg-teal-950/20 dark:text-teal-300">
-            MM
+            {resident?.full_name
+              ?.split(" ")
+              .map((name) => name[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase() ?? "R"}
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-              Welcome Michael
+              Welcome {resident?.full_name ?? "Resident"}
             </h1>
             <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">
-              2, Ofili close, Thomas Ajufo Estate
+              {resident
+                ? `${resident.house_number}, ${resident.street}, Thomas Ajufo Estate`
+                : "Thomas Ajufo Estate"}
             </p>
           </div>
         </header>

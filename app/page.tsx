@@ -23,23 +23,35 @@ export default function Home() {
       return;
     }
 
+
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, must_change_password")
       .eq("id", data.user.id)
       .single();
+
+
 
     if (profileError) {
       alert("Profile not found.");
       return;
     }
 
-     if (profile.role === "resident") {
+    console.log("Role:", profile.role);
+
+    // Check if the user is still using a temporary password
+    if (profile.must_change_password) {
+      router.push("/update-password");
+      return;
+    }
+
+    if (profile.role === "resident") {
       router.push("/residents");
       return;
     }
 
     if (profile.role === "security") {
+      console.log("➡️ Redirecting to security");
       router.push("/security");
       return;
     }
@@ -49,7 +61,6 @@ export default function Home() {
       return;
     }
   }
-
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">

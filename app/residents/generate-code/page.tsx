@@ -35,7 +35,7 @@ export default function GenerateCodePage() {
     const { data, error } = await supabase
       .from("visitors")
       .select("*")
-      .eq("resident_id", resident.id)
+      .eq("resident_id", residentData.id)
       .order("created_at", { ascending: false });
 
     if (!error && data) {
@@ -95,7 +95,7 @@ export default function GenerateCodePage() {
       alert(error.message);
       return;
     }
-    await loadVisitors();
+    // await loadVisitors();
 
     setVisitorName("");
     setPhoneNumber("");
