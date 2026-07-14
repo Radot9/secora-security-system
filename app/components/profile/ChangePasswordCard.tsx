@@ -1,118 +1,129 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Save } from "lucide-react";
+import { Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import SettingsSection from "./SettingsSection";
+import { InputField } from "../InputField";
+import { PasswordRequirements } from "../PasswordRequirements";
+import { isPasswordValid } from "@/lib/password-requirements";
 
 export default function ChangePasswordCard() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+ const [currentPassword, setCurrentPassword] = useState("");
+ const [newPassword, setNewPassword] = useState("");
+ const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
+ const [loading, setLoading] = useState(false);
 
-  async function handleChangePassword(
-    e: React.FormEvent
-  ) {
-    e.preventDefault();
+ async function handleChangePassword(
+ e: React.FormEvent
+ ) {
+ e.preventDefault();
 
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
+ if (!currentPassword) {
+ toast.error("Current password is missing. Enter your current password to continue.");
+ return;
+ }
 
-    if (newPassword.length < 8) {
-      toast.error(
-        "Password must be at least 8 characters."
-      );
-      return;
-    }
+ if (newPassword !== confirmPassword) {
+ toast.error("Passwords do not match.");
+ return;
+ }
 
-    setLoading(true);
+ if (!isPasswordValid(newPassword)) {
+ toast.error("Password does not meet all requirements.");
+ return;
+ }
 
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
+ setLoading(true);
 
-    setLoading(false);
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+ if (!user?.email) {
+ toast.error("We could not verify your account. Please sign in again.");
+ setLoading(false);
+ return;
+ }
 
-    toast.success("Password updated successfully.");
+ const { error: verificationError } = await supabase.auth.signInWithPassword({
+ email: user.email,
+ password: currentPassword,
+ });
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  }
+ if (verificationError) {
+ toast.error("Your current password is incorrect. Please try again.");
+ setLoading(false);
+ return;
+ }
 
-  return (
-    <SettingsSection title="Security & Password">
-      <form
-        onSubmit={handleChangePassword}
-        className="space-y-5"
-      >
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Current Password
-          </label>
+ const { error } = await supabase.auth.updateUser({
+ password: newPassword,
+ });
 
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) =>
-              setCurrentPassword(e.target.value)
-            }
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950"
-          />
-        </div>
+ setLoading(false);
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            New Password
-          </label>
+ if (error) {
+ toast.error(error.message);
+ return;
+ }
 
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) =>
-              setNewPassword(e.target.value)
-            }
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950"
-          />
-        </div>
+ toast.success("Password updated successfully.");
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Confirm Password
-          </label>
+ setCurrentPassword("");
+ setNewPassword("");
+ setConfirmPassword("");
+ }
 
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) =>
-              setConfirmPassword(e.target.value)
-            }
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950"
-          />
-        </div>
+ return (
+ <SettingsSection title="Security & Password">
+ <form
+ onSubmit={handleChangePassword}
+ className="space-y-5"
+ >
+ <InputField
+ id="settings-current-password"
+ label="Current Password"
+ type="password"
+ value={currentPassword}
+ onChange={(e) => setCurrentPassword(e.target.value)}
+ autoComplete="current-password"
+ />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-2xl bg-teal-500 px-6 py-3 font-semibold text-white transition hover:bg-teal-600 disabled:opacity-50"
-        >
-          <Lock className="h-5 w-5" />
+ <InputField
+ id="settings-new-password"
+ label="New Password"
+ type="password"
+ value={newPassword}
+ onChange={(e) => setNewPassword(e.target.value)}
+ autoComplete="new-password"
+ />
 
-          {loading
-            ? "Updating..."
-            : "Update Password"}
-        </button>
-      </form>
-    </SettingsSection>
-  );
+ <PasswordRequirements password={newPassword} />
+
+ <InputField
+ id="settings-confirm-password"
+ label="Confirm Password"
+ type="password"
+ value={confirmPassword}
+ onChange={(e) => setConfirmPassword(e.target.value)}
+ autoComplete="new-password"
+ />
+
+ <button
+ type="submit"
+ disabled={loading || !isPasswordValid(newPassword) || newPassword !== confirmPassword}
+ className="inline-flex items-center gap-2 rounded-2xl bg-primary/100 px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:opacity-50"
+ >
+ <Lock className="h-5 w-5" />
+
+ {loading
+ ? "Updating..."
+ : "Update Password"}
+ </button>
+ </form>
+ </SettingsSection>
+ );
 }

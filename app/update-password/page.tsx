@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -8,151 +8,240 @@ import { supabase } from "@/lib/supabase";
 
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { PasswordRequirements } from "../components/PasswordRequirements";
+import { isPasswordValid } from "@/lib/password-requirements";
 
 export default function UpdatePasswordPage() {
-  const [newPassword, setNewPassword] = useState("");
+ const [mode, setMode] = useState<"loading" | "reset" | "update" | "missing">("loading");
+ const [newPassword, setNewPassword] = useState("");
 
-  const [currentPassword, setCurrentPassword] = useState("");
+ const [currentPassword, setCurrentPassword] = useState("");
 
-  const [confirmPassword, setConfirmPassword] = useState("");
+ const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
+ const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
+ const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+ useEffect(() => {
+ const recoveryLink =
+ window.location.search.includes("code=") ||
+ window.location.hash.includes("type=recovery");
 
-    // Stop multiple clicks
-    setLoading(true);
+ const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+ if (event === "PASSWORD_RECOVERY") {
+ setMode("reset");
+ } else if (event === "INITIAL_SESSION") {
+ setMode(session ? (recoveryLink ? "reset" : "update") : "missing");
+ }
+ });
 
-    // Check both passwords match
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
+ return () => listener.subscription.unsubscribe();
+ }, []);
 
-    // Update the user's password in Supabase Authentication
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
+ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+ e.preventDefault();
 
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
-    }
+ // Stop multiple clicks
+ setLoading(true);
 
-    // Get the currently logged-in user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+ if (mode === "missing") {
+ toast.error("Your password reset link is missing or has expired. Request a new link.");
+ setLoading(false);
+ return;
+ }
 
-    // Get the user's role from the profiles table
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user?.id)
-      .single();
+ if (mode === "update" && !currentPassword) {
+ toast.error("Current password is missing. Enter your current password to continue.");
+ setLoading(false);
+ return;
+ }
 
-    // Mark that the user has changed their temporary password
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        must_change_password: false,
-      })
-      .eq("id", user?.id);
+ if (!isPasswordValid(newPassword)) {
+ toast.error("Password does not meet all requirements.");
+ setLoading(false);
+ return;
+ }
 
-    if (profileError) {
-      console.error(profileError);
-      toast.error(profileError.message);
-      setLoading(false);
-      return;
-    }
+ // Check both passwords match
+ if (newPassword !== confirmPassword) {
+ toast.error("Passwords do not match.");
+ setLoading(false);
+ return;
+ }
 
-    toast.success("Password updated successfully.");
+ if (mode === "update") {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setLoading(false);
+ if (!user?.email) {
+ toast.error("We could not verify your account. Please sign in again.");
+ setLoading(false);
+ return;
+ }
 
-    setTimeout(() => {
-      switch (profile?.role) {
-        case "resident":
-          router.push("/residents");
-          break;
+ const { error: verificationError } = await supabase.auth.signInWithPassword({
+ email: user.email,
+ password: currentPassword,
+ });
 
-        case "security":
-          router.push("/security");
-          break;
+ if (verificationError) {
+ toast.error("Your current password is incorrect. Please try again.");
+ setLoading(false);
+ return;
+ }
+ }
 
-        case "admin":
-          router.push("/admin");
-          break;
+ // Update the user's password in Supabase Authentication
+ const { error } = await supabase.auth.updateUser({
+ password: newPassword,
+ });
 
-        default:
-          router.push("/");
-      }
-    }, 1500);
-  }
+ if (error) {
+ toast.error(
+ error.message.toLowerCase().includes("session")
+ ? "Your password reset session has expired. Request a new reset link."
+ : error.message
+ );
+ setLoading(false);
+ return;
+ }
 
-  return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/10 sm:p-10">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-teal-100 text-teal-700 shadow-sm shadow-teal-100/70 dark:bg-teal-950/20 dark:text-teal-300">
-            <span className="text-3xl font-black">S</span>
-          </div>
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-teal-500">
-              Security
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Update Password
-            </h1>
-          </div>
-        </div>
+ // Get the currently logged-in user
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <InputField
-            id="current-password"
-            label="Current Password"
-            type="password"
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-            placeholder="Enter current password"
-            autoComplete="current-password"
-          />
+ // Get the user's role from the profiles table
+ const { data: profile } = await supabase
+ .from("profiles")
+ .select("role")
+ .eq("id", user?.id)
+ .single();
 
-          <InputField
-            id="new-password"
-            label="New password"
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            placeholder="Enter new password"
-            autoComplete="new-password"
-          />
+ // Privileged profile flags are changed only by an authenticated server route.
+ const finalizeResponse = await fetch("/api/profile/password-changed", { method: "POST" });
+ const finalizeResult = await finalizeResponse.json();
+ if (!finalizeResponse.ok) {
+ toast.error(finalizeResult.error);
+ setLoading(false);
+ return;
+ }
 
-          <InputField
-            id="confirm-password"
-            label="Confirm new password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Enter new password again"
-            autoComplete="new-password"
-          />
-          <p className="text-sm text-slate-500">
-            Password must be at least 8 characters and include an uppercase
-            letter, a number and a special character.
-          </p>
+ if (finalizeResult.shouldSignIn) {
+ toast.success("Account created. Sign in to open your dashboard.");
+ await supabase.auth.signOut();
+ setCurrentPassword("");
+ setNewPassword("");
+ setConfirmPassword("");
+ setLoading(false);
+ setTimeout(() => router.push("/"), 1500);
+ return;
+ }
 
-          <PrimaryButton type="submit">Update Password</PrimaryButton>
-        </form>
-      </div>
-    </main>
-  );
+ toast.success(mode === "reset" ? "Password reset successfully." : "Password updated successfully.");
+
+ setCurrentPassword("");
+ setNewPassword("");
+ setConfirmPassword("");
+ setLoading(false);
+
+ setTimeout(() => {
+ switch (profile?.role) {
+ case "resident":
+ router.push("/residents");
+ break;
+
+ case "security":
+ router.push("/security");
+ break;
+
+ case "admin":
+ router.push(finalizeResult.dashboardHref ?? "/admin");
+ break;
+
+ case "super_admin":
+ router.push(finalizeResult.dashboardHref ?? "/admin/super-admin");
+ break;
+
+ default:
+ router.push("/");
+ }
+ }, 1500);
+ }
+
+ return (
+ <main className="min-h-screen bg-background px-4 py-10 text-foreground">
+ <div className="mx-auto flex w-full max-w-md flex-col gap-10 rounded-3xl border border-border bg-card p-8 shadow-xl shadow-muted/50 sm:p-10">
+ <div className="flex flex-col items-center gap-4 text-center">
+ <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary shadow-sm shadow-primary/10">
+ <span className="text-3xl font-black">S</span>
+ </div>
+ <div>
+ <p className="text-sm uppercase tracking-[0.35em] text-primary">
+ Security
+ </p>
+ <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+ {mode === "reset" ? "Reset Password" : "Update Password"}
+ </h1>
+ </div>
+ </div>
+
+ <form className="space-y-5" onSubmit={handleSubmit}>
+ {mode === "missing" ? (
+ <div className="space-y-4 text-center">
+ <p className="text-sm text-muted-foreground">
+ Your password reset link is missing or has expired. Return to sign in and request a new link.
+ </p>
+ <PrimaryButton type="button" onClick={() => router.push("/")}>
+ Return to Sign In
+ </PrimaryButton>
+ </div>
+ ) : mode === "loading" ? (
+ <p className="text-center text-sm text-muted-foreground">Checking your password session...</p>
+ ) : (
+ <>
+ {mode === "update" && (
+ <InputField
+ id="current-password"
+ label="Current Password"
+ type="password"
+ value={currentPassword}
+ onChange={(event) => setCurrentPassword(event.target.value)}
+ placeholder="Enter current password"
+ autoComplete="current-password"
+ />
+ )}
+
+ <InputField
+ id="new-password"
+ label="New password"
+ type="password"
+ value={newPassword}
+ onChange={(event) => setNewPassword(event.target.value)}
+ placeholder="Enter new password"
+ autoComplete="new-password"
+ />
+
+ <PasswordRequirements password={newPassword} />
+
+ <InputField
+ id="confirm-password"
+ label="Confirm new password"
+ type="password"
+ value={confirmPassword}
+ onChange={(event) => setConfirmPassword(event.target.value)}
+ placeholder="Enter new password again"
+ autoComplete="new-password"
+ />
+ <PrimaryButton type="submit" disabled={loading || !isPasswordValid(newPassword) || newPassword !== confirmPassword}>
+ {loading ? (mode === "reset" ? "Resetting..." : "Updating...") : (mode === "reset" ? "Reset Password" : "Update Password")}
+ </PrimaryButton>
+ </>
+ )}
+ </form>
+ </div>
+ </main>
+ );
 }

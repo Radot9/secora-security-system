@@ -10,108 +10,112 @@ import ProfileField from "@/app/components/profile/ProfileField";
 import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
 
 interface ResidentProfile {
-  full_name: string;
-  email: string;
-  phone: string;
-  house_number: string;
-  street: string;
+ full_name: string;
+ email: string;
+ phone: string;
+ house_number: string;
+ street: string;
 }
 
 export default function ResidentProfilePage() {
-  const [resident, setResident] = useState<ResidentProfile | null>(null);
+ const [resident, setResident] = useState<ResidentProfile | null>(null);
 
-  const [loading, setLoading] = useState(true);
+ const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+ useEffect(() => {
+ let isMounted = true;
 
-  async function loadProfile() {
-    setLoading(true);
+ async function loadProfile() {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
 
-    // Get the logged-in user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+ if (!user) {
+ if (isMounted) setLoading(false);
+ return;
+ }
 
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+ const { data, error } = await supabase
+ .from("residents")
+ .select(
+ `
+ full_name,
+ email,
+ phone,
+ house_number,
+ street
+ `,
+ )
+ .eq("user_id", user.id)
+ .single();
 
-    // Load resident information
-    const { data, error } = await supabase
-      .from("residents")
-      .select(
-        `
-        full_name,
-        email,
-        phone,
-        house_number,
-        street
-      `
-      )
-      .eq("user_id", user.id)
-      .single();
+ if (!isMounted) return;
 
-    if (!error && data) {
-      setResident(data);
-    }
+ if (!error && data) {
+ setResident(data);
+ }
 
-    setLoading(false);
-  }
+ setLoading(false);
+ }
 
-  if (loading) {
-    return (
-      <AppShell>
-        <div className="py-20 text-center">
-          Loading profile...
-        </div>
-      </AppShell>
-    );
-  }
+ void loadProfile();
 
-  return (
-    <AppShell size="default">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+ return () => {
+ isMounted = false;
+ };
+ }, []);
 
-        <PageHeader
-          title="My Profile"
-          subtitle="Manage your personal information"
-        />
+ if (loading) {
+ return (
+ <AppShell>
+ <div className="py-20 text-center">
+ Loading profile...
+ </div>
+ </AppShell>
+ );
+ }
 
-        <ProfileCard title="Personal Information">
+ return (
+ <AppShell size="default">
+ <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
 
-          <ProfileField
-            label="Full Name"
-            value={resident?.full_name ?? "-"}
-          />
+ <PageHeader
+ title="My Profile"
+ subtitle="Manage your personal information"
+ />
 
-          <ProfileField
-            label="Email Address"
-            value={resident?.email ?? "-"}
-          />
+ <ProfileCard title="Personal Information">
 
-          <ProfileField
-            label="Phone Number"
-            value={resident?.phone ?? "-"}
-          />
+ <ProfileField
+ label="Full Name"
+ value={resident?.full_name ?? "-"}
+ />
 
-          <ProfileField
-            label="House Number"
-            value={resident?.house_number ?? "-"}
-          />
+ <ProfileField
+ label="Email Address"
+ value={resident?.email ?? "-"}
+ />
 
-          <ProfileField
-            label="Street"
-            value={resident?.street ?? "-"}
-          />
+ <ProfileField
+ label="Phone Number"
+ value={resident?.phone ?? "-"}
+ />
 
-        </ProfileCard>
+ <ProfileField
+ label="House Number"
+ value={resident?.house_number ?? "-"}
+ />
 
-        <ChangePasswordCard />
+ <ProfileField
+ label="Street"
+ value={resident?.street ?? "-"}
+ />
 
-      </div>
-    </AppShell>
-  );
+ </ProfileCard>
+
+ <ChangePasswordCard />
+
+ </div>
+ </AppShell>
+ );
 }

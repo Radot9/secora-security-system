@@ -3,25 +3,25 @@ import { ReactNode } from "react";
 
 
 interface SettingsSectionProps {
-  title: string;
-  children: ReactNode;
+ title: string;
+ children: ReactNode;
 }
 
 export default function SettingsSection({
-  title,
-  children,
+ title,
+ children,
 }: SettingsSectionProps) {
-  return (
-    <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+ return (
+ <section className="rounded-3xl border border-border bg-card p-8 shadow-sm">
 
-      <h2 className="mb-6 text-lg font-bold">
-        {title}
-      </h2>
+ <h2 className="mb-6 text-lg font-bold">
+ {title}
+ </h2>
 
-      <div className="space-y-6">
-        {children}
-      </div>
+ <div className="space-y-6">
+ {children}
+ </div>
 
-    </section>
-  );
+ </section>
+ );
 }

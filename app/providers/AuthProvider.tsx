@@ -1,18 +1,23 @@
 "use client";
 
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
 
-type AuthContextType = {};
+type AuthContextType = {
+ user: User | null;
+ loading: boolean;
+};
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
-  children: ReactNode;
+ children: ReactNode;
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>;
+ return (
+ <AuthContext.Provider value={{ user: null, loading: false }}>
+ {children}
+ </AuthContext.Provider>
+ );
 }

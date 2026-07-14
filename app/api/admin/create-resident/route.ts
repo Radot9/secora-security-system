@@ -1,126 +1,53 @@
-import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
+ try {
+ await requireApiRole(["admin", "super_admin"]);
+ const body = await request.json();
+ const fullName = String(body.fullName ?? "").trim();
+ const email = String(body.email ?? "").trim().toLowerCase();
+ const password = String(body.password ?? "");
+ const phone = String(body.phone ?? "").trim();
+ const houseNumber = String(body.houseNumber ?? "").trim();
+ const street = String(body.street ?? "").trim();
 
-    const { fullName, email, password, phone, houseNumber, street } = body;
+ if (!fullName || !email || !password || !phone || !houseNumber || !street) {
+ return Response.json({ error: "All fields are required." }, { status: 400 });
+ }
 
-    if (!fullName || !email || !password || !phone || !houseNumber || !street) {
-      return NextResponse.json(
-        {
-          error: "All fields are required.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-    console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log(
-      "SERVICE ROLE EXISTS:",
-      !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    );
-    // 1. Create Auth User
-    const { data: authData, error: authError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
+ const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+ email,
+ password,
+ email_confirm: true,
+ });
+ if (authError || !authData.user) {
+ const duplicate = authError?.message.toLowerCase().includes("already");
+ return Response.json({ error: duplicate ? "Resident already exists." : (authError?.message ?? "Unable to create resident.") }, { status: 400 });
+ }
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
-    }
+ const userId = authData.user.id;
+ const { error: profileError } = await supabaseAdmin.from("profiles").insert({
+ id: userId, email, full_name: fullName, phone, role: "resident", is_active: true,
+ });
+ if (profileError) {
+ await supabaseAdmin.auth.admin.deleteUser(userId);
+ return Response.json({ error: "Unable to create the resident profile." }, { status: 400 });
+ }
 
-    const user = authData.user;
+ const { error: residentError } = await supabaseAdmin.from("residents").insert({
+ user_id: userId, full_name: fullName, email, phone, house_number: houseNumber, street, is_active: true,
+ });
+ if (residentError) {
+ await supabaseAdmin.from("profiles").delete().eq("id", userId);
+ await supabaseAdmin.auth.admin.deleteUser(userId);
+ return Response.json({ error: "Unable to create the resident record." }, { status: 400 });
+ }
 
-    // 2. Create Profile
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: user.id,
-        email,
-        full_name: fullName,
-        role: "resident",
-        is_active: true,
-      });
-
-    if (authError) {
-      // Return a friendlier message for duplicate emails
-      if (
-        authError.message.toLowerCase().includes("already") ||
-        authError.message.toLowerCase().includes("registered")
-      ) {
-        return NextResponse.json(
-          {
-            error: "Resident already exists.",
-          },
-          {
-            status: 400,
-          },
-        );
-      }
-
-      return NextResponse.json(
-        {
-          error: authError.message,
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    // 3. Create Resident Record
-    const { error: residentError } = await supabaseAdmin
-      .from("residents")
-      .insert({
-        user_id: user.id,
-        full_name: fullName,
-        email,
-        phone,
-        house_number: houseNumber,
-        street,
-        is_active: true,
-      });
-
-    if (residentError) {
-      await supabaseAdmin.auth.admin.deleteUser(user.id);
-
-      return NextResponse.json(
-        { error: residentError.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Resident created successfully.",
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        catch(error) {
-          console.error(error);
-
-          return NextResponse.json(
-            {
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "Something went wrong.",
-            },
-            {
-              status: 500,
-            },
-          );
-        },
-      },
-      {
-        status: 500,
-      },
-    );
-  }
+ return Response.json({ success: true, message: "Resident created successfully." });
+ } catch (error) {
+ const authResponse = authorizationResponse(error);
+ if (authResponse) return authResponse;
+ return Response.json({ error: "Unable to create resident." }, { status: 500 });
+ }
 }

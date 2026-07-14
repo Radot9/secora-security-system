@@ -6,176 +6,214 @@ import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import QRCode from "react-qr-code";
+import { toast } from "sonner";
 
 type Visitor = {
-  visitor_name: string;
-  visitor_phone: string;
-  plate_number: string | null;
-  expires_at: string | null;
+ visitor_name: string;
+ visitor_phone: string;
+ plate_number: string | null;
+ expires_at: string | null;
+ status: string;
 };
 
 function AccessCodeContent() {
-  const searchParams = useSearchParams();
-  const accessCode = searchParams.get("code");
-  const [qrValue, setQrValue] = useState("");
+ const searchParams = useSearchParams();
+ const accessCode = searchParams.get("code");
 
-  const [visitor, setVisitor] = useState<Visitor | null>(null);
+ const [visitor, setVisitor] = useState<Visitor | null>(null);
+ const qrValue = accessCode ? `/security?code=${accessCode}` : "";
 
-  useEffect(() => {
-    async function loadVisitor() {
-      if (!accessCode) return;
+ useEffect(() => {
+ async function loadVisitor() {
+ if (!accessCode) return;
 
-      const { data, error } = await supabase
-        .from("visitors")
-        .select("*")
-        .eq("access_code", accessCode)
-        .single();
+ const { data, error } = await supabase
+ .from("visitors")
+ .select("*")
+ .eq("access_code", accessCode)
+ .single();
 
-      if (error) {
-        console.error(error);
-        return;
-      }
+ if (error) {
+ console.error(error);
+ return;
+ }
 
-      setVisitor({
-        visitor_name: data.visitor_name,
-        visitor_phone: data.visitor_phone,
-        plate_number: data.plate_number,
-        expires_at: data.expires_at,
-      });
-    }
+ setVisitor({
+ visitor_name: data.visitor_name,
+ visitor_phone: data.visitor_phone,
+ plate_number: data.plate_number,
+ expires_at: data.expires_at,
+ status: data.status,
+ });
+ }
 
-    loadVisitor();
-  }, [accessCode]);
+ loadVisitor();
+ }, [accessCode]);
 
-  useEffect(() => {
-    if (!accessCode) return;
+ async function shareCode() {
+ if (!accessCode || !visitor) return;
 
-    setQrValue(`${window.location.origin}/security?code=${accessCode}`);
-  }, [accessCode]);
+ const text = `Secora visitor pass for ${visitor.visitor_name}. Access code: ${accessCode}`;
 
-  if (!visitor) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <p className="text-slate-600 dark:text-slate-300">Loading visitor...</p>
-      </main>
-    );
-  }
+ try {
+ if (navigator.share) {
+ await navigator.share({
+ title: "Secora Visitor Pass",
+ text,
+ });
+ return;
+ }
 
-  async function revokeCode() {
-    if (!accessCode) return;
+ await navigator.clipboard.writeText(text);
+ toast.success("Access code copied.");
+ } catch {
+ toast.error("Unable to share this access code.");
+ }
+ }
 
-    const { error } = await supabase
-      .from("visitors")
-      .update({
-        status: "revoked",
-      })
-      .eq("access_code", accessCode);
+ if (!accessCode) {
+ return (
+ <main className="flex min-h-screen items-center justify-center bg-background px-4">
+ <p className="text-center text-sm text-muted-foreground">
+ No access code was provided.
+ </p>
+ </main>
+ );
+ }
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+ if (!visitor) {
+ return (
+ <main className="min-h-screen flex items-center justify-center bg-background">
+ <p className="text-muted-foreground">Loading visitor...</p>
+ </main>
+ );
+ }
 
-    alert("Access code revoked");
-  }
+ async function revokeCode() {
+ if (!accessCode) return;
 
-  return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-md lg:max-w-3xl flex-col gap-8">
-        <header className="flex items-start gap-3">
-          <Link
-            href="/residents"
-            aria-label="Back to residents"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-          >
-            <span
-              aria-hidden="true"
-              className="h-3 w-3 rotate-45 border-b-2 border-l-2 border-slate-700 dark:border-slate-200"
-            />
-          </Link>
+ const { error } = await supabase
+ .from("visitors")
+ .update({
+ status: "revoked",
+ })
+ .eq("access_code", accessCode);
 
-          <div>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-              Access Code Generated
-            </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Share this code with your visitor
-            </p>
-          </div>
-        </header>
+ if (error) {
+ toast.error(error.message);
+ return;
+ }
 
-        <section className="rounded-[2rem] bg-teal-50 p-6 dark:bg-teal-950/20">
-          <p className="text-sm text-slate-500 dark:text-slate-300">
-            Authorised Visitor
-          </p>
+ setVisitor((current) =>
+ current
+ ? {
+ ...current,
+ status: "revoked",
+ }
+ : current,
+ );
 
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-            {visitor.visitor_name}
-          </h2>
+ toast.success("Access code revoked.");
+ }
 
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {visitor.visitor_phone}
-          </p>
+ return (
+ <main className="min-h-screen bg-background px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-foreground">
+ <div className="mx-auto flex w-full max-w-md lg:max-w-3xl flex-col gap-8">
+ <header className="flex items-start gap-3">
+ <Link
+ href="/residents"
+ aria-label="Back to residents"
+ className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+ >
+ <span
+ aria-hidden="true"
+ className="h-3 w-3 rotate-45 border-b-2 border-l-2 border-border"
+ />
+ </Link>
 
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Plate Number: {visitor.plate_number || "N/A"}
-          </p>
+ <div>
+ <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+ Access Code Generated
+ </h1>
+ <p className="mt-2 text-sm text-muted-foreground">
+ Share this code with your visitor
+ </p>
+ </div>
+ </header>
 
-          <span className="mt-4 inline-flex rounded-md bg-teal-500 px-3 py-1.5 text-xs font-medium text-white">
-            Authorised Visitor
-          </span>
+ <section className="rounded-3xl bg-primary/10 p-6">
+ <p className="text-sm text-muted-foreground">
+ Authorised Visitor
+ </p>
 
-          <div className="my-5 h-px bg-slate-300 dark:bg-slate-700" />
+ <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+ {visitor.visitor_name}
+ </h2>
 
-          <p className="text-sm text-slate-500 dark:text-slate-300">Expires</p>
+ <p className="mt-2 text-sm text-muted-foreground">
+ {visitor.visitor_phone}
+ </p>
 
-          <p className="mt-2 text-base font-semibold">
-            {visitor.expires_at
-              ? new Date(visitor.expires_at).toLocaleString()
-              : "No expiry set"}
-          </p>
-        </section>
+ <p className="mt-1 text-sm text-muted-foreground">
+ Plate Number: {visitor.plate_number || "N/A"}
+ </p>
 
-        <section className="flex flex-col items-center text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Access Code
-          </p>
+ <span className="mt-4 inline-flex rounded-md bg-primary/100 px-3 py-1.5 text-xs font-medium text-primary-foreground">
+ {visitor.status === "revoked" ? "Revoked" : "Authorised Visitor"}
+ </span>
 
-          <p className="mt-5 text-3xl font-bold tracking-[0.2em]">
-            {accessCode}
-          </p>
+ <div className="my-5 h-px bg-border" />
 
-          <div className="mt-8 rounded-2xl bg-white p-4">
-            <QRCode value={qrValue} size={220} />
-          </div>
-        </section>
+ <p className="text-sm text-muted-foreground">Expires</p>
 
-        <div className="mt-4 space-y-4 px-5">
-          <button
-            type="button"
-            className="inline-flex w-full items-center justify-center rounded-2xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
-          >
-            Share Code
-          </button>
+ <p className="mt-2 text-base font-semibold">
+ {visitor.expires_at
+ ? new Date(visitor.expires_at).toLocaleString()
+ : "No expiry set"}
+ </p>
+ </section>
 
-          <button
-            type="button" onClick={revokeCode} 
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            Revoke Code
-          </button>
-        </div>
-      </div>
+ <section className="flex flex-col items-center text-center">
+ <p className="text-sm text-muted-foreground">
+ Access Code
+ </p>
 
-      <ResidentBottomNav />
-    </main>
-  );
+ <p className="mt-5 text-3xl font-bold tracking-[0.2em]">
+ {accessCode}
+ </p>
+
+ <div className="mt-8 rounded-2xl bg-card p-4">
+ <QRCode value={qrValue} size={220} />
+ </div>
+ </section>
+
+ <div className="mt-4 space-y-4 px-5">
+ <button
+ type="button"
+ onClick={shareCode}
+ className="inline-flex w-full items-center justify-center rounded-2xl bg-primary/100 px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring"
+ >
+ Share Code
+ </button>
+
+ <button
+ type="button" onClick={revokeCode} 
+ className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+ >
+ Revoke Code
+ </button>
+ </div>
+ </div>
+
+ <ResidentBottomNav />
+ </main>
+ );
 }
 
 export default function AccessCodePage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <AccessCodeContent />
-    </Suspense>
-  );
+ return (
+ <Suspense fallback={<div>Loading...</div>}>
+ <AccessCodeContent />
+ </Suspense>
+ );
 }
