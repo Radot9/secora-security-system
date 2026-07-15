@@ -1,6 +1,7 @@
 "use client";
 
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { AppShell } from "../../components/ui/AppShell";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
 import { useEffect, useMemo, useState } from "react";
@@ -97,8 +98,8 @@ export default function ActivityPage() {
  }, [visitors]);
 
  return (
- <main className="min-h-screen bg-background px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-foreground">
- <div className="flex flex-col gap-6">
+ <AppShell size="full" residentSidebar>
+ <div className="resident-page">
  <PageHeader
  title="Activity Logs"
  subtitle="Recent visitor movements for your residence"
@@ -142,6 +143,6 @@ export default function ActivityPage() {
  </Card>
  </div>
  <ResidentBottomNav />
- </main>
+ </AppShell>
  );
 }

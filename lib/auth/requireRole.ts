@@ -18,10 +18,10 @@ export async function requireRole(requiredRoles: UserRole | readonly UserRole[])
  .single();
 
  if (!profile || !profile.is_active || !isUserRole(profile.role)) redirect("/");
+ if (profile.must_change_password) redirect("/update-password");
  if ((profile.role === "admin" || profile.role === "super_admin") && !profile.onboarding_completed_at) {
  redirect("/administrator-onboarding");
  }
- if (profile.must_change_password) redirect("/update-password");
 
  if (!canAccessRole(profile.role, allowedRoles)) redirect(dashboardByRole[profile.role]);
 

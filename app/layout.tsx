@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { cn } from "@/lib/utils";
 
-const inter = Inter({
- variable: "--font-inter",
- subsets: ["latin"],
-});
+const systemThemeScript = `
+(function () {
+  function applyTheme(event) {
+    var prefersDark = event ? event.matches : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", prefersDark);
+    document.documentElement.style.colorScheme = prefersDark ? "dark" : "light";
+  }
 
-const geistMono = Geist_Mono({
- variable: "--font-geist-mono",
- subsets: ["latin"],
-});
+  var mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  applyTheme(mediaQuery);
+  mediaQuery.addEventListener("change", applyTheme);
+})();
+`;
 
 export const metadata: Metadata = {
  title: "Secora Security System",
@@ -27,9 +29,13 @@ export default function RootLayout({
  return (
  <html
  lang="en"
- className={cn("h-full antialiased font-sans", inter.variable, geistMono.variable)}
+ className="h-full antialiased font-sans"
+ suppressHydrationWarning
  >
- 
+ <head>
+ <meta name="color-scheme" content="light dark" />
+ <script dangerouslySetInnerHTML={{ __html: systemThemeScript }} />
+ </head>
  <body className="flex min-h-full flex-col">
  <Toaster position="bottom-right" richColors closeButton />
  {children}

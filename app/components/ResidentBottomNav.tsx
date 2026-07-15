@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 const items = [
  {
@@ -60,7 +59,6 @@ const items = [
 
 export function ResidentBottomNav() {
  const pathname = usePathname();
- const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
  const renderItems = (variant: "bottom" | "sidebar") =>
  items.map((item) => {
@@ -80,15 +78,21 @@ export function ResidentBottomNav() {
  ? "bg-primary/10 text-primary"
  : "text-muted-foreground hover:bg-muted hover:text-foreground"
  }`
- : `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring ${
+ : `flex min-h-12 items-center justify-center gap-0 rounded-2xl px-0 text-sm font-semibold transition-all duration-200 hover:justify-start hover:gap-3 hover:px-4 focus:outline-none focus:ring-2 focus:ring-ring group-hover:justify-start group-hover:gap-3 group-hover:px-4 group-focus-within:justify-start group-focus-within:gap-3 group-focus-within:px-4 ${
  isActive
  ? "bg-primary/10 text-primary"
  : "text-muted-foreground hover:bg-muted hover:text-foreground"
  }`
  }
  >
+ <span className="flex h-5 w-5 shrink-0 items-center justify-center">
  {item.icon}
- <span>{item.label}</span>
+ </span>
+ <span
+ className="w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:w-auto group-hover:opacity-100 group-focus-within:w-auto group-focus-within:opacity-100"
+ >
+ {item.label}
+ </span>
  </Link>
  );
  });
@@ -101,27 +105,22 @@ export function ResidentBottomNav() {
  </div>
  </nav>
 
- {!isSidebarOpen && (
- <button
- type="button"
- aria-label="Open resident menu"
- onClick={() => setIsSidebarOpen(true)}
- className="fixed left-5 top-5 z-50 hidden h-11 w-11 items-center justify-center rounded-2xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring lg:flex"
+ <aside
+ className={`group fixed bottom-0 left-0 top-0 z-50 hidden flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-4 py-6 text-sidebar-foreground shadow-xl shadow-border/50 transition-[width] duration-300 ease-out lg:flex ${
+ "w-24 hover:w-72 focus-within:w-72"
+ }`}
  >
- <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
- <path d="M4 7h16M4 12h16M4 17h16" />
- </svg>
- </button>
- )}
-
- {isSidebarOpen && (
- <aside className="fixed bottom-0 left-0 top-0 z-50 hidden w-72 flex-col border-r border-border bg-card px-5 py-6 shadow-xl shadow-border/50 lg:flex">
- <div className="flex items-center justify-between gap-4">
- <Link href="/residents" className="flex items-center gap-3">
+ <div className="flex items-center">
+ <Link
+ href="/residents"
+ className="flex w-full min-w-0 items-center justify-center gap-0 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring group-hover:justify-start group-hover:gap-3 group-focus-within:justify-start group-focus-within:gap-3"
+ >
  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-lg font-black text-primary">
  S
  </div>
- <div>
+ <div
+ className="w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover:w-auto group-hover:opacity-100 group-focus-within:w-auto group-focus-within:opacity-100"
+ >
  <p className="text-sm font-bold uppercase tracking-[0.28em] text-primary">
  Security
  </p>
@@ -130,23 +129,12 @@ export function ResidentBottomNav() {
  </p>
  </div>
  </Link>
- <button
- type="button"
- aria-label="Close resident menu"
- onClick={() => setIsSidebarOpen(false)}
- className="flex h-10 w-10 items-center justify-center rounded-2xl text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
- >
- <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
- <path d="M6 6l12 12M18 6 6 18" />
- </svg>
- </button>
  </div>
 
  <div className="mt-10 flex flex-1 flex-col gap-2">
  {renderItems("sidebar")}
  </div>
  </aside>
- )}
  </>
  );
 }

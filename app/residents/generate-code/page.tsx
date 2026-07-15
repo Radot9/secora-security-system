@@ -1,269 +1,454 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+ Car,
+ Clock3,
+ ClipboardList,
+ Phone,
+ Plus,
+ ShieldCheck,
+ Sparkles,
+ UserRound,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { AppShell } from "../../components/ui/AppShell";
+import { Card } from "../../components/ui/Card";
+import { PageHeader } from "../../components/ui/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
-import { toast } from "sonner";
+
+const MINIMUM_CODE_VALIDITY_MINUTES = 30;
+
+function formatExpiry(value: string | null) {
+ if (!value) return "No expiry set";
+
+ return new Date(value).toLocaleString([], {
+  dateStyle: "medium",
+  timeStyle: "short",
+ });
+}
+
+function formatDuration(minutes: number | null) {
+ if (!minutes) return "Duration not available";
+
+ const hours = Math.floor(minutes / 60);
+ const remainingMinutes = minutes % 60;
+ const parts = [];
+
+ if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+ if (remainingMinutes > 0) parts.push(`${remainingMinutes} ${remainingMinutes === 1 ? "minute" : "minutes"}`);
+
+ return parts.join(" ") || "0 minutes";
+}
+
+function statusClassName(status: string) {
+ switch (status) {
+  case "revoked":
+   return "bg-destructive/15 text-destructive";
+  case "entered":
+   return "bg-emerald-100 text-emerald-700";
+  case "exited":
+   return "bg-primary/15 text-primary";
+  default:
+   return "bg-primary/15 text-primary";
+ }
+}
+
+function displayStatus(status: string) {
+ if (status === "revoked") return "Revoked";
+ return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 export default function GenerateCodePage() {
  const [visitorName, setVisitorName] = useState("");
  const [phoneNumber, setPhoneNumber] = useState("");
+ const [purposeOfVisit, setPurposeOfVisit] = useState("");
+ const [validityHours, setValidityHours] = useState("0");
+ const [validityRemainderMinutes, setValidityRemainderMinutes] = useState(`${MINIMUM_CODE_VALIDITY_MINUTES}`);
  const [plateNumber, setPlateNumber] = useState("");
  const [loading, setLoading] = useState(false);
-
  const [visitors, setVisitors] = useState<Visitor[]>([]);
 
  const router = useRouter();
 
  useEffect(() => {
- let isMounted = true;
+  let isMounted = true;
 
- async function loadVisitors() {
- const {
- data: { user },
- } = await supabase.auth.getUser();
+  async function loadVisitors() {
+   const {
+    data: { user },
+   } = await supabase.auth.getUser();
 
- if (!user) return;
+   if (!user) return;
 
- const { data: resident } = await supabase
- .from("residents")
- .select("id")
- .eq("user_id", user.id)
- .single();
+   const { data: resident } = await supabase
+    .from("residents")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
 
- if (!resident) return;
+   if (!resident) return;
 
- const { data, error } = await supabase
- .from("visitors")
- .select("*")
- .eq("resident_id", resident.id)
- .order("created_at", { ascending: false });
+   const { data, error } = await supabase
+    .from("visitors")
+    .select("*")
+    .eq("resident_id", resident.id)
+    .order("created_at", { ascending: false })
+    .limit(6);
 
- if (isMounted && !error && data) {
- setVisitors(data);
- }
- }
+   if (isMounted && !error && data) {
+    setVisitors(data);
+   }
+  }
 
- void loadVisitors();
+  void loadVisitors();
 
- return () => {
- isMounted = false;
- };
+  return () => {
+   isMounted = false;
+  };
  }, []);
 
  async function generateUniqueAccessCode() {
- for (let attempt = 0; attempt < 5; attempt += 1) {
- const code = Math.floor(100000 + Math.random() * 900000).toString();
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+   const code = Math.floor(100000 + Math.random() * 900000).toString();
 
- const { data } = await supabase
- .from("visitors")
- .select("id")
- .eq("access_code", code)
- .maybeSingle();
+   const { data } = await supabase
+    .from("visitors")
+    .select("id")
+    .eq("access_code", code)
+    .maybeSingle();
 
- if (!data) return code;
- }
+   if (!data) return code;
+  }
 
- return `${Date.now()}`.slice(-8);
+  return `${Date.now()}`.slice(-8);
  }
 
  async function handleGenerateCode() {
- if (!visitorName || !phoneNumber) {
- toast.error("Visitor name and phone number are required.");
- return;
- }
- setLoading(true);
+  const trimmedVisitorName = visitorName.trim();
+  const trimmedPhoneNumber = phoneNumber.trim();
+  const trimmedPurpose = purposeOfVisit.trim();
+  const trimmedPlateNumber = plateNumber.trim();
 
- const {
- data: { user },
- } = await supabase.auth.getUser();
+  if (!trimmedVisitorName) {
+   toast.error("Visitor name is required.");
+   return;
+  }
 
- if (!user) {
- toast.error("Please log in again.");
- setLoading(false);
- return;
- }
+  if (!trimmedPhoneNumber) {
+   toast.error("Visitor phone number is required.");
+   return;
+  }
 
- const { data: resident, error: residentError } = await supabase
- .from("residents")
- .select("*")
- .eq("user_id", user.id)
- .maybeSingle();
+  if (!trimmedPurpose) {
+   toast.error("Purpose of visit is required.");
+   return;
+  }
 
- if (residentError || !resident) {
- setLoading(false);
- return;
- }
- const accessCode = await generateUniqueAccessCode();
+  if (!validityHours.trim() && !validityRemainderMinutes.trim()) {
+   toast.error("Code validity time is required.");
+   return;
+  }
 
- const { error } = await supabase.from("visitors").insert({
- visitor_name: visitorName,
- visitor_phone: phoneNumber,
- plate_number: plateNumber,
+  const parsedValidityHours = Number(validityHours || 0);
+  const parsedValidityRemainderMinutes = Number(validityRemainderMinutes || 0);
+  const parsedValidityMinutes = (parsedValidityHours * 60) + parsedValidityRemainderMinutes;
 
- resident_id: resident.id,
- resident_name: resident.full_name,
+  if (
+   !Number.isFinite(parsedValidityHours) ||
+   !Number.isFinite(parsedValidityRemainderMinutes) ||
+   !Number.isInteger(parsedValidityHours) ||
+   !Number.isInteger(parsedValidityRemainderMinutes) ||
+   parsedValidityHours < 0 ||
+   parsedValidityRemainderMinutes < 0 ||
+   parsedValidityRemainderMinutes > 59
+  ) {
+   toast.error("Enter a valid code duration in hours and minutes.");
+   return;
+  }
 
- access_code: accessCode,
- status: "pending",
- expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
- });
+  if (parsedValidityMinutes < MINIMUM_CODE_VALIDITY_MINUTES) {
+   toast.error("Code validity must be at least 30 minutes.");
+   return;
+  }
 
- if (error) {
- setLoading(false);
- toast.error(error.message);
- return;
- }
- setVisitorName("");
- setPhoneNumber("");
- setPlateNumber("");
+  setLoading(true);
 
- setLoading(false);
+  const {
+   data: { user },
+  } = await supabase.auth.getUser();
 
- router.push(`/residents/access-code?code=${accessCode}`);
+  if (!user) {
+   toast.error("Please log in again.");
+   setLoading(false);
+   return;
+  }
+
+  const { data: resident, error: residentError } = await supabase
+   .from("residents")
+   .select("*")
+   .eq("user_id", user.id)
+   .maybeSingle();
+
+  if (residentError || !resident) {
+   toast.error("Unable to find your resident profile. Please log in again.");
+   setLoading(false);
+   return;
+  }
+
+  const accessCode = await generateUniqueAccessCode();
+
+  const { error } = await supabase.from("visitors").insert({
+   visitor_name: trimmedVisitorName,
+   visitor_phone: trimmedPhoneNumber,
+   purpose_of_visit: trimmedPurpose,
+   plate_number: trimmedPlateNumber || null,
+   resident_id: resident.id,
+   resident_name: resident.full_name,
+   access_code: accessCode,
+   status: "pending",
+   validity_duration_minutes: parsedValidityMinutes,
+   expires_at: new Date(Date.now() + parsedValidityMinutes * 60 * 1000).toISOString(),
+  });
+
+  if (error) {
+   setLoading(false);
+   toast.error(error.message);
+   return;
+  }
+
+  setVisitorName("");
+  setPhoneNumber("");
+  setPurposeOfVisit("");
+  setValidityHours("0");
+  setValidityRemainderMinutes(`${MINIMUM_CODE_VALIDITY_MINUTES}`);
+  setPlateNumber("");
+  setLoading(false);
+
+  toast.success("Visitor access code generated.");
+  router.push(`/residents/access-code?code=${accessCode}`);
  }
 
  return (
- <main className="min-h-screen bg-background px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-foreground">
- <div className="mx-auto flex w-full max-w-md lg:max-w-5xl flex-col gap-8">
- <header className="flex items-start gap-3">
- <Link
- href="/residents"
- aria-label="Back to visitors"
- className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
- >
- <span
- aria-hidden="true"
- className="h-3 w-3 rotate-45 border-b-2 border-l-2 border-border"
- />
- </Link>
- <div>
- <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
- Access Code Generated
- </h1>
- <p className="mt-2 text-sm text-muted-foreground">
- Generate code for your guest
- </p>
- </div>
- </header>
+  <AppShell size="full" residentSidebar>
+   <div className="resident-page">
+    <PageHeader
+     title="Generate Visitor Pass"
+     subtitle="Create a secure access code and decide how long it should stay valid."
+    />
 
- <section className="rounded-3xl bg-primary/10 p-5">
- <form className="space-y-5">
- <div className="space-y-2">
- <label
- htmlFor="visitor-name"
- className="block text-sm font-medium text-foreground"
- >
- Visitor&apos;s name
- </label>
- <input
- id="visitor-name"
- type="text"
- value={visitorName}
- onChange={(event) => setVisitorName(event.target.value)}
- placeholder="Enter visitor's name"
- autoComplete="name"
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
- </div>
+    <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+     <Card className="overflow-hidden p-0">
+      <div className="m-4 rounded-3xl bg-primary/10 p-6">
+       <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+         <Sparkles className="h-6 w-6" />
+        </div>
+        <div>
+         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">New visitor</p>
+         <h2 className="mt-2 text-2xl font-black tracking-tight">Create access details</h2>
+         <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Access codes must stay valid for at least 30 minutes. We will notify you with a toast if anything is missing.
+         </p>
+        </div>
+       </div>
+      </div>
 
- <div className="space-y-2">
- <label
- htmlFor="visitor-phone"
- className="block text-sm font-medium text-foreground"
- >
- Visitor&apos;s phone number
- </label>
- <input
- id="visitor-phone"
- type="tel"
- value={phoneNumber}
- onChange={(event) => setPhoneNumber(event.target.value)}
- placeholder="Enter phone number"
- autoComplete="tel"
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
- </div>
+      <form className="grid gap-5 p-6" onSubmit={(event) => event.preventDefault()}>
+       <div className="grid gap-5 md:grid-cols-2">
+        <label htmlFor="visitor-name" className="space-y-2">
+         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <UserRound className="h-4 w-4 text-primary" />
+          Visitor name
+         </span>
+         <input
+          id="visitor-name"
+          type="text"
+          value={visitorName}
+          onChange={(event) => setVisitorName(event.target.value)}
+          placeholder="Enter visitor name"
+          autoComplete="name"
+          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+         />
+        </label>
 
- <div className="space-y-2">
- <label
- htmlFor="plate-number"
- className="block text-sm font-medium text-foreground"
- >
- Visitor&apos;s vehicle plate number
- </label>
- <input
- id="plate-number"
- type="text"
- value={plateNumber}
- onChange={(event) => setPlateNumber(event.target.value)}
- placeholder="Enter plate number"
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
- </div>
+        <label htmlFor="visitor-phone" className="space-y-2">
+         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Phone className="h-4 w-4 text-primary" />
+          Phone number
+         </span>
+         <input
+          id="visitor-phone"
+          type="tel"
+          value={phoneNumber}
+          onChange={(event) => setPhoneNumber(event.target.value)}
+          placeholder="Enter phone number"
+          autoComplete="tel"
+          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+         />
+        </label>
+       </div>
 
- <button
- type="button"
- onClick={handleGenerateCode}
- disabled={loading}
- className="inline-flex w-full items-center justify-center rounded-2xl bg-primary/100 px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
- >
- {loading ? "Generating..." : "Generate Code"}
- </button>
- </form>
- </section>
+       <label htmlFor="purpose-of-visit" className="space-y-2">
+        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+         <ClipboardList className="h-4 w-4 text-primary" />
+         Purpose of visit
+        </span>
+        <textarea
+         id="purpose-of-visit"
+         value={purposeOfVisit}
+         onChange={(event) => setPurposeOfVisit(event.target.value)}
+         placeholder="Example: Family visit, delivery, inspection"
+         rows={4}
+         className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
+       </label>
 
- <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm shadow-muted/50">
- <div className="flex items-center justify-between px-4 py-5">
- <h2 className="text-lg font-semibold tracking-tight">Visitors</h2>
- <Link
- href="/residents/visitors"
- className="text-sm font-medium text-primary transition hover:text-primary/80"
- >
- View all
- </Link>
- </div>
+       <div className="grid gap-5 md:grid-cols-2">
+        <div className="space-y-2">
+         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Clock3 className="h-4 w-4 text-primary" />
+          Code validity time
+         </span>
+         <div className="grid grid-cols-2 gap-3">
+          <label htmlFor="validity-hours" className="space-y-2">
+           <input
+            id="validity-hours"
+            type="number"
+            min="0"
+            step="1"
+            inputMode="numeric"
+            value={validityHours}
+            onChange={(event) => setValidityHours(event.target.value)}
+            placeholder="0"
+            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+           />
+           <span className="block text-xs text-muted-foreground">Hours</span>
+          </label>
 
- <div className="overflow-x-auto">
- <table className="w-full min-w-[390px] border-collapse text-left text-sm">
- <thead className="bg-muted text-xs font-medium text-muted-foreground">
- <tr>
- <th className="px-4 py-3 font-medium">Name</th>
- <th className="px-3 py-3 font-medium">Phone number</th>
- <th className="px-3 py-3 font-medium">Time in</th>
- <th className="px-4 py-3 font-medium">Time out</th>
- </tr>
- </thead>
- <tbody className="divide-y divide-border">
- {visitors.map((visitor) => (
- <tr key={visitor.id}>
- <td className="whitespace-nowrap px-4 py-4 text-foreground">
- {visitor.visitor_name}
- </td>
- <td className="whitespace-nowrap px-3 py-4 text-foreground">
- {visitor.visitor_phone}
- </td>
- <td className="whitespace-nowrap px-3 py-4 text-foreground">
- {visitor.entry_time
- ? new Date(visitor.entry_time).toLocaleTimeString()
- : "--"}
- </td>
- <td className="whitespace-nowrap px-4 py-4 text-foreground">
- {visitor.exit_time
- ? new Date(visitor.exit_time).toLocaleTimeString()
- : "--"}
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </section>
- </div>
- <ResidentBottomNav />
- </main>
+          <label htmlFor="validity-minutes" className="space-y-2">
+           <input
+            id="validity-minutes"
+            type="number"
+            min="0"
+            max="59"
+            step="5"
+            inputMode="numeric"
+            value={validityRemainderMinutes}
+            onChange={(event) => setValidityRemainderMinutes(event.target.value)}
+            placeholder="30"
+            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+           />
+           <span className="block text-xs text-muted-foreground">Minutes</span>
+          </label>
+         </div>
+         <p className="text-xs text-muted-foreground">Minimum duration is 30 minutes.</p>
+        </div>
+
+        <label htmlFor="plate-number" className="space-y-2">
+         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Car className="h-4 w-4 text-primary" />
+          Vehicle plate number
+         </span>
+         <input
+          id="plate-number"
+          type="text"
+          value={plateNumber}
+          onChange={(event) => setPlateNumber(event.target.value)}
+          placeholder="Enter plate number"
+          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm uppercase text-foreground outline-none transition placeholder:normal-case placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+         />
+        </label>
+       </div>
+
+       <button
+        type="button"
+        onClick={handleGenerateCode}
+        disabled={loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+       >
+        <Plus className="h-5 w-5" />
+        {loading ? "Generating pass..." : "Generate Access Code"}
+       </button>
+      </form>
+     </Card>
+
+     <div className="grid gap-6">
+      <Card className="bg-gradient-to-br from-primary/15 via-card to-card">
+       <ShieldCheck className="h-10 w-10 text-primary" />
+       <h2 className="mt-4 text-xl font-bold">How this pass works</h2>
+       <div className="mt-5 space-y-4">
+        <div className="flex items-start gap-3">
+         <Clock3 className="mt-0.5 h-5 w-5 text-primary" />
+         <p className="text-sm leading-6 text-muted-foreground">
+          The code validity duration cannot be less than 30 minutes.
+         </p>
+        </div>
+        <div className="flex items-start gap-3">
+         <ClipboardList className="mt-0.5 h-5 w-5 text-primary" />
+         <p className="text-sm leading-6 text-muted-foreground">
+          The generated pass includes the visitor, phone, purpose, expiry time, plate if provided, and access code.
+         </p>
+        </div>
+       </div>
+      </Card>
+
+      <Card>
+       <div className="flex items-center justify-between gap-4">
+        <div>
+         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Recent</p>
+         <h2 className="mt-2 text-xl font-bold">Visitor passes</h2>
+        </div>
+        <Link href="/residents/visitors" className="text-sm font-semibold text-primary transition hover:text-primary/80">
+         View all
+        </Link>
+       </div>
+
+       <div className="mt-5 space-y-3">
+        {visitors.length === 0 ? (
+         <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+          No visitor passes created yet.
+         </div>
+        ) : (
+         visitors.map((visitor) => (
+          <div key={visitor.id} className="rounded-2xl border border-border bg-background p-4">
+           <div className="flex items-start justify-between gap-4">
+            <div>
+             <p className="font-semibold text-foreground">{visitor.visitor_name}</p>
+             <p className="mt-1 text-sm text-muted-foreground">{visitor.visitor_phone}</p>
+            </div>
+            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>
+             {displayStatus(visitor.status)}
+            </span>
+           </div>
+           <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
+           <p className="flex items-center gap-2">
+             <Clock3 className="h-4 w-4 text-primary" />
+             Valid for {formatDuration(visitor.validity_duration_minutes)}
+            </p>
+            <p className="flex items-center gap-2">
+             <Clock3 className="h-4 w-4 text-primary" />
+             Expires {formatExpiry(visitor.expires_at)}
+            </p>
+            <p className="line-clamp-2 flex gap-2">
+             <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+             <span>{visitor.purpose_of_visit || "Purpose not available"}</span>
+            </p>
+           </div>
+          </div>
+         ))
+        )}
+       </div>
+      </Card>
+     </div>
+    </section>
+   </div>
+   <ResidentBottomNav />
+  </AppShell>
  );
 }

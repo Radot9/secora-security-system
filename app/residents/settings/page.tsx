@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { AppShell } from "../../components/ui/AppShell";
 
 import SettingsSection from "@/app/components/profile/SettingsSection";
 import ProfileField from "@/app/components/profile/ProfileField";
@@ -65,8 +66,8 @@ export default function SettingsPage() {
  }, []);
 
  return (
- <main className="min-h-screen bg-background px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-foreground">
- <div className="mx-auto flex w-full max-w-md lg:max-w-3xl flex-col gap-6">
+ <AppShell size="full" residentSidebar>
+ <div className="resident-page">
  <header>
  <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
  <p className="mt-2 text-sm text-muted-foreground">
@@ -114,6 +115,6 @@ export default function SettingsPage() {
  )}
  </div>
  <ResidentBottomNav />
- </main>
+ </AppShell>
  );
 }

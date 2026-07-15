@@ -43,7 +43,7 @@ export default function Home() {
  return;
  }
 
- await routeAuthenticatedUser(user.id);
+ await routeAuthenticatedUser(user.id, "email-link");
  if (mounted) setCheckingEmailLink(false);
  });
 
@@ -54,14 +54,14 @@ export default function Home() {
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
- function redirectForProfile(profile: LoginProfile) {
+ function redirectForProfile(profile: LoginProfile, source: "email-link" | "password") {
  if (!profile.is_active) {
  toast.error("Your account is inactive. Contact a Super Admin for assistance.");
  return;
  }
 
  if (profile.must_change_password) {
- if ((profile.role === "admin" || profile.role === "super_admin") && !profile.onboarding_completed_at) {
+ if (source === "email-link" && (profile.role === "admin" || profile.role === "super_admin") && !profile.onboarding_completed_at) {
  router.push("/administrator-onboarding");
  return;
  }
@@ -90,7 +90,7 @@ export default function Home() {
  }
  }
 
- async function routeAuthenticatedUser(userId: string) {
+ async function routeAuthenticatedUser(userId: string, source: "email-link" | "password") {
  const { data: profile, error: profileError } = await supabase
  .from("profiles")
  .select("role, must_change_password, is_active, onboarding_completed_at")
@@ -106,7 +106,7 @@ export default function Home() {
  await supabase.auth.signOut();
  }
 
- redirectForProfile(profile);
+ redirectForProfile(profile, source);
  }
 
  async function handlePasswordReset() {
@@ -140,7 +140,7 @@ export default function Home() {
  return;
  }
 
- await routeAuthenticatedUser(data.user.id);
+ await routeAuthenticatedUser(data.user.id, "password");
  }
 
  if (checkingEmailLink) {

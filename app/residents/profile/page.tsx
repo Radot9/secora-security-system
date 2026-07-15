@@ -8,6 +8,7 @@ import { PageHeader } from "@/app/components/ui/PageHeader";
 import ProfileCard from "@/app/components/profile/ProfileCard";
 import ProfileField from "@/app/components/profile/ProfileField";
 import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
+import { ResidentBottomNav } from "@/app/components/ResidentBottomNav";
 
 interface ResidentProfile {
  full_name: string;
@@ -67,17 +68,18 @@ export default function ResidentProfilePage() {
 
  if (loading) {
  return (
- <AppShell>
+ <AppShell size="full" residentSidebar>
  <div className="py-20 text-center">
  Loading profile...
  </div>
+ <ResidentBottomNav />
  </AppShell>
  );
  }
 
  return (
- <AppShell size="default">
- <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+ <AppShell size="full" residentSidebar>
+ <div className="resident-page">
 
  <PageHeader
  title="My Profile"
@@ -116,6 +118,7 @@ export default function ResidentProfilePage() {
  <ChangePasswordCard />
 
  </div>
+ <ResidentBottomNav />
  </AppShell>
  );
 }

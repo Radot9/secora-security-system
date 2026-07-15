@@ -14,20 +14,26 @@ export default function ActivityTable({
  return (
  <section>
  <div className="flex items-center justify-between">
+ <div>
  <h2 className="text-xl font-bold tracking-tight">
- Recent Verification
+ Recent Verifications
  </h2>
-
- <button
- type="button"
- className="text-sm font-medium text-primary transition hover:text-primary/80"
- >
- View all
- </button>
+ <p className="mt-1 text-sm text-muted-foreground">
+ Visitor checks from the last 24 hours.
+ </p>
+ </div>
  </div>
 
  <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm shadow-muted/50">
- {activity.map((item) => {
+ {activity.length === 0 ? (
+ <div className="px-5 py-14 text-center">
+ <h3 className="font-semibold">No verification activity yet</h3>
+ <p className="mt-2 text-sm text-muted-foreground">
+ Visitor scans and code checks from the last 24 hours will appear here.
+ </p>
+ </div>
+ ) : (
+ activity.map((item) => {
  const displayStatus = getVisitorStatus(item);
 
  const isDenied =
@@ -89,7 +95,8 @@ export default function ActivityTable({
  </time>
  </article>
  );
- })}
+ })
+ )}
  </div>
  </section>
  );

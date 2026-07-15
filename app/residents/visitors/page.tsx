@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
+import { AppShell } from "@/app/components/ui/AppShell";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 
@@ -88,8 +89,8 @@ export default function VisitorsPage() {
  }
 
  return (
- <main className="min-h-screen bg-background px-4 py-10 pb-32 lg:px-10 lg:pb-10 lg:pl-80 text-foreground">
- <div className="flex flex-col gap-6">
+ <AppShell size="full" residentSidebar>
+ <div className="resident-page">
  <header className="flex items-center justify-between gap-4">
  <div>
  <h1 className="text-2xl font-bold tracking-tight">Visitors</h1>
@@ -177,6 +178,6 @@ export default function VisitorsPage() {
  </section>
  </div>
  <ResidentBottomNav />
- </main>
+ </AppShell>
  );
 }
