@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
@@ -16,7 +15,8 @@ export default function NewResidentPage() {
  const [email, setEmail] = useState("");
  const [phone, setPhone] = useState("");
  const [houseNumber, setHouseNumber] = useState("");
- const [street, setStreet] = useState("");
+ const [locationType, setLocationType] = useState<"street" | "close">("street");
+ const [locationName, setLocationName] = useState("");
 
  const [password, setPassword] = useState(() => generatePassword());
 
@@ -46,13 +46,13 @@ export default function NewResidentPage() {
  password,
  phone,
  houseNumber,
- street,
+ locationType,
+ locationName,
  }),
  });
 
  const result = await response.json();
 
- //Duplicate email error handling
  if (!response.ok) {
  if (result.error?.toLowerCase().includes("already")) {
  toast.warning("A resident with this email address already exists.");
@@ -70,11 +70,8 @@ export default function NewResidentPage() {
  password,
  });
 
- // Open the success dialog
  setDialogOpen(true);
- } catch (error) {
- console.error(error);
-
+ } catch {
  toast.error("Unable to create resident.");
  } finally {
  setLoading(false);
@@ -88,21 +85,14 @@ export default function NewResidentPage() {
  setEmail("");
  setPhone("");
  setHouseNumber("");
- setStreet("");
+ setLocationType("street");
+ setLocationName("");
  setPassword(generatePassword());
  }
 
  return (
  <AppShell size="default">
  <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
- <Link
- href="/admin/residents"
- className="inline-flex w-fit items-center gap-2 rounded-xl px-2 py-1 text-sm text-muted-foreground transition hover:text-primary"
- >
- <ArrowLeft className="h-4 w-4" />
- Back to Residents
- </Link>
-
  <PageHeader
  title="Add Resident"
  subtitle="Create a new resident account"
@@ -187,15 +177,31 @@ export default function NewResidentPage() {
  />
  </div>
 
- <div>
- <label className="mb-2 block text-sm font-medium">Street</label>
+ <div className="grid gap-3 sm:grid-cols-[0.8fr_1.2fr]">
+ <label>
+ <span className="mb-2 block text-sm font-medium">Location Type</span>
+ <select
+ value={locationType}
+ onChange={(event) => setLocationType(event.target.value as "street" | "close")}
+ className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+ >
+ <option value="street">Street</option>
+ <option value="close">Close</option>
+ </select>
+ </label>
 
+ <label>
+ <span className="mb-2 block text-sm font-medium">
+ {locationType === "street" ? "Street Name" : "Close Name"}
+ </span>
  <input
  type="text"
- value={street}
- onChange={(e) => setStreet(e.target.value)}
+ value={locationName}
+ onChange={(event) => setLocationName(event.target.value)}
+ placeholder={locationType === "street" ? "Example: Ajufo Street" : "Example: Ofili Close"}
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
+ </label>
  </div>
  </div>
 

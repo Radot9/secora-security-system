@@ -56,4 +56,4 @@ try {
  throw error;
 }
 
-console.log("First Super Admin invitation created successfully. Remove the bootstrap enable flag now.");
+process.stdout.write("First Super Admin invitation created successfully. Remove the bootstrap enable flag now.\n");

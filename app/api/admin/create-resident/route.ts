@@ -10,10 +10,14 @@ export async function POST(request: Request) {
  const password = String(body.password ?? "");
  const phone = String(body.phone ?? "").trim();
  const houseNumber = String(body.houseNumber ?? "").trim();
- const street = String(body.street ?? "").trim();
+ const locationType = String(body.locationType ?? "").trim();
+ const locationName = String(body.locationName ?? "").trim();
 
- if (!fullName || !email || !password || !phone || !houseNumber || !street) {
+ if (!fullName || !email || !password || !phone || !houseNumber || !locationName) {
  return Response.json({ error: "All fields are required." }, { status: 400 });
+ }
+ if (locationType !== "street" && locationType !== "close") {
+ return Response.json({ error: "Select either Street or Close." }, { status: 400 });
  }
 
  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -36,7 +40,14 @@ export async function POST(request: Request) {
  }
 
  const { error: residentError } = await supabaseAdmin.from("residents").insert({
- user_id: userId, full_name: fullName, email, phone, house_number: houseNumber, street, is_active: true,
+ user_id: userId,
+ full_name: fullName,
+ email,
+ phone,
+ house_number: houseNumber,
+ street: locationType === "street" ? locationName : null,
+ close: locationType === "close" ? locationName : null,
+ is_active: true,
  });
  if (residentError) {
  await supabaseAdmin.from("profiles").delete().eq("id", userId);

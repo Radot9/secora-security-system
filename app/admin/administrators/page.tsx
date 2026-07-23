@@ -68,7 +68,7 @@ export default function AdministratorsPage() {
  <AppShell size="wide">
  <div className="space-y-8">
  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
- <PageHeader title="Administrators" subtitle="Invite administrators and manage privileged access" backHref="/admin" />
+ <PageHeader title="Administrators" subtitle="Invite administrators and manage privileged access" />
  <button onClick={() => setShowInvite((value) => !value)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground"><UserPlus className="h-5 w-5" />Invite Administrator</button>
  </div>
 

@@ -65,11 +65,6 @@ export default function VisitorDetailsModal({
  />
 
  <DetailRow
- label="Access Code"
- value={visitor.access_code}
- />
-
- <DetailRow
  label="Entry Time"
  value={
  visitor.entry_time

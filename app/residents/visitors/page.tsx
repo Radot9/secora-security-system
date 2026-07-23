@@ -9,6 +9,7 @@ import { Visitor } from "@/types/visitors";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 
 export default function VisitorsPage() {
  const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -75,18 +76,6 @@ export default function VisitorsPage() {
  );
  });
  }, [search, visitors]);
-
- function getVisitorStatus(visitor: Visitor) {
- if (
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return visitor.status;
- }
 
  return (
  <AppShell size="full" residentSidebar>
@@ -157,7 +146,7 @@ export default function VisitorsPage() {
  {visitor.access_code}
  </td>
  <td className="whitespace-nowrap px-3 py-4">
- <StatusBadge status={getVisitorStatus(visitor)} />
+ <StatusBadge status={getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })} />
  </td>
  <td className="whitespace-nowrap px-3 py-4 text-foreground">
  {visitor.entry_time

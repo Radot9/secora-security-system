@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
  Activity,
  CheckCircle2,
@@ -14,6 +15,7 @@ import {
  ShieldCheck,
  ShieldX,
  LogOut,
+ UserCircle,
  UsersRound,
 } from "lucide-react";
 
@@ -23,6 +25,7 @@ import VerificationCard from "./components/VerificationCard";
 import VisitorDetailsModal from "./components/VisitorDetailsModal";
 import { ActivityItem } from "@/types/activity";
 import { toast } from "sonner";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 
 type SecurityOfficerProfile = {
  full_name: string | null;
@@ -94,7 +97,20 @@ function VerificationResultCard({
  <p>Plate Number: {plateNumber || "N/A"}</p>
  </div>
 
- {isExpired ? (
+ {status === "entered" ? (
+ <>
+ <p className="mt-4 font-semibold text-primary">
+ {isExpired ? "Visitor is inside · original pass has expired" : "Visitor already inside"}
+ </p>
+ <button
+ type="button"
+ onClick={checkOutVisitor}
+ className="mt-4 w-full rounded-2xl bg-foreground px-4 py-3 font-bold text-background shadow-sm transition hover:bg-foreground/85 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
+ >
+ Check Out Visitor
+ </button>
+ </>
+ ) : isExpired ? (
  <p className="mt-4 font-semibold text-destructive">Pass expired</p>
  ) : status === "revoked" ? (
  <p className="mt-4 font-semibold text-destructive">Access revoked</p>
@@ -109,17 +125,6 @@ function VerificationResultCard({
  Allow Entry
  </button>
  </>
- ) : status === "entered" ? (
- <>
- <p className="mt-4 font-semibold text-primary">Visitor already inside</p>
- <button
- type="button"
- onClick={checkOutVisitor}
- className="mt-4 w-full rounded-2xl bg-secondary px-4 py-3 font-semibold text-secondary-foreground transition hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-ring"
- >
- Check Out Visitor
- </button>
- </>
  ) : (
  <p className="mt-4 font-semibold text-muted-foreground">Visitor has left</p>
  )}
@@ -131,6 +136,7 @@ function VerificationResultCard({
 
 function SecurityContent() {
  const searchParams = useSearchParams();
+ const router = useRouter();
  const qrCode = searchParams.get("code") ?? "";
  const [accessCode, setAccessCode] = useState(qrCode);
  const [visitorName, setVisitorName] = useState("");
@@ -142,6 +148,7 @@ function SecurityContent() {
  const [scannerOpen, setScannerOpen] = useState(false);
  const [officer, setOfficer] = useState<SecurityOfficerProfile | null>(null);
  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+ const [transitionLoading, setTransitionLoading] = useState(false);
  const autoVerifiedCode = useRef("");
  const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
  null,
@@ -303,8 +310,9 @@ function SecurityContent() {
 
  const { data: visitors } = await supabase
  .from("visitors")
- .select("*")
- .or(`created_at.gte.${twentyFourHoursAgoIso},entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`);
+ .select("id, visitor_name, visitor_phone, plate_number, resident_name, status, created_at, entry_time, exit_time, expires_at")
+ .in("status", ["entered", "exited"])
+ .or(`entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`);
 
  if (!isMounted) return;
 
@@ -313,19 +321,17 @@ function SecurityContent() {
  const firstTime = Math.max(
  new Date(first.exit_time || 0).getTime(),
  new Date(first.entry_time || 0).getTime(),
- new Date(first.created_at || 0).getTime(),
  );
  const secondTime = Math.max(
  new Date(second.exit_time || 0).getTime(),
  new Date(second.entry_time || 0).getTime(),
- new Date(second.created_at || 0).getTime(),
  );
 
  return secondTime - firstTime;
  })
  .slice(0, 10);
 
- setActivity(recentVisitors);
+ setActivity(recentVisitors.map((visitor) => ({ ...visitor, access_code: "" })));
  setStats([
  {
  label: "Visitors checked in",
@@ -369,19 +375,20 @@ function SecurityContent() {
  }, [qrCode, verifyCode]);
  async function allowEntry() {
  if (!visitorId) return;
+ if (transitionLoading) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({
- status: "entered",
- entry_time: new Date().toISOString(),
- })
- .eq("id", visitorId);
+ setTransitionLoading(true);
+ const response = await fetch(`/api/security/visitors/${visitorId}/check-in`, {
+ method: "POST",
+ });
+ const result = await response.json();
+ setTransitionLoading(false);
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to check in visitor.");
  return;
  }
+
  setStatus("entered");
  setDashboardRefreshKey((current) => current + 1);
  toast.success("Visitor checked in successfully.");
@@ -389,17 +396,17 @@ function SecurityContent() {
 
  async function checkOutVisitor() {
  if (!visitorId) return;
+ if (transitionLoading) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({
- status: "exited",
- exit_time: new Date().toISOString(),
- })
- .eq("id", visitorId);
+ setTransitionLoading(true);
+ const response = await fetch(`/api/security/visitors/${visitorId}/check-out`, {
+ method: "POST",
+ });
+ const result = await response.json();
+ setTransitionLoading(false);
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to check out visitor.");
  return;
  }
 
@@ -409,21 +416,9 @@ function SecurityContent() {
  toast.success("Visitor checked out successfully.");
  }
 
- function getVisitorStatus(visitor: ActivityItem) {
- if (
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return visitor.status;
- }
-
  const visitorStatusConfig = selectedVisitor
  ? statusConfig[
- getVisitorStatus(selectedVisitor) as keyof typeof statusConfig
+ getDisplayVisitorStatus({ status: selectedVisitor.status, expiresAt: selectedVisitor.expires_at }) as keyof typeof statusConfig
  ] || statusConfig.pending
  : statusConfig.pending;
 
@@ -431,9 +426,20 @@ function SecurityContent() {
  const officerName = officer?.full_name ?? "Security Officer";
  const officerInitials = initials(officerName);
 
+ async function handleLogout() {
+ const { error } = await supabase.auth.signOut();
+ if (error) {
+ toast.error("Unable to log out. Please try again.");
+ return;
+ }
+
+ router.replace("/");
+ router.refresh();
+ }
+
  return (
  <main className="min-h-screen bg-background px-4 py-10 text-foreground lg:px-10">
- <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+ <div className="flex w-full max-w-none flex-col gap-8">
  <header className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm shadow-muted/50">
  <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
  <div className="bg-primary/10 p-6 sm:p-8">
@@ -441,7 +447,7 @@ function SecurityContent() {
  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-primary text-2xl font-black text-primary-foreground shadow-sm">
  {officerInitials}
  </div>
- <div>
+ <div className="flex-1">
  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
  Security dashboard
  </p>
@@ -451,6 +457,23 @@ function SecurityContent() {
  <p className="mt-2 text-sm leading-6 text-muted-foreground">
  Verify visitor passes, manage gate entry, and review recent access activity.
  </p>
+ <div className="mt-5 flex flex-wrap gap-3">
+ <Link
+ href="/security/profile"
+ className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-card px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10"
+ >
+ <UserCircle className="h-5 w-5" />
+ View Profile
+ </Link>
+ <button
+ type="button"
+ onClick={handleLogout}
+ className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+ >
+ <LogOut className="h-5 w-5" />
+ Logout
+ </button>
+ </div>
  </div>
  </div>
  </div>
@@ -547,7 +570,7 @@ function SecurityContent() {
  <ActivityTable
  activity={activity}
  setSelectedVisitor={setSelectedVisitor}
- getVisitorStatus={getVisitorStatus}
+ getVisitorStatus={(visitor) => getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })}
  />
  </div>
 

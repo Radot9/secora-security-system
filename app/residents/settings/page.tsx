@@ -9,13 +9,15 @@ import ProfileField from "@/app/components/profile/ProfileField";
 import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatResidentLocation } from "@/lib/resident-address";
 
 interface ResidentProfile {
  full_name: string;
  email: string;
  phone: string;
  house_number: string;
- street: string;
+ street: string | null;
+ close: string | null;
 }
 
 export default function SettingsPage() {
@@ -43,7 +45,8 @@ export default function SettingsPage() {
  email,
  phone,
  house_number,
- street
+ street,
+ close
  `,
  )
  .eq("user_id", user.id)
@@ -96,7 +99,8 @@ export default function SettingsPage() {
  value={resident?.house_number ?? "-"}
  />
 
- <ProfileField label="Street" value={resident?.street ?? "-"} />
+ <ProfileField label="Location Type" value={resident?.close ? "Close" : "Street"} />
+ <ProfileField label={resident?.close ? "Close Name" : "Street Name"} value={resident ? formatResidentLocation(resident) : "-"} />
 
  <ProfileField label="Estate" value="Thomas Ajufo Estate" />
  </SettingsSection>

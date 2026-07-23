@@ -6,6 +6,7 @@ import { Card } from "@/app/components/ui/Card";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { AppShell } from "@/app/components/ui/AppShell";
+import { toast } from "sonner";
 
 type Visitor = {
  id: string;
@@ -28,7 +29,7 @@ export default function CurrentlyInsidePage() {
  .order("entry_time", { ascending: false });
 
  if (error) {
- console.error(error);
+ toast.error("Unable to load visitors currently inside.");
  return;
  }
 

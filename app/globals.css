@@ -142,10 +142,19 @@
     @apply flex w-full max-w-none flex-col gap-8;
   }
 
+  .admin-content > main {
+    min-height: auto;
+  }
+
+  .resident-content > main {
+    min-height: auto;
+  }
+
   @media (min-width: 1024px) {
     .resident-shell {
-      padding-left: 8rem;
+      padding-left: 2.5rem;
       padding-right: 2.5rem;
+      padding-bottom: 2.5rem;
     }
   }
 }

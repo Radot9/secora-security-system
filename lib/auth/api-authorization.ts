@@ -7,7 +7,15 @@ export class ApiAuthorizationError extends Error {
  }
 }
 
-export async function requireApiRole(allowedRoles: readonly UserRole[]) {
+type ApiRoleOptions = {
+ allowPasswordChangeRequired?: boolean;
+ allowIncompleteOnboarding?: boolean;
+};
+
+export async function requireApiRole(
+ allowedRoles: readonly UserRole[],
+ options: ApiRoleOptions = {},
+) {
  const supabase = await createSupabaseServerClient();
  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
@@ -28,6 +36,16 @@ export async function requireApiRole(allowedRoles: readonly UserRole[]) {
  const profile = data as ProfileAccess;
  if (!profile.is_active) {
  throw new ApiAuthorizationError("Your account is inactive. Contact a Super Admin.", 403);
+ }
+ if (profile.must_change_password && !options.allowPasswordChangeRequired) {
+ throw new ApiAuthorizationError("Change your temporary password before continuing.", 403);
+ }
+ if (
+ (profile.role === "admin" || profile.role === "super_admin") &&
+ !profile.onboarding_completed_at &&
+ !options.allowIncompleteOnboarding
+ ) {
+ throw new ApiAuthorizationError("Complete administrator onboarding before continuing.", 403);
  }
  if (!canAccessRole(profile.role, allowedRoles)) {
  throw new ApiAuthorizationError("You do not have permission to perform this action.", 403);

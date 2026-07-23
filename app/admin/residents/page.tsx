@@ -9,6 +9,7 @@ import { Resident } from "@/types/resident";
 
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
+import { formatResidentAddress } from "@/lib/resident-address";
 
 export default function ResidentsPage() {
  const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export default function ResidentsPage() {
  phone,
  house_number,
  street,
+ close,
  is_active
  `,
  )
@@ -56,7 +58,9 @@ export default function ResidentsPage() {
  return (
  resident.full_name.toLowerCase().includes(query) ||
  resident.phone.toLowerCase().includes(query) ||
- resident.house_number.toLowerCase().includes(query)
+ resident.house_number.toLowerCase().includes(query) ||
+ resident.street?.toLowerCase().includes(query) ||
+ resident.close?.toLowerCase().includes(query)
  );
  });
 
@@ -117,7 +121,7 @@ export default function ResidentsPage() {
  <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
  <span className="flex items-center gap-1">
  <Home className="h-4 w-4" />
- {resident.house_number}, {resident.street}
+ {formatResidentAddress(resident)}
  </span>
 
  <span className="flex items-center gap-1">

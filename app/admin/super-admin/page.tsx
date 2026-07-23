@@ -182,7 +182,6 @@ export default function SuperAdminDashboardPage() {
  <PageHeader
  title="Super Admin Dashboard"
  subtitle="Privileged access, administrator onboarding, and estate account health."
- backHref="/admin"
  />
  <Link
  href="/admin/administrators"

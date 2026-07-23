@@ -12,6 +12,7 @@ import { AppShell } from "../../components/ui/AppShell";
 import { Card } from "../../components/ui/Card";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { supabase } from "@/lib/supabase";
+import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
 
 type Visitor = {
  visitor_name: string;
@@ -22,24 +23,6 @@ type Visitor = {
  expires_at: string | null;
  status: string;
 };
-
-function statusClassName(status: string) {
- switch (status) {
- case "revoked":
- return "bg-destructive/15 text-destructive";
- case "entered":
- return "bg-emerald-100 text-emerald-700";
- case "exited":
- return "bg-primary/15 text-primary";
- default:
- return "bg-primary/15 text-primary";
- }
-}
-
-function displayStatus(status: string) {
- if (status === "revoked") return "Revoked";
- return status.charAt(0).toUpperCase() + status.slice(1);
-}
 
 function formatDuration(minutes: number | null) {
  if (!minutes) return "Duration not available";
@@ -60,7 +43,7 @@ function AccessCodeContent() {
  const [visitor, setVisitor] = useState<Visitor | null>(null);
  const [loading, setLoading] = useState(Boolean(accessCode));
 
- const qrValue = accessCode ? `/security?code=${accessCode}` : "";
+ const qrValue = accessCode || "";
  const expiresAt = visitor?.expires_at ? new Date(visitor.expires_at).toLocaleString() : "No expiry set";
  const validityDuration = visitor ? formatDuration(visitor.validity_duration_minutes) : "Duration not available";
 
@@ -112,11 +95,15 @@ function AccessCodeContent() {
  };
  }, [accessCode]);
 
+ function getPublicPassUrl() {
+ return `${window.location.origin}/visitor-pass?code=${encodeURIComponent(accessCode ?? "")}`;
+ }
+
  async function copyPassInfo() {
  if (!passText) return;
 
  try {
- await navigator.clipboard.writeText(passText);
+ await navigator.clipboard.writeText(`${passText}\nQR visitor pass: ${getPublicPassUrl()}`);
  toast.success("Access code info copied.");
  } catch {
  toast.error("Unable to copy this access code.");
@@ -127,10 +114,12 @@ function AccessCodeContent() {
  if (!passText) return;
 
  try {
+ const publicPassUrl = getPublicPassUrl();
  if (navigator.share) {
  await navigator.share({
  title: "Secora Visitor Pass",
- text: passText,
+ text: `${passText}\nQR visitor pass: ${publicPassUrl}`,
+ url: publicPassUrl,
  });
  return;
  }
@@ -144,13 +133,15 @@ function AccessCodeContent() {
  async function revokeCode() {
  if (!accessCode) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({ status: "revoked" })
- .eq("access_code", accessCode);
+ const response = await fetch("/api/residents/visitors/revoke", {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ accessCode }),
+ });
+ const result = await response.json();
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to revoke this access code.");
  return;
  }
 
@@ -191,7 +182,7 @@ function AccessCodeContent() {
  <AppShell size="full" residentSidebar>
  <div className="resident-page">
  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
- <PageHeader title="Access Code Generated" subtitle="Copy or share this visitor pass with one click." backHref="/residents" />
+ <PageHeader title="Access Code Generated" subtitle="Copy or share this visitor pass with one click." />
  <button
  type="button"
  onClick={copyPassInfo}
@@ -257,8 +248,8 @@ function AccessCodeContent() {
  <div className="space-y-5 p-6">
  <div>
  <p className="text-sm text-muted-foreground">Status</p>
- <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>
- {displayStatus(visitor.status)}
+ <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${visitorStatusClassName(visitor.status)}`}>
+ {displayVisitorStatus(visitor.status)}
  </span>
  </div>
  <div>
@@ -274,7 +265,7 @@ function AccessCodeContent() {
  <CheckCircle2 className="h-4 w-4" />
  Ready to share
  </div>
- <p className="mt-2 text-sm leading-6 text-muted-foreground">The copy button includes the visitor name, phone number, purpose, duration, code, plate, and expiry.</p>
+ <p className="mt-2 text-sm leading-6 text-muted-foreground">The copy button includes the visitor details, access code, expiry, and a link to the QR visitor pass.</p>
  </div>
  </div>
  </div>

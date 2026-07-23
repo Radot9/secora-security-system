@@ -22,12 +22,14 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { StatCard } from "../components/ui/StatCard";
 import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
+import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
+import { formatResidentAddress, formatResidentLocation } from "@/lib/resident-address";
 
 type ResidentProfile = {
  id: string;
  full_name: string;
  house_number: string;
- street: string;
+ street: string | null;
  close: string | null;
 };
 
@@ -82,23 +84,6 @@ function initials(name?: string) {
  .join("")
  .slice(0, 2)
  .toUpperCase();
-}
-
-function statusClassName(status: string) {
- switch (status) {
- case "entered":
- return "bg-emerald-100 text-emerald-700";
- case "exited":
- return "bg-primary/15 text-primary";
- case "revoked":
- return "bg-destructive/15 text-destructive";
- default:
- return "bg-muted text-muted-foreground";
- }
-}
-
-function displayStatus(status: string) {
- return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function formatTime(value: string | null) {
@@ -189,8 +174,9 @@ export default function ResidentsPage() {
  }, [overview]);
 
  const address = resident
- ? [resident.house_number, resident.street, resident.close].filter(Boolean).join(", ")
+ ? formatResidentAddress(resident)
  : "Thomas Ajufo Estate";
+ const locationName = resident ? formatResidentLocation(resident) : "Location unavailable";
 
  const latestCode = overview.recentVisitors.find((visitor) => visitor.access_code)?.access_code;
 
@@ -235,7 +221,7 @@ export default function ResidentsPage() {
  <div className="p-6">
  <p className="text-sm font-medium text-muted-foreground">Address</p>
  <p className="mt-3 text-xl font-bold">{resident?.house_number ?? "--"}</p>
- <p className="mt-2 text-sm text-muted-foreground">{resident?.street ?? "Street unavailable"}</p>
+ <p className="mt-2 text-sm text-muted-foreground">Location: {locationName}</p>
  </div>
  <div className="p-6">
  <p className="text-sm font-medium text-muted-foreground">Latest access code</p>
@@ -250,21 +236,21 @@ export default function ResidentsPage() {
  </div>
  </Card>
 
- <Card className={watchItems.length > 0 ? "border-amber-300 bg-amber-50/70" : "border-emerald-300 bg-emerald-50/70"}>
+ <Card className={watchItems.length > 0 ? "border-amber-400 bg-amber-50" : "border-emerald-400 bg-emerald-50"}>
  <div className="flex items-center gap-3">
- {watchItems.length > 0 ? <AlertTriangle className="h-6 w-6 text-amber-600" /> : <ShieldCheck className="h-6 w-6 text-emerald-700" />}
+ {watchItems.length > 0 ? <AlertTriangle className="h-6 w-6 text-amber-800" /> : <ShieldCheck className="h-6 w-6 text-emerald-800" />}
  <div>
- <h2 className="font-bold text-foreground">Resident watch</h2>
- <p className="mt-1 text-sm text-muted-foreground">
+ <h2 className={`font-bold ${watchItems.length > 0 ? "text-amber-950" : "text-emerald-950"}`}>Resident watch</h2>
+ <p className={`mt-1 text-sm ${watchItems.length > 0 ? "text-amber-900" : "text-emerald-900"}`}>
  {watchItems.length > 0 ? "Visitor activity worth checking." : "Your visitor access looks quiet right now."}
  </p>
  </div>
  </div>
  <div className="mt-5 space-y-3">
  {watchItems.length === 0 ? (
- <p className="text-sm text-muted-foreground">No pending or active visitor issues for your home.</p>
+ <p className="text-sm font-medium text-emerald-950">No pending or active visitor issues for your home.</p>
  ) : (
- watchItems.map((item) => <p key={item} className="rounded-2xl bg-background/70 p-3 text-sm text-foreground">{item}</p>)
+ watchItems.map((item) => <p key={item} className="rounded-2xl border border-amber-200 bg-white p-3 text-sm font-medium text-amber-950">{item}</p>)
  )}
  </div>
  </Card>
@@ -308,8 +294,8 @@ export default function ResidentsPage() {
  {visitor.visitor_phone} · {formatTime(visitor.created_at)}
  </p>
  </div>
- <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>
- {displayStatus(visitor.status)}
+ <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${visitorStatusClassName(visitor.status)}`}>
+ {displayVisitorStatus(visitor.status)}
  </span>
  </article>
  ))}

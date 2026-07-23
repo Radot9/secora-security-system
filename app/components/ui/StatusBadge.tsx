@@ -1,3 +1,5 @@
+import { displayVisitorStatus } from "@/lib/visitor-status";
+
 interface StatusBadgeProps {
  status: string;
 }
@@ -17,11 +19,12 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
  return (
  <span
+ aria-label={`Visitor status: ${displayVisitorStatus(status)}`}
  className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
  styles[status as keyof typeof styles] ?? "bg-muted text-muted-foreground"
  }`}
  >
- {status}
+ {displayVisitorStatus(status)}
  </span>
  );
 }

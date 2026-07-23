@@ -40,7 +40,7 @@ export default function ActivityPage() {
 
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
+ .select("id, visitor_name, visitor_phone, purpose_of_visit, plate_number, resident_id, resident_name, access_code, status, validity_duration_minutes, entry_time, exit_time, expires_at, created_at")
  .eq("resident_id", resident.id)
  .order("created_at", { ascending: false })
  .limit(50);

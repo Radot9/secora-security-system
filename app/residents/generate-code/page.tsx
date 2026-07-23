@@ -21,6 +21,7 @@ import { Card } from "../../components/ui/Card";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
+import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
 
 const MINIMUM_CODE_VALIDITY_MINUTES = 30;
 
@@ -44,24 +45,6 @@ function formatDuration(minutes: number | null) {
  if (remainingMinutes > 0) parts.push(`${remainingMinutes} ${remainingMinutes === 1 ? "minute" : "minutes"}`);
 
  return parts.join(" ") || "0 minutes";
-}
-
-function statusClassName(status: string) {
- switch (status) {
-  case "revoked":
-   return "bg-destructive/15 text-destructive";
-  case "entered":
-   return "bg-emerald-100 text-emerald-700";
-  case "exited":
-   return "bg-primary/15 text-primary";
-  default:
-   return "bg-primary/15 text-primary";
- }
-}
-
-function displayStatus(status: string) {
- if (status === "revoked") return "Revoked";
- return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function GenerateCodePage() {
@@ -422,8 +405,8 @@ export default function GenerateCodePage() {
              <p className="font-semibold text-foreground">{visitor.visitor_name}</p>
              <p className="mt-1 text-sm text-muted-foreground">{visitor.visitor_phone}</p>
             </div>
-            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>
-             {displayStatus(visitor.status)}
+            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${visitorStatusClassName(visitor.status)}`}>
+             {displayVisitorStatus(visitor.status)}
             </span>
            </div>
            <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
