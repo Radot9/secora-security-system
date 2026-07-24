@@ -7,7 +7,6 @@ import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import ProfileCard from "@/app/components/profile/ProfileCard";
 import ProfileField from "@/app/components/profile/ProfileField";
-import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
 import { ResidentBottomNav } from "@/app/components/ResidentBottomNav";
 import { formatResidentLocation } from "@/lib/resident-address";
 
@@ -86,7 +85,7 @@ export default function ResidentProfilePage() {
 
  <PageHeader
  title="My Profile"
- subtitle="Manage your personal information"
+ subtitle="Review your personal and residence information"
  />
 
  <ProfileCard title="Personal Information">
@@ -115,8 +114,6 @@ export default function ResidentProfilePage() {
  <ProfileField label={resident?.close ? "Close Name" : "Street Name"} value={resident ? formatResidentLocation(resident) : "-"} />
 
  </ProfileCard>
-
- <ChangePasswordCard />
 
  </div>
  <ResidentBottomNav />
