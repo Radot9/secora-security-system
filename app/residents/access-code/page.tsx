@@ -39,9 +39,10 @@ function formatDuration(minutes: number | null) {
 
 function AccessCodeContent() {
  const searchParams = useSearchParams();
- const accessCode = searchParams.get("code");
+ const requestedAccessCode = searchParams.get("code");
+ const [accessCode, setAccessCode] = useState(requestedAccessCode);
  const [visitor, setVisitor] = useState<Visitor | null>(null);
- const [loading, setLoading] = useState(Boolean(accessCode));
+ const [loading, setLoading] = useState(true);
 
  const qrValue = accessCode || "";
  const expiresAt = visitor?.expires_at ? new Date(visitor.expires_at).toLocaleString() : "No expiry set";
@@ -65,7 +66,46 @@ function AccessCodeContent() {
  let mounted = true;
 
  async function loadVisitor() {
- if (!accessCode) {
+ let codeToLoad = requestedAccessCode;
+
+ if (!codeToLoad) {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+
+ if (!user) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ const { data: resident } = await supabase
+ .from("residents")
+ .select("id")
+ .eq("user_id", user.id)
+ .maybeSingle();
+
+ if (!resident) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ const { data: latestVisitor, error: latestError } = await supabase
+ .from("visitors")
+ .select("access_code")
+ .eq("resident_id", resident.id)
+ .order("created_at", { ascending: false })
+ .limit(1)
+ .maybeSingle();
+
+ if (latestError || !latestVisitor?.access_code) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ codeToLoad = latestVisitor.access_code;
+ }
+
+ if (!codeToLoad) {
  setLoading(false);
  return;
  }
@@ -73,7 +113,7 @@ function AccessCodeContent() {
  const { data, error } = await supabase
  .from("visitors")
  .select("visitor_name, visitor_phone, purpose_of_visit, validity_duration_minutes, plate_number, expires_at, status")
- .eq("access_code", accessCode)
+ .eq("access_code", codeToLoad)
  .single();
 
  if (!mounted) return;
@@ -84,6 +124,7 @@ function AccessCodeContent() {
  return;
  }
 
+ setAccessCode(codeToLoad);
  setVisitor(data);
  setLoading(false);
  }
@@ -93,7 +134,7 @@ function AccessCodeContent() {
  return () => {
  mounted = false;
  };
- }, [accessCode]);
+ }, [requestedAccessCode]);
 
  function getPublicPassUrl() {
  return `${window.location.origin}/visitor-pass?code=${encodeURIComponent(accessCode ?? "")}`;
@@ -149,7 +190,18 @@ function AccessCodeContent() {
  toast.success("Access code revoked.");
  }
 
- if (!accessCode) {
+ if (loading) {
+ return (
+ <AppShell size="full" residentSidebar>
+ <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground">
+ Loading visitor pass...
+ </div>
+ <ResidentBottomNav />
+ </AppShell>
+ );
+ }
+
+ if (!accessCode || !visitor) {
  return (
  <AppShell size="full" residentSidebar>
  <div className="flex min-h-[70vh] items-center justify-center text-center">
@@ -161,17 +213,6 @@ function AccessCodeContent() {
  Generate Code
  </Link>
  </div>
- </div>
- <ResidentBottomNav />
- </AppShell>
- );
- }
-
- if (loading || !visitor) {
- return (
- <AppShell size="full" residentSidebar>
- <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground">
- Loading visitor pass...
  </div>
  <ResidentBottomNav />
  </AppShell>

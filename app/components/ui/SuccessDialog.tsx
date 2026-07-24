@@ -44,13 +44,21 @@ export default function SuccessDialog({
  if (!open) return null;
 
  async function copyCredentials() {
- const credentials = `Name: ${fullName}
+ const credentials = `Welcome to Secora Security System, ${fullName}!
+
+Your ${accountLabel} has been created successfully.
+
+Use the login details below:
+
+Name: ${fullName}
 
 Email: ${email}
 
 Temporary Password: ${password}
 
-Login: ${websiteUrl}`;
+Login: ${websiteUrl}
+
+When you log in, you will be prompted immediately to change your temporary password before continuing.`;
 
  await navigator.clipboard.writeText(credentials);
 
@@ -62,6 +70,8 @@ Login: ${websiteUrl}`;
 
 Your ${accountLabel} has been created successfully.
 
+Welcome, ${fullName}! Please use the login details below.
+
 Name: ${fullName}
 
 Email: ${email}
@@ -70,15 +80,13 @@ Temporary Password: ${password}
 
 Login here: ${websiteUrl}
 
-Please change your password after your first login.
+When you log in using these details, you will be prompted immediately to change your temporary password before continuing.
 
 Welcome to Thomas Ajufo Estate.`);
 
  const emailSubject = encodeURIComponent(`Your Secora ${accountLabel}`);
 
- const emailBody = encodeURIComponent(`Hello ${fullName},
-
-Welcome to Secora.
+ const emailBody = encodeURIComponent(`Welcome to Secora Security System, ${fullName}!
 
 Your ${accountLabel} has been created successfully.
 
@@ -91,7 +99,7 @@ ${password}
 Login here:
 ${websiteUrl}
 
-Please change your password after your first login.
+When you log in using these details, you will be prompted immediately to change your temporary password before continuing.
 
 Thomas Ajufo Estate Administration`);
 

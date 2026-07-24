@@ -149,10 +149,6 @@ export default function VisitorsPage() {
  <td className="whitespace-nowrap px-4 py-4 text-foreground">
  {visitor.visitor_name}
  </td>
- <td className="whitespace-nowrap px-4 py-4 text-foreground">
- <p>In: {visitor.checked_in_by_name || "--"}</p>
- <p>Out: {visitor.checked_out_by_name || "--"}</p>
- </td>
  <td className="whitespace-nowrap px-3 py-4 text-foreground">
  {visitor.visitor_phone}
  </td>
@@ -171,6 +167,10 @@ export default function VisitorsPage() {
  {visitor.exit_time
  ? new Date(visitor.exit_time).toLocaleTimeString()
  : "--"}
+ </td>
+ <td className="whitespace-nowrap px-4 py-4 text-foreground">
+ <p>In: {visitor.checked_in_by_name || "--"}</p>
+ <p>Out: {visitor.checked_out_by_name || "--"}</p>
  </td>
  </tr>
  ))}
