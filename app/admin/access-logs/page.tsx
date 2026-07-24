@@ -23,7 +23,7 @@ export default function AccessLogsPage() {
  async function loadLogs() {
  const { data, error } = await supabase
  .from("visitors")
- .select("id, visitor_name, visitor_phone, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at")
+ .select("id, visitor_name, visitor_phone, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
  .order("created_at", { ascending: false })
  .limit(100);
 
@@ -116,6 +116,7 @@ export default function AccessLogsPage() {
  <th className="px-5 py-4 font-semibold">Status</th>
  <th className="px-5 py-4 font-semibold">Entry</th>
  <th className="px-5 py-4 font-semibold">Exit</th>
+ <th className="px-5 py-4 font-semibold">Security Officers</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-border">
@@ -145,6 +146,10 @@ export default function AccessLogsPage() {
  {item.exit_time
  ? new Date(item.exit_time).toLocaleString()
  : "Still inside"}
+ </td>
+ <td className="px-5 py-4 text-foreground">
+ <p>In: {item.checked_in_by_name || "Not recorded"}</p>
+ <p className="mt-1">Out: {item.checked_out_by_name || "Not recorded"}</p>
  </td>
  </tr>
  ))}

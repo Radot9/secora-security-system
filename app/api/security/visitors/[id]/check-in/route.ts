@@ -7,7 +7,7 @@ export async function POST(
  context: RouteContext<"/api/security/visitors/[id]/check-in">,
 ) {
  try {
- await requireApiRole(["security"]);
+ const { profile } = await requireApiRole(["security"]);
  const { id } = await context.params;
 
  const { data: visitor, error: visitorError } = await supabaseAdmin
@@ -29,10 +29,15 @@ export async function POST(
  const entryTime = new Date().toISOString();
  const { data: updatedVisitor, error: updateError } = await supabaseAdmin
  .from("visitors")
- .update({ status: "entered", entry_time: entryTime })
+ .update({
+ status: "entered",
+ entry_time: entryTime,
+ checked_in_by: profile.id,
+ checked_in_by_name: profile.full_name,
+ })
  .eq("id", id)
  .eq("status", "pending")
- .select("id, status, entry_time")
+ .select("id, status, entry_time, checked_in_by, checked_in_by_name")
  .single();
 
  if (updateError || !updatedVisitor) {

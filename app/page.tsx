@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { InputField } from "./components/InputField";
 import { resolveEmailLinkSession } from "@/lib/auth/email-link-session";
 import { supabase } from "@/lib/supabase";
+import { LoadingSpinner } from "./components/ui/LoadingSpinner";
 
 type LoginProfile = {
  role: string;
@@ -28,6 +29,8 @@ export default function Home() {
  const [email, setEmail] = useState("");
  const [password, setPassword] = useState("");
  const [checkingEmailLink, setCheckingEmailLink] = useState(hasEmailLinkTokens);
+ const [loginLoading, setLoginLoading] = useState(false);
+ const [resetLoading, setResetLoading] = useState(false);
 
  const router = useRouter();
 
@@ -115,20 +118,25 @@ export default function Home() {
  return;
  }
 
+ setResetLoading(true);
  const { error } = await supabase.auth.resetPasswordForEmail(email, {
  redirectTo: `${window.location.origin}/update-password`,
  });
 
  if (error) {
+ setResetLoading(false);
  toast.error(error.message);
  return;
  }
 
+ setResetLoading(false);
  toast.success("Check your email for the password change link.");
  }
 
  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
  e.preventDefault();
+ if (loginLoading) return;
+ setLoginLoading(true);
 
  const { data, error } = await supabase.auth.signInWithPassword({
  email,
@@ -136,11 +144,13 @@ export default function Home() {
  });
 
  if (error) {
+ setLoginLoading(false);
  toast.error(error.message);
  return;
  }
 
  await routeAuthenticatedUser(data.user.id, "password");
+ setLoginLoading(false);
  }
 
  if (checkingEmailLink) {
@@ -202,17 +212,22 @@ export default function Home() {
  <button
  type="button"
  onClick={handlePasswordReset}
+ disabled={resetLoading || loginLoading}
  className="text-sm font-medium text-primary transition hover:underline"
  >
- Forgot or change password?
+ {resetLoading ? "Sending link..." : "Forgot or change password?"}
  </button>
  </div>
 
  <button
  type="submit"
+ disabled={loginLoading}
  className="w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
  >
- Sign In
+ <span className="inline-flex items-center justify-center gap-2">
+ {loginLoading && <LoadingSpinner />}
+ {loginLoading ? "Signing in..." : "Sign In"}
+ </span>
  </button>
  </form>
  </div>

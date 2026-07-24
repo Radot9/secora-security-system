@@ -15,6 +15,7 @@ type Visitor = {
  plate_number: string;
  entry_time: string;
  status: string;
+ checked_in_by_name?: string;
 };
 
 export default function CurrentlyInsidePage() {
@@ -73,6 +74,9 @@ export default function CurrentlyInsidePage() {
 
  <p className="text-sm text-muted-foreground">
  Entered: {new Date(visitor.entry_time).toLocaleString()}
+ </p>
+ <p className="text-sm text-muted-foreground">
+ Checked in by: {visitor.checked_in_by_name || "Not recorded"}
  </p>
  </div>
  </Card>

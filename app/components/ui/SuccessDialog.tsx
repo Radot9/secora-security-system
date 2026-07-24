@@ -15,6 +15,7 @@ interface SuccessDialogProps {
  email: string;
  password: string;
  phone?: string;
+ accountLabel?: string;
 }
 
 export default function SuccessDialog({
@@ -26,7 +27,11 @@ export default function SuccessDialog({
  email,
  password,
  phone,
+ accountLabel = "account",
 }: SuccessDialogProps) {
+ const websiteUrl =
+ process.env.NEXT_PUBLIC_SITE_URL ||
+ (typeof window !== "undefined" ? window.location.origin : "");
  useEffect(() => {
  if (!open) return;
  const closeOnEscape = (event: KeyboardEvent) => {
@@ -43,7 +48,9 @@ export default function SuccessDialog({
 
 Email: ${email}
 
-Temporary Password: ${password}`;
+Temporary Password: ${password}
+
+Login: ${websiteUrl}`;
 
  await navigator.clipboard.writeText(credentials);
 
@@ -53,7 +60,7 @@ Temporary Password: ${password}`;
  const whatsappMessage =
  encodeURIComponent(`Welcome to Secora Security System 🏡
 
-Your resident account has been created successfully.
+Your ${accountLabel} has been created successfully.
 
 Name: ${fullName}
 
@@ -61,23 +68,28 @@ Email: ${email}
 
 Temporary Password: ${password}
 
+Login here: ${websiteUrl}
+
 Please change your password after your first login.
 
 Welcome to Thomas Ajufo Estate.`);
 
- const emailSubject = encodeURIComponent("Your Secora Resident Account");
+ const emailSubject = encodeURIComponent(`Your Secora ${accountLabel}`);
 
  const emailBody = encodeURIComponent(`Hello ${fullName},
 
 Welcome to Secora.
 
-Your resident account has been created successfully.
+Your ${accountLabel} has been created successfully.
 
 Email:
 ${email}
 
 Temporary Password:
 ${password}
+
+Login here:
+${websiteUrl}
 
 Please change your password after your first login.
 
@@ -124,6 +136,13 @@ Thomas Ajufo Estate Administration`);
  <p className="font-mono text-lg font-bold text-primary">
  {password}
  </p>
+ </div>
+
+ <div>
+ <p className="text-sm text-muted-foreground">Website</p>
+ <a className="font-semibold text-primary hover:underline" href={websiteUrl}>
+ {websiteUrl}
+ </a>
  </div>
  </div>
  </div>

@@ -3,6 +3,7 @@ interface VerificationCardProps {
  setAccessCode: (value: string) => void;
  verifyCode: () => void;
  scannerOpen: () => void;
+ loading?: boolean;
 }
 
 export default function VerificationCard({
@@ -10,6 +11,7 @@ export default function VerificationCard({
  setAccessCode,
  verifyCode,
  scannerOpen,
+ loading = false,
 }: VerificationCardProps) {
  return (
  <section className="h-full rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50">
@@ -40,6 +42,7 @@ export default function VerificationCard({
  <div className="h-px flex-1 bg-muted" />
  </div>
 
+ <form onSubmit={(event) => { event.preventDefault(); verifyCode(); }}>
  <input
  value={accessCode}
  onChange={(event) => setAccessCode(event.target.value)}
@@ -48,12 +51,13 @@ export default function VerificationCard({
  />
 
  <button
- type="button"
- onClick={() => verifyCode()}
+ type="submit"
+ disabled={loading}
  className="mt-4 w-full rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
  >
- Verify Code
+ {loading ? "Verifying..." : "Verify Code"}
  </button>
+ </form>
  </section>
  );
 }

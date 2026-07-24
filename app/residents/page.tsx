@@ -38,6 +38,7 @@ type ResidentOverview = {
  pendingPasses: number;
  currentlyInside: number;
  revokedPasses: number;
+ expiredPasses: number;
  recentVisitors: Visitor[];
 };
 
@@ -46,6 +47,7 @@ const fallbackOverview: ResidentOverview = {
  pendingPasses: 0,
  currentlyInside: 0,
  revokedPasses: 0,
+ expiredPasses: 0,
  recentVisitors: [],
 };
 
@@ -126,12 +128,14 @@ export default function ResidentsPage() {
  pendingPasses,
  currentlyInside,
  revokedPasses,
+ expiredPasses,
  recentVisitors,
  ] = await Promise.all([
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("resident_id", residentData.id),
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("resident_id", residentData.id).eq("status", "pending"),
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("resident_id", residentData.id).eq("status", "entered"),
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("resident_id", residentData.id).eq("status", "revoked"),
+ supabase.from("visitors").select("id", { count: "exact", head: true }).eq("resident_id", residentData.id).eq("status", "pending").lt("expires_at", new Date().toISOString()),
  supabase.from("visitors").select("*").eq("resident_id", residentData.id).order("created_at", { ascending: false }).limit(5),
  ]);
 
@@ -140,6 +144,7 @@ export default function ResidentsPage() {
  pendingPasses.error,
  currentlyInside.error,
  revokedPasses.error,
+ expiredPasses.error,
  recentVisitors.error,
  ].find(Boolean);
 
@@ -155,6 +160,7 @@ export default function ResidentsPage() {
  pendingPasses: pendingPasses.count ?? 0,
  currentlyInside: currentlyInside.count ?? 0,
  revokedPasses: revokedPasses.count ?? 0,
+ expiredPasses: expiredPasses.count ?? 0,
  recentVisitors: recentVisitors.data ?? [],
  });
  setLoading(false);
@@ -202,11 +208,14 @@ export default function ResidentsPage() {
  </Link>
  </div>
 
- <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+ <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
  <StatCard label="Total Visitors" value={loading ? "..." : overview.totalVisitors} icon={<UsersRound className="h-6 w-6 text-primary" />} />
  <StatCard label="Pending Passes" value={loading ? "..." : overview.pendingPasses} icon={<Clock3 className="h-6 w-6 text-primary" />} />
  <StatCard label="Currently Inside" value={loading ? "..." : overview.currentlyInside} icon={<DoorOpen className="h-6 w-6 text-primary" />} />
  <StatCard label="Revoked Passes" value={loading ? "..." : overview.revokedPasses} icon={<AlertTriangle className="h-6 w-6 text-destructive" />} />
+ <Link href="/residents/visitors?status=expired" aria-label="View all expired visitor codes">
+ <StatCard label="Expired Codes" value={loading ? "..." : overview.expiredPasses} icon={<Clock3 className="h-6 w-6 text-destructive" />} />
+ </Link>
  </section>
 
  <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

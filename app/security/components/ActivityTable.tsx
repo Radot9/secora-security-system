@@ -50,6 +50,9 @@ export default function ActivityTable({
  <p className="mt-1 truncate text-sm text-muted-foreground">
  <span className="font-semibold text-foreground">{displayStatus}</span> verification
  </p>
+ <p className="mt-1 truncate text-xs text-muted-foreground">
+ In: {item.checked_in_by_name || "Not checked in"} · Out: {item.checked_out_by_name || "Not checked out"}
+ </p>
  </div>
 
  <time className="text-sm text-muted-foreground">

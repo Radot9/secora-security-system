@@ -23,6 +23,8 @@ type Visitor = {
  entry_time?: string;
  exit_time?: string;
  expires_at?: string;
+ checked_in_by_name?: string;
+ checked_out_by_name?: string;
 };
 
 export default function VisitorHistoryPage() {
@@ -35,7 +37,7 @@ export default function VisitorHistoryPage() {
  async function loadVisitors() {
  const { data, error } = await supabase
  .from("visitors")
- .select("id, visitor_name, visitor_phone, plate_number, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at")
+ .select("id, visitor_name, visitor_phone, plate_number, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at, checked_in_by_name, checked_out_by_name")
  .order("created_at", { ascending: false })
  .limit(250);
 
@@ -101,10 +103,13 @@ export default function VisitorHistoryPage() {
  Code: {visitor.access_code}
  </p>
  </div>
+ <div>
+ <p className="text-xs text-muted-foreground">Security Officers</p>
+ <p className="text-sm">In: {visitor.checked_in_by_name || "Not recorded"} · Out: {visitor.checked_out_by_name || "Not recorded"}</p>
+ </div>
 
  <StatusBadge status={getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })} />
  </div>
-
  <div className="mt-4 grid gap-3 md:grid-cols-2">
  <div>
  <p className="text-xs text-muted-foreground">Entry Time</p>
@@ -124,6 +129,14 @@ export default function VisitorHistoryPage() {
  ? new Date(visitor.exit_time).toLocaleString()
  : "Still Inside"}
  </p>
+ </div>
+ <div>
+ <p className="text-sm text-muted-foreground">Checked In By</p>
+ <p>{visitor.checked_in_by_name || "Not recorded"}</p>
+ </div>
+ <div>
+ <p className="text-sm text-muted-foreground">Checked Out By</p>
+ <p>{visitor.checked_out_by_name || "Not recorded"}</p>
  </div>
  </div>
  </Card>

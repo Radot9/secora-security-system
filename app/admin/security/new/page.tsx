@@ -7,6 +7,7 @@ import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
 import { generatePassword } from "@/lib/utils/generatePassword";
 import SuccessDialog from "@/app/components/ui/SuccessDialog";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 export default function NewResidentPage() {
  const [loading, setLoading] = useState(false);
@@ -203,7 +204,7 @@ export default function NewResidentPage() {
  disabled={loading}
  className="inline-flex items-center gap-2 rounded-2xl bg-primary/100 px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
  >
- <Save className="h-5 w-5" />
+ {loading ? <LoadingSpinner className="h-5 w-5" /> : <Save className="h-5 w-5" />}
 
  {loading ? "Creating..." : "Create Security Officer"}
  </button>
@@ -220,6 +221,7 @@ export default function NewResidentPage() {
  email={createdOfficer?.email ?? ""}
  password={createdOfficer?.password ?? ""}
  phone={createdOfficer?.phone}
+ accountLabel="security officer account"
  />
  </AppShell>
  );

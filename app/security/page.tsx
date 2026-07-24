@@ -26,6 +26,7 @@ import VisitorDetailsModal from "./components/VisitorDetailsModal";
 import { ActivityItem } from "@/types/activity";
 import { toast } from "sonner";
 import { getDisplayVisitorStatus } from "@/lib/visitor-status";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 type SecurityOfficerProfile = {
  full_name: string | null;
@@ -65,6 +66,8 @@ function VerificationResultCard({
  isExpired,
  allowEntry,
  checkOutVisitor,
+ close,
+ loading,
 }: {
  visitorName: string;
  visitorPhone: string;
@@ -73,22 +76,21 @@ function VerificationResultCard({
  isExpired: boolean;
  allowEntry: () => void;
  checkOutVisitor: () => void;
+ close: () => void;
+ loading: boolean;
 }) {
+ if (!visitorName) return null;
  return (
- <section className="flex-1 rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50">
+ <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={close}>
+ <section role="dialog" aria-modal="true" aria-labelledby="verification-result-title" className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
  <div className="flex items-center gap-3">
  <CheckCircle2 className="h-5 w-5 text-primary" />
  <div>
- <h2 className="text-xl font-bold">Verification Result</h2>
+ <h2 id="verification-result-title" className="text-xl font-bold">Verification Result</h2>
  <p className="mt-1 text-sm text-muted-foreground">Visitor status appears immediately after verification.</p>
  </div>
  </div>
 
- {!visitorName ? (
- <div className="mt-6 rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
- No visitor verified yet. Scan a QR code or enter an access code to see the result here.
- </div>
- ) : (
  <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
  <p className="text-sm text-muted-foreground">Visitor Found</p>
  <h3 className="mt-2 text-2xl font-bold">{visitorName}</h3>
@@ -105,9 +107,10 @@ function VerificationResultCard({
  <button
  type="button"
  onClick={checkOutVisitor}
+ disabled={loading}
  className="mt-4 w-full rounded-2xl bg-foreground px-4 py-3 font-bold text-background shadow-sm transition hover:bg-foreground/85 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
  >
- Check Out Visitor
+ {loading && <LoadingSpinner />} {loading ? "Checking out..." : "Check Out Visitor"}
  </button>
  </>
  ) : isExpired ? (
@@ -120,17 +123,19 @@ function VerificationResultCard({
  <button
  type="button"
  onClick={allowEntry}
+ disabled={loading}
  className="mt-4 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
  >
- Allow Entry
+ {loading && <LoadingSpinner />} {loading ? "Checking in..." : "Check In Visitor"}
  </button>
  </>
  ) : (
  <p className="mt-4 font-semibold text-muted-foreground">Visitor has left</p>
  )}
  </div>
- )}
+ <button type="button" onClick={close} disabled={loading} className="mt-4 w-full rounded-2xl border border-border px-4 py-3 font-semibold transition hover:bg-muted disabled:opacity-50">Close</button>
  </section>
+ </div>
  );
 }
 
@@ -149,6 +154,7 @@ function SecurityContent() {
  const [officer, setOfficer] = useState<SecurityOfficerProfile | null>(null);
  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
  const [transitionLoading, setTransitionLoading] = useState(false);
+ const [verificationLoading, setVerificationLoading] = useState(false);
  const autoVerifiedCode = useRef("");
  const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
  null,
@@ -228,6 +234,7 @@ function SecurityContent() {
  return;
  }
 
+ setVerificationLoading(true);
  const { data, error } = await supabase
  .from("visitors")
  .select("*")
@@ -235,11 +242,13 @@ function SecurityContent() {
  .maybeSingle();
 
  if (error) {
+ setVerificationLoading(false);
  toast.error(error.message);
  return;
  }
 
  if (!data) {
+ setVerificationLoading(false);
  toast.error(`Code "${code}" was not found.`);
  return;
  }
@@ -252,6 +261,7 @@ function SecurityContent() {
  setIsExpired(
  data.expires_at ? new Date(data.expires_at) < new Date() : false,
  );
+ setVerificationLoading(false);
  },
  [accessCode],
  );
@@ -310,7 +320,7 @@ function SecurityContent() {
 
  const { data: visitors } = await supabase
  .from("visitors")
- .select("id, visitor_name, visitor_phone, plate_number, resident_name, status, created_at, entry_time, exit_time, expires_at")
+ .select("id, visitor_name, visitor_phone, plate_number, resident_name, status, created_at, entry_time, exit_time, expires_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
  .in("status", ["entered", "exited"])
  .or(`entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`);
 
@@ -503,6 +513,7 @@ function SecurityContent() {
  setAccessCode={setAccessCode}
  verifyCode={verifyCode}
  scannerOpen={() => setScannerOpen(true)}
+ loading={verificationLoading}
  />
 
  <div className="flex h-full flex-col gap-6">
@@ -522,15 +533,6 @@ function SecurityContent() {
  </div>
  </section>
 
- <VerificationResultCard
- visitorName={visitorName}
- visitorPhone={visitorPhone}
- plateNumber={plateNumber}
- status={status}
- isExpired={isExpired}
- allowEntry={allowEntry}
- checkOutVisitor={checkOutVisitor}
- />
  </div>
  </section>
 
@@ -579,6 +581,22 @@ function SecurityContent() {
  visitorStatusConfig={visitorStatusConfig}
  StatusIcon={StatusIcon}
  onClose={() => setSelectedVisitor(null)}
+ />
+ <VerificationResultCard
+ visitorName={visitorName}
+ visitorPhone={visitorPhone}
+ plateNumber={plateNumber}
+ status={status}
+ isExpired={isExpired}
+ allowEntry={allowEntry}
+ checkOutVisitor={checkOutVisitor}
+ loading={transitionLoading}
+ close={() => {
+ setVisitorName("");
+ setVisitorId("");
+ setStatus("");
+ setIsExpired(false);
+ }}
  />
  <ScannerModal
  open={scannerOpen}

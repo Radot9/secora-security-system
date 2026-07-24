@@ -7,6 +7,7 @@ import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
 import { generatePassword } from "@/lib/utils/generatePassword";
 import SuccessDialog from "@/app/components/ui/SuccessDialog";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 export default function NewResidentPage() {
  const [loading, setLoading] = useState(false);
@@ -70,6 +71,14 @@ export default function NewResidentPage() {
  password,
  });
 
+ setFullName("");
+ setEmail("");
+ setPhone("");
+ setHouseNumber("");
+ setLocationType("street");
+ setLocationName("");
+ setPassword(generatePassword());
+ toast.success("Resident account created successfully.");
  setDialogOpen(true);
  } catch {
  toast.error("Unable to create resident.");
@@ -81,13 +90,7 @@ export default function NewResidentPage() {
  function handleDialogClose() {
  setDialogOpen(false);
 
- setFullName("");
- setEmail("");
- setPhone("");
- setHouseNumber("");
- setLocationType("street");
- setLocationName("");
- setPassword(generatePassword());
+ setCreatedResident(null);
  }
 
  return (
@@ -210,7 +213,7 @@ export default function NewResidentPage() {
  disabled={loading}
  className="inline-flex items-center gap-2 rounded-2xl bg-primary/100 px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
  >
- <Save className="h-5 w-5" />
+ {loading ? <LoadingSpinner className="h-5 w-5" /> : <Save className="h-5 w-5" />}
 
  {loading ? "Creating..." : "Create Resident"}
  </button>
@@ -227,6 +230,7 @@ export default function NewResidentPage() {
  email={createdResident?.email ?? ""}
  password={createdResident?.password ?? ""}
  phone={createdResident?.phone}
+ accountLabel="resident account"
  />
  </AppShell>
  );

@@ -72,6 +72,7 @@ export default function VisitorDetailsModal({
  : "Not entered"
  }
  />
+ <DetailRow label="Checked In By" value={visitor.checked_in_by_name || "Not recorded"} />
 
  <DetailRow
  label="Exit Time"
@@ -81,6 +82,7 @@ export default function VisitorDetailsModal({
  : "Still inside"
  }
  />
+ <DetailRow label="Checked Out By" value={visitor.checked_out_by_name || "Not recorded"} />
 
  <DetailRow
  label="Expires"

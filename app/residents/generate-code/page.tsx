@@ -22,6 +22,7 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
 import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 const MINIMUM_CODE_VALIDITY_MINUTES = 30;
 
@@ -242,7 +243,7 @@ export default function GenerateCodePage() {
        </div>
       </div>
 
-      <form className="grid gap-5 p-6" onSubmit={(event) => event.preventDefault()}>
+ <form className="grid gap-5 p-6" onSubmit={(event) => { event.preventDefault(); void handleGenerateCode(); }}>
        <div className="grid gap-5 md:grid-cols-2">
         <label htmlFor="visitor-name" className="space-y-2">
          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -350,12 +351,11 @@ export default function GenerateCodePage() {
        </div>
 
        <button
-        type="button"
-        onClick={handleGenerateCode}
+ type="submit"
         disabled={loading}
         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
        >
-        <Plus className="h-5 w-5" />
+ {loading ? <LoadingSpinner className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
         {loading ? "Generating pass..." : "Generate Access Code"}
        </button>
       </form>
