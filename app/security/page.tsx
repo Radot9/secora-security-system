@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -28,6 +29,7 @@ import { ActivityItem } from "@/types/activity";
 import { toast } from "sonner";
 import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { AnimatedDialog } from "@/app/components/ui/AnimatedDialog";
 
 type SecurityOfficerProfile = {
  full_name: string | null;
@@ -82,8 +84,13 @@ function VerificationResultCard({
 }) {
  if (!visitorName) return null;
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={close}>
- <section role="dialog" aria-modal="true" aria-labelledby="verification-result-title" className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+ <AnimatedDialog
+ open={Boolean(visitorName)}
+ onClose={close}
+ labelledBy="verification-result-title"
+ canDismiss={!loading}
+ surfaceClassName="max-w-lg p-5 sm:p-6"
+ >
  <div className="flex items-center gap-3">
  <CheckCircle2 className="h-5 w-5 text-primary" />
  <div>
@@ -135,8 +142,7 @@ function VerificationResultCard({
  )}
  </div>
  <button type="button" onClick={close} disabled={loading} className="mt-4 w-full rounded-2xl border border-border px-4 py-3 font-semibold transition hover:bg-muted disabled:opacity-50">Close</button>
- </section>
- </div>
+ </AnimatedDialog>
  );
 }
 
@@ -156,6 +162,9 @@ function SecurityContent() {
  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
  const [transitionLoading, setTransitionLoading] = useState(false);
  const [verificationLoading, setVerificationLoading] = useState(false);
+ const [officerMenuOpen, setOfficerMenuOpen] = useState(false);
+ const [officerMenuPosition, setOfficerMenuPosition] = useState({ top: 0, right: 16 });
+ const officerMenuButtonRef = useRef<HTMLButtonElement>(null);
  const autoVerifiedCode = useRef("");
  const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
  null,
@@ -236,20 +245,20 @@ function SecurityContent() {
  }
 
  setVerificationLoading(true);
+ try {
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
+ .select("id, visitor_name, visitor_phone, plate_number, status, expires_at")
  .eq("access_code", code)
+ .limit(1)
  .maybeSingle();
 
  if (error) {
- setVerificationLoading(false);
  toast.error(error.message);
  return;
  }
 
  if (!data) {
- setVerificationLoading(false);
  toast.error(`Code "${code}" was not found.`);
  return;
  }
@@ -262,10 +271,40 @@ function SecurityContent() {
  setIsExpired(
  data.expires_at ? new Date(data.expires_at) < new Date() : false,
  );
+ } finally {
  setVerificationLoading(false);
+ }
  },
  [accessCode],
  );
+
+ useEffect(() => {
+ let isMounted = true;
+
+ async function loadOfficer() {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+
+ if (!user) return;
+
+ const { data: officerData, error: officerError } = await supabase
+ .from("security_personnel")
+ .select("full_name, email, gate, team")
+ .eq("user_id", user.id)
+ .maybeSingle();
+
+ if (!officerError && officerData && isMounted) {
+ setOfficer(officerData);
+ }
+ }
+
+ void loadOfficer();
+
+ return () => {
+ isMounted = false;
+ };
+ }, []);
 
  useEffect(() => {
  let isMounted = true;
@@ -279,53 +318,41 @@ function SecurityContent() {
  const startOfTodayIso = startOfToday.toISOString();
  const twentyFourHoursAgoIso = twentyFourHoursAgo.toISOString();
 
- const {
- data: { user },
- } = await supabase.auth.getUser();
-
- if (user) {
- const { data: officerData, error: officerError } = await supabase
- .from("security_personnel")
- .select("full_name, email, gate, team")
- .eq("user_id", user.id)
- .maybeSingle();
-
- if (!officerError && officerData && isMounted) {
- setOfficer(officerData);
- }
- }
-
- const { count: checkedIn } = await supabase
+ const [checkedInResult, checkedOutResult, currentlyInsideResult, expiredPassesResult, visitorsResult] = await Promise.all([
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .not("entry_time", "is", null)
- .gte("entry_time", startOfTodayIso);
-
- const { count: checkedOut } = await supabase
+ .gte("entry_time", startOfTodayIso),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .not("exit_time", "is", null)
- .gte("exit_time", startOfTodayIso);
-
- const { count: currentlyInside } = await supabase
+ .gte("exit_time", startOfTodayIso),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
- .eq("status", "entered");
-
- const { count: expiredPasses } = await supabase
+ .select("id", { count: "exact", head: true })
+ .eq("status", "entered"),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .eq("status", "pending")
  .gte("expires_at", startOfTodayIso)
- .lt("expires_at", nowIso);
-
- const { data: visitors } = await supabase
+ .lt("expires_at", nowIso),
+ supabase
  .from("visitors")
  .select("id, visitor_name, visitor_phone, plate_number, resident_name, status, created_at, entry_time, exit_time, expires_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
  .in("status", ["entered", "exited"])
- .or(`entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`);
+ .or(`entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`),
+ ]);
 
  if (!isMounted) return;
+
+ const checkedIn = checkedInResult.count;
+ const checkedOut = checkedOutResult.count;
+ const currentlyInside = currentlyInsideResult.count;
+ const expiredPasses = expiredPassesResult.count;
+ const visitors = visitorsResult.data;
 
  const recentVisitors = (visitors || [])
  .sort((first, second) => {
@@ -389,11 +416,11 @@ function SecurityContent() {
  if (transitionLoading) return;
 
  setTransitionLoading(true);
+ try {
  const response = await fetch(`/api/security/visitors/${visitorId}/check-in`, {
  method: "POST",
  });
  const result = await response.json();
- setTransitionLoading(false);
 
  if (!response.ok) {
  toast.error(result.error ?? "Unable to check in visitor.");
@@ -403,6 +430,11 @@ function SecurityContent() {
  setStatus("entered");
  setDashboardRefreshKey((current) => current + 1);
  toast.success("Visitor checked in successfully.");
+ } catch {
+ toast.error("Unable to reach the check-in service. Please try again.");
+ } finally {
+ setTransitionLoading(false);
+ }
  }
 
  async function checkOutVisitor() {
@@ -410,11 +442,11 @@ function SecurityContent() {
  if (transitionLoading) return;
 
  setTransitionLoading(true);
+ try {
  const response = await fetch(`/api/security/visitors/${visitorId}/check-out`, {
  method: "POST",
  });
  const result = await response.json();
- setTransitionLoading(false);
 
  if (!response.ok) {
  toast.error(result.error ?? "Unable to check out visitor.");
@@ -423,8 +455,12 @@ function SecurityContent() {
 
  setStatus("exited");
  setDashboardRefreshKey((current) => current + 1);
-
  toast.success("Visitor checked out successfully.");
+ } catch {
+ toast.error("Unable to reach the check-out service. Please try again.");
+ } finally {
+ setTransitionLoading(false);
+ }
  }
 
  const visitorStatusConfig = selectedVisitor
@@ -437,7 +473,39 @@ function SecurityContent() {
  const officerName = officer?.full_name ?? "Security Officer";
  const officerInitials = initials(officerName);
 
+ const positionOfficerMenu = useCallback(() => {
+ const trigger = officerMenuButtonRef.current;
+ if (!trigger) return;
+
+ const rect = trigger.getBoundingClientRect();
+ setOfficerMenuPosition({
+ top: rect.bottom + 12,
+ right: Math.max(16, window.innerWidth - rect.right),
+ });
+ }, []);
+
+ useEffect(() => {
+ if (!officerMenuOpen) return;
+
+ positionOfficerMenu();
+
+ function closeOnEscape(event: KeyboardEvent) {
+ if (event.key === "Escape") setOfficerMenuOpen(false);
+ }
+
+ window.addEventListener("resize", positionOfficerMenu);
+ window.addEventListener("scroll", positionOfficerMenu, true);
+ window.addEventListener("keydown", closeOnEscape);
+
+ return () => {
+ window.removeEventListener("resize", positionOfficerMenu);
+ window.removeEventListener("scroll", positionOfficerMenu, true);
+ window.removeEventListener("keydown", closeOnEscape);
+ };
+ }, [officerMenuOpen, positionOfficerMenu]);
+
  async function handleLogout() {
+ setOfficerMenuOpen(false);
  const { error } = await supabase.auth.signOut();
  if (error) {
  toast.error("Unable to log out. Please try again.");
@@ -451,7 +519,7 @@ function SecurityContent() {
  return (
  <main className="min-h-screen bg-background px-4 py-4 text-foreground sm:py-6 lg:px-10 lg:py-10">
  <div className="flex w-full max-w-none flex-col gap-4 sm:gap-6 lg:gap-8">
- <header className="overflow-visible rounded-3xl border border-border bg-card shadow-sm shadow-muted/50 md:overflow-hidden">
+ <header className="relative z-50 overflow-visible rounded-3xl border border-border bg-card shadow-sm shadow-muted/50 md:overflow-hidden">
  <div className="flex items-center gap-3 p-3 md:hidden">
  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
  {officerInitials}
@@ -466,12 +534,41 @@ function SecurityContent() {
  </p>
  </div>
 
- <details className="group relative ml-auto">
- <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-2xl border border-border bg-background text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring [&::-webkit-details-marker]:hidden">
+ <button
+ ref={officerMenuButtonRef}
+ type="button"
+ aria-haspopup="menu"
+ aria-expanded={officerMenuOpen}
+ aria-controls="security-officer-menu"
+ onClick={() => {
+ positionOfficerMenu();
+ setOfficerMenuOpen((current) => !current);
+ }}
+ className="ml-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-background text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+ >
  <Menu className="h-5 w-5" />
- <span className="sr-only">Open officer menu</span>
- </summary>
- <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(18rem,calc(100vw-2rem))] rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl">
+ <span className="sr-only">{officerMenuOpen ? "Close" : "Open"} officer menu</span>
+ </button>
+
+ {officerMenuOpen && typeof document !== "undefined" && createPortal(
+ <>
+ <button
+ type="button"
+ aria-label="Close officer menu"
+ onClick={() => setOfficerMenuOpen(false)}
+ className="fixed inset-0 z-[64] cursor-default bg-transparent"
+ style={{ transform: "none" }}
+ />
+ <div
+ id="security-officer-menu"
+ role="menu"
+ className="fixed z-[65] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl"
+ style={{
+ top: officerMenuPosition.top,
+ right: officerMenuPosition.right,
+ maxHeight: `calc(100dvh - ${officerMenuPosition.top + 16}px)`,
+ }}
+ >
  <div className="border-b border-border px-2 pb-3">
  <p className="font-semibold">{officerName}</p>
  <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -491,6 +588,7 @@ function SecurityContent() {
  <div className="grid gap-2">
  <Link
  href="/security/profile"
+ onClick={() => setOfficerMenuOpen(false)}
  className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold transition hover:bg-muted"
  >
  <UserCircle className="h-5 w-5 text-primary" />
@@ -506,7 +604,9 @@ function SecurityContent() {
  </button>
  </div>
  </div>
- </details>
+ </>,
+ document.body,
+ )}
  </div>
 
  <div className="hidden items-center gap-3 p-3 md:flex lg:px-4">

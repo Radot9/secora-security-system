@@ -17,16 +17,22 @@ export async function requireApiRole(
  options: ApiRoleOptions = {},
 ) {
  const supabase = await createSupabaseServerClient();
- const { data: { user }, error: userError } = await supabase.auth.getUser();
+ const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+ const userId = claimsData?.claims.sub;
 
- if (userError || !user) {
+ if (claimsError || !userId) {
  throw new ApiAuthorizationError("Please sign in to continue.", 401);
  }
+
+ const user = {
+ id: userId,
+ email: typeof claimsData.claims.email === "string" ? claimsData.claims.email : undefined,
+ };
 
  const { data, error } = await supabase
  .from("profiles")
  .select("id, email, full_name, phone, role, is_active, must_change_password, onboarding_completed_at")
- .eq("id", user.id)
+ .eq("id", userId)
  .single();
 
  if (error || !data || !isUserRole(data.role)) {

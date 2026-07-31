@@ -48,8 +48,8 @@ export default function Home() {
  return;
  }
 
- await routeAuthenticatedUser(user.id, "email-link");
- if (mounted) setCheckingEmailLink(false);
+ const navigationStarted = await routeAuthenticatedUser(user.id, "email-link");
+ if (mounted && !navigationStarted) setCheckingEmailLink(false);
  });
 
  return () => {
@@ -59,40 +59,38 @@ export default function Home() {
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
- function redirectForProfile(profile: LoginProfile, source: "email-link" | "password") {
+ function dashboardForProfile(profile: LoginProfile, source: "email-link" | "password") {
  if (!profile.is_active) {
  toast.error("Your account is inactive. Contact a Super Admin for assistance.");
- return;
+ return null;
  }
 
  if (profile.must_change_password) {
  if (source === "email-link" && (profile.role === "admin" || profile.role === "super_admin") && !profile.onboarding_completed_at) {
- router.push("/administrator-onboarding");
- return;
+ return "/administrator-onboarding";
  }
 
- router.push("/update-password");
- return;
+ return "/update-password";
  }
 
  if (profile.role === "resident") {
- router.push("/residents");
- return;
+ return "/residents";
  }
 
  if (profile.role === "security") {
- router.push("/security");
- return;
+ return "/security";
  }
 
  if (profile.role === "admin") {
- router.push("/admin");
- return;
+ return "/admin";
  }
 
  if (profile.role === "super_admin") {
- router.push("/admin/super-admin");
+ return "/admin/super-admin";
  }
+
+ toast.error("Your account does not have a recognized dashboard role.");
+ return null;
  }
 
  async function routeAuthenticatedUser(userId: string, source: "email-link" | "password") {
@@ -104,14 +102,21 @@ export default function Home() {
 
  if (profileError || !profile) {
  toast.error("Profile not found.");
- return;
+ return false;
  }
 
  if (!profile.is_active) {
  await supabase.auth.signOut();
  }
 
- redirectForProfile(profile, source);
+ const destination = dashboardForProfile(profile, source);
+ if (!destination) return false;
+
+ // Keep the pending UI mounted until the destination replaces this page.
+ // Prefetch also lets Next reuse the authenticated route request when possible.
+ router.prefetch(destination);
+ router.replace(destination);
+ return true;
  }
 
  async function handlePasswordReset() {
@@ -151,8 +156,8 @@ export default function Home() {
  return;
  }
 
- await routeAuthenticatedUser(data.user.id, "password");
- setLoginLoading(false);
+ const navigationStarted = await routeAuthenticatedUser(data.user.id, "password");
+ if (!navigationStarted) setLoginLoading(false);
  }
 
  if (checkingEmailLink) {

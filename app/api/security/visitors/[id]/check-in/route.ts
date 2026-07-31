@@ -7,14 +7,15 @@ export async function POST(
  context: RouteContext<"/api/security/visitors/[id]/check-in">,
 ) {
  try {
- const { profile } = await requireApiRole(["security"]);
  const { id } = await context.params;
-
- const { data: visitor, error: visitorError } = await supabaseAdmin
+ const [{ profile }, { data: visitor, error: visitorError }] = await Promise.all([
+ requireApiRole(["security"]),
+ supabaseAdmin
  .from("visitors")
  .select("id, status, expires_at")
  .eq("id", id)
- .single();
+ .single(),
+ ]);
 
  if (visitorError || !visitor) {
  return Response.json({ error: "Visitor pass was not found." }, { status: 404 });

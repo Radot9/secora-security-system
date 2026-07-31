@@ -1,4 +1,5 @@
 import { ActivityItem } from "@/types/activity";
+import { AnimatedDialog } from "@/app/components/ui/AnimatedDialog";
 
 interface VisitorDetailsModalProps {
  visitor: ActivityItem | null;
@@ -20,16 +21,11 @@ export default function VisitorDetailsModal({
  if (!visitor) return null;
 
  return (
- <div
- className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
- onClick={onClose}
- >
- <div
- role="dialog"
- aria-modal="true"
- aria-labelledby="visitor-details-title"
- className="apple-card max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-border bg-card p-6"
- onClick={(event) => event.stopPropagation()}
+ <AnimatedDialog
+ open={Boolean(visitor)}
+ onClose={onClose}
+ labelledBy="visitor-details-title"
+ surfaceClassName="max-w-lg p-5 sm:p-6"
  >
  <div className="text-center">
  <div
@@ -105,8 +101,7 @@ export default function VisitorDetailsModal({
  >
  Close
  </button>
- </div>
- </div>
+ </AnimatedDialog>
  );
 }
 

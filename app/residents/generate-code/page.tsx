@@ -227,7 +227,7 @@ export default function GenerateCodePage() {
 
     <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
      <Card className="overflow-hidden p-0">
- <form className="grid gap-5 p-6" onSubmit={(event) => { event.preventDefault(); void handleGenerateCode(); }}>
+ <form className="grid gap-5 p-4 sm:p-6" onSubmit={(event) => { event.preventDefault(); void handleGenerateCode(); }}>
        <div className="grid gap-5">
         <label htmlFor="visitor-name" className="space-y-2">
          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -241,7 +241,7 @@ export default function GenerateCodePage() {
           onChange={(event) => setVisitorName(event.target.value)}
           placeholder="Enter visitor name"
           autoComplete="name"
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
          />
         </label>
 
@@ -257,7 +257,7 @@ export default function GenerateCodePage() {
           onChange={(event) => setPhoneNumber(event.target.value)}
           placeholder="Enter phone number"
           autoComplete="tel"
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
          />
         </label>
        </div>
@@ -273,7 +273,7 @@ export default function GenerateCodePage() {
          onChange={(event) => setPurposeOfVisit(event.target.value)}
          placeholder="Example: Family visit, delivery, inspection"
          rows={4}
-         className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+         className="w-full resize-none rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
         />
        </label>
 
@@ -294,7 +294,7 @@ export default function GenerateCodePage() {
             value={validityHours}
             onChange={(event) => setValidityHours(event.target.value)}
             placeholder="0"
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+            className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
            />
            <span className="block text-xs text-muted-foreground">Hours</span>
           </label>
@@ -310,7 +310,7 @@ export default function GenerateCodePage() {
             value={validityRemainderMinutes}
             onChange={(event) => setValidityRemainderMinutes(event.target.value)}
             placeholder="30"
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+            className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
            />
            <span className="block text-xs text-muted-foreground">Minutes</span>
           </label>
@@ -329,7 +329,7 @@ export default function GenerateCodePage() {
           value={plateNumber}
           onChange={(event) => setPlateNumber(event.target.value)}
           placeholder="Enter plate number"
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm uppercase text-foreground outline-none transition placeholder:normal-case placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+         className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm uppercase text-foreground outline-none transition placeholder:normal-case placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
          />
         </label>
        </div>

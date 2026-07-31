@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type AnimatedDialogProps = {
   open: boolean;
@@ -69,9 +70,9 @@ export function AnimatedDialog({
     };
   }, [canDismiss, mounted, onClose, open]);
 
-  if (!mounted) return null;
+  if (!mounted || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="apple-dialog-layer"
       data-state={visible && open ? "open" : "closed"}
@@ -93,6 +94,7 @@ export function AnimatedDialog({
       >
         {children}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
