@@ -14,7 +14,16 @@ export function Card({
  return (
  <div
  onClick={onClick}
- className={`rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50 ${className}`}
+ onKeyDown={onClick ? (event) => {
+ if (event.key === "Enter" || event.key === " ") {
+ event.preventDefault();
+ onClick();
+ }
+ } : undefined}
+ role={onClick ? "button" : undefined}
+ tabIndex={onClick ? 0 : undefined}
+ data-interactive={onClick ? "true" : undefined}
+ className={`apple-card rounded-3xl border border-border bg-card p-6 ${className}`}
  >
  {children}
  </div>

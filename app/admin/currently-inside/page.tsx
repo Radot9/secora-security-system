@@ -6,6 +6,7 @@ import { Card } from "@/app/components/ui/Card";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { AppShell } from "@/app/components/ui/AppShell";
+import { toast } from "sonner";
 
 type Visitor = {
  id: string;
@@ -14,6 +15,7 @@ type Visitor = {
  plate_number: string;
  entry_time: string;
  status: string;
+ checked_in_by_name?: string;
 };
 
 export default function CurrentlyInsidePage() {
@@ -28,7 +30,7 @@ export default function CurrentlyInsidePage() {
  .order("entry_time", { ascending: false });
 
  if (error) {
- console.error(error);
+ toast.error("Unable to load visitors currently inside.");
  return;
  }
 
@@ -72,6 +74,9 @@ export default function CurrentlyInsidePage() {
 
  <p className="text-sm text-muted-foreground">
  Entered: {new Date(visitor.entry_time).toLocaleString()}
+ </p>
+ <p className="text-sm text-muted-foreground">
+ Checked in by: {visitor.checked_in_by_name || "Not recorded"}
  </p>
  </div>
  </Card>

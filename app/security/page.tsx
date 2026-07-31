@@ -1,8 +1,10 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
  Activity,
  CheckCircle2,
@@ -10,10 +12,12 @@ import {
  DoorOpen,
  IdCard,
  MapPin,
+ Menu,
  QrCode,
  ShieldCheck,
  ShieldX,
  LogOut,
+ UserCircle,
  UsersRound,
 } from "lucide-react";
 
@@ -23,6 +27,9 @@ import VerificationCard from "./components/VerificationCard";
 import VisitorDetailsModal from "./components/VisitorDetailsModal";
 import { ActivityItem } from "@/types/activity";
 import { toast } from "sonner";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { AnimatedDialog } from "@/app/components/ui/AnimatedDialog";
 
 type SecurityOfficerProfile = {
  full_name: string | null;
@@ -62,6 +69,8 @@ function VerificationResultCard({
  isExpired,
  allowEntry,
  checkOutVisitor,
+ close,
+ loading,
 }: {
  visitorName: string;
  visitorPhone: string;
@@ -70,22 +79,26 @@ function VerificationResultCard({
  isExpired: boolean;
  allowEntry: () => void;
  checkOutVisitor: () => void;
+ close: () => void;
+ loading: boolean;
 }) {
+ if (!visitorName) return null;
  return (
- <section className="flex-1 rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50">
+ <AnimatedDialog
+ open={Boolean(visitorName)}
+ onClose={close}
+ labelledBy="verification-result-title"
+ canDismiss={!loading}
+ surfaceClassName="max-w-lg p-5 sm:p-6"
+ >
  <div className="flex items-center gap-3">
  <CheckCircle2 className="h-5 w-5 text-primary" />
  <div>
- <h2 className="text-xl font-bold">Verification Result</h2>
+ <h2 id="verification-result-title" className="text-xl font-bold">Verification Result</h2>
  <p className="mt-1 text-sm text-muted-foreground">Visitor status appears immediately after verification.</p>
  </div>
  </div>
 
- {!visitorName ? (
- <div className="mt-6 rounded-2xl border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
- No visitor verified yet. Scan a QR code or enter an access code to see the result here.
- </div>
- ) : (
  <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
  <p className="text-sm text-muted-foreground">Visitor Found</p>
  <h3 className="mt-2 text-2xl font-bold">{visitorName}</h3>
@@ -94,7 +107,21 @@ function VerificationResultCard({
  <p>Plate Number: {plateNumber || "N/A"}</p>
  </div>
 
- {isExpired ? (
+ {status === "entered" ? (
+ <>
+ <p className="mt-4 font-semibold text-primary">
+ {isExpired ? "Visitor is inside · original pass has expired" : "Visitor already inside"}
+ </p>
+ <button
+ type="button"
+ onClick={checkOutVisitor}
+ disabled={loading}
+ className="mt-4 w-full rounded-2xl bg-foreground px-4 py-3 font-bold text-background shadow-sm transition hover:bg-foreground/85 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
+ >
+ {loading && <LoadingSpinner />} {loading ? "Checking out..." : "Check Out Visitor"}
+ </button>
+ </>
+ ) : isExpired ? (
  <p className="mt-4 font-semibold text-destructive">Pass expired</p>
  ) : status === "revoked" ? (
  <p className="mt-4 font-semibold text-destructive">Access revoked</p>
@@ -104,33 +131,24 @@ function VerificationResultCard({
  <button
  type="button"
  onClick={allowEntry}
+ disabled={loading}
  className="mt-4 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
  >
- Allow Entry
- </button>
- </>
- ) : status === "entered" ? (
- <>
- <p className="mt-4 font-semibold text-primary">Visitor already inside</p>
- <button
- type="button"
- onClick={checkOutVisitor}
- className="mt-4 w-full rounded-2xl bg-secondary px-4 py-3 font-semibold text-secondary-foreground transition hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-ring"
- >
- Check Out Visitor
+ {loading && <LoadingSpinner />} {loading ? "Checking in..." : "Check In Visitor"}
  </button>
  </>
  ) : (
  <p className="mt-4 font-semibold text-muted-foreground">Visitor has left</p>
  )}
  </div>
- )}
- </section>
+ <button type="button" onClick={close} disabled={loading} className="mt-4 w-full rounded-2xl border border-border px-4 py-3 font-semibold transition hover:bg-muted disabled:opacity-50">Close</button>
+ </AnimatedDialog>
  );
 }
 
 function SecurityContent() {
  const searchParams = useSearchParams();
+ const router = useRouter();
  const qrCode = searchParams.get("code") ?? "";
  const [accessCode, setAccessCode] = useState(qrCode);
  const [visitorName, setVisitorName] = useState("");
@@ -142,6 +160,11 @@ function SecurityContent() {
  const [scannerOpen, setScannerOpen] = useState(false);
  const [officer, setOfficer] = useState<SecurityOfficerProfile | null>(null);
  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+ const [transitionLoading, setTransitionLoading] = useState(false);
+ const [verificationLoading, setVerificationLoading] = useState(false);
+ const [officerMenuOpen, setOfficerMenuOpen] = useState(false);
+ const [officerMenuPosition, setOfficerMenuPosition] = useState({ top: 0, right: 16 });
+ const officerMenuButtonRef = useRef<HTMLButtonElement>(null);
  const autoVerifiedCode = useRef("");
  const [selectedVisitor, setSelectedVisitor] = useState<ActivityItem | null>(
  null,
@@ -221,10 +244,13 @@ function SecurityContent() {
  return;
  }
 
+ setVerificationLoading(true);
+ try {
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
+ .select("id, visitor_name, visitor_phone, plate_number, status, expires_at")
  .eq("access_code", code)
+ .limit(1)
  .maybeSingle();
 
  if (error) {
@@ -245,9 +271,40 @@ function SecurityContent() {
  setIsExpired(
  data.expires_at ? new Date(data.expires_at) < new Date() : false,
  );
+ } finally {
+ setVerificationLoading(false);
+ }
  },
  [accessCode],
  );
+
+ useEffect(() => {
+ let isMounted = true;
+
+ async function loadOfficer() {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+
+ if (!user) return;
+
+ const { data: officerData, error: officerError } = await supabase
+ .from("security_personnel")
+ .select("full_name, email, gate, team")
+ .eq("user_id", user.id)
+ .maybeSingle();
+
+ if (!officerError && officerData && isMounted) {
+ setOfficer(officerData);
+ }
+ }
+
+ void loadOfficer();
+
+ return () => {
+ isMounted = false;
+ };
+ }, []);
 
  useEffect(() => {
  let isMounted = true;
@@ -261,71 +318,58 @@ function SecurityContent() {
  const startOfTodayIso = startOfToday.toISOString();
  const twentyFourHoursAgoIso = twentyFourHoursAgo.toISOString();
 
- const {
- data: { user },
- } = await supabase.auth.getUser();
-
- if (user) {
- const { data: officerData, error: officerError } = await supabase
- .from("security_personnel")
- .select("full_name, email, gate, team")
- .eq("user_id", user.id)
- .maybeSingle();
-
- if (!officerError && officerData && isMounted) {
- setOfficer(officerData);
- }
- }
-
- const { count: checkedIn } = await supabase
+ const [checkedInResult, checkedOutResult, currentlyInsideResult, expiredPassesResult, visitorsResult] = await Promise.all([
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .not("entry_time", "is", null)
- .gte("entry_time", startOfTodayIso);
-
- const { count: checkedOut } = await supabase
+ .gte("entry_time", startOfTodayIso),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .not("exit_time", "is", null)
- .gte("exit_time", startOfTodayIso);
-
- const { count: currentlyInside } = await supabase
+ .gte("exit_time", startOfTodayIso),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
- .eq("status", "entered");
-
- const { count: expiredPasses } = await supabase
+ .select("id", { count: "exact", head: true })
+ .eq("status", "entered"),
+ supabase
  .from("visitors")
- .select("*", { count: "exact", head: true })
+ .select("id", { count: "exact", head: true })
  .eq("status", "pending")
  .gte("expires_at", startOfTodayIso)
- .lt("expires_at", nowIso);
-
- const { data: visitors } = await supabase
+ .lt("expires_at", nowIso),
+ supabase
  .from("visitors")
- .select("*")
- .or(`created_at.gte.${twentyFourHoursAgoIso},entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`);
+ .select("id, visitor_name, visitor_phone, plate_number, resident_name, status, created_at, entry_time, exit_time, expires_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
+ .in("status", ["entered", "exited"])
+ .or(`entry_time.gte.${twentyFourHoursAgoIso},exit_time.gte.${twentyFourHoursAgoIso}`),
+ ]);
 
  if (!isMounted) return;
+
+ const checkedIn = checkedInResult.count;
+ const checkedOut = checkedOutResult.count;
+ const currentlyInside = currentlyInsideResult.count;
+ const expiredPasses = expiredPassesResult.count;
+ const visitors = visitorsResult.data;
 
  const recentVisitors = (visitors || [])
  .sort((first, second) => {
  const firstTime = Math.max(
  new Date(first.exit_time || 0).getTime(),
  new Date(first.entry_time || 0).getTime(),
- new Date(first.created_at || 0).getTime(),
  );
  const secondTime = Math.max(
  new Date(second.exit_time || 0).getTime(),
  new Date(second.entry_time || 0).getTime(),
- new Date(second.created_at || 0).getTime(),
  );
 
  return secondTime - firstTime;
  })
  .slice(0, 10);
 
- setActivity(recentVisitors);
+ setActivity(recentVisitors.map((visitor) => ({ ...visitor, access_code: "" })));
  setStats([
  {
  label: "Visitors checked in",
@@ -369,61 +413,59 @@ function SecurityContent() {
  }, [qrCode, verifyCode]);
  async function allowEntry() {
  if (!visitorId) return;
+ if (transitionLoading) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({
- status: "entered",
- entry_time: new Date().toISOString(),
- })
- .eq("id", visitorId);
+ setTransitionLoading(true);
+ try {
+ const response = await fetch(`/api/security/visitors/${visitorId}/check-in`, {
+ method: "POST",
+ });
+ const result = await response.json();
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to check in visitor.");
  return;
  }
+
  setStatus("entered");
  setDashboardRefreshKey((current) => current + 1);
  toast.success("Visitor checked in successfully.");
+ } catch {
+ toast.error("Unable to reach the check-in service. Please try again.");
+ } finally {
+ setTransitionLoading(false);
+ }
  }
 
  async function checkOutVisitor() {
  if (!visitorId) return;
+ if (transitionLoading) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({
- status: "exited",
- exit_time: new Date().toISOString(),
- })
- .eq("id", visitorId);
+ setTransitionLoading(true);
+ try {
+ const response = await fetch(`/api/security/visitors/${visitorId}/check-out`, {
+ method: "POST",
+ });
+ const result = await response.json();
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to check out visitor.");
  return;
  }
 
  setStatus("exited");
  setDashboardRefreshKey((current) => current + 1);
-
  toast.success("Visitor checked out successfully.");
+ } catch {
+ toast.error("Unable to reach the check-out service. Please try again.");
+ } finally {
+ setTransitionLoading(false);
  }
-
- function getVisitorStatus(visitor: ActivityItem) {
- if (
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return visitor.status;
  }
 
  const visitorStatusConfig = selectedVisitor
  ? statusConfig[
- getVisitorStatus(selectedVisitor) as keyof typeof statusConfig
+ getDisplayVisitorStatus({ status: selectedVisitor.status, expiresAt: selectedVisitor.expires_at }) as keyof typeof statusConfig
  ] || statusConfig.pending
  : statusConfig.pending;
 
@@ -431,83 +473,218 @@ function SecurityContent() {
  const officerName = officer?.full_name ?? "Security Officer";
  const officerInitials = initials(officerName);
 
+ const positionOfficerMenu = useCallback(() => {
+ const trigger = officerMenuButtonRef.current;
+ if (!trigger) return;
+
+ const rect = trigger.getBoundingClientRect();
+ setOfficerMenuPosition({
+ top: rect.bottom + 12,
+ right: Math.max(16, window.innerWidth - rect.right),
+ });
+ }, []);
+
+ useEffect(() => {
+ if (!officerMenuOpen) return;
+
+ positionOfficerMenu();
+
+ function closeOnEscape(event: KeyboardEvent) {
+ if (event.key === "Escape") setOfficerMenuOpen(false);
+ }
+
+ window.addEventListener("resize", positionOfficerMenu);
+ window.addEventListener("scroll", positionOfficerMenu, true);
+ window.addEventListener("keydown", closeOnEscape);
+
+ return () => {
+ window.removeEventListener("resize", positionOfficerMenu);
+ window.removeEventListener("scroll", positionOfficerMenu, true);
+ window.removeEventListener("keydown", closeOnEscape);
+ };
+ }, [officerMenuOpen, positionOfficerMenu]);
+
+ async function handleLogout() {
+ setOfficerMenuOpen(false);
+ const { error } = await supabase.auth.signOut();
+ if (error) {
+ toast.error("Unable to log out. Please try again.");
+ return;
+ }
+
+ router.replace("/");
+ router.refresh();
+ }
+
  return (
- <main className="min-h-screen bg-background px-4 py-10 text-foreground lg:px-10">
- <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
- <header className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm shadow-muted/50">
- <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
- <div className="bg-primary/10 p-6 sm:p-8">
- <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
- <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-primary text-2xl font-black text-primary-foreground shadow-sm">
+ <main className="min-h-screen bg-background px-4 py-4 text-foreground sm:py-6 lg:px-10 lg:py-10">
+ <div className="flex w-full max-w-none flex-col gap-4 sm:gap-6 lg:gap-8">
+ <header className="relative z-50 overflow-visible rounded-3xl border border-border bg-card shadow-sm shadow-muted/50 md:overflow-hidden">
+ <div className="flex items-center gap-3 p-3 md:hidden">
+ <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
  {officerInitials}
  </div>
- <div>
- <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
+ <div className="min-w-0 flex-1">
+ <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary">
  Security dashboard
  </p>
- <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground">
- {officerName}
- </h1>
- <p className="mt-2 text-sm leading-6 text-muted-foreground">
- Verify visitor passes, manage gate entry, and review recent access activity.
+ <h1 className="truncate text-base font-bold">{officerName}</h1>
+ <p className="truncate text-xs text-muted-foreground">
+ {dutyValue(officer?.gate)} · {dutyValue(officer?.team)}
  </p>
  </div>
+
+ <button
+ ref={officerMenuButtonRef}
+ type="button"
+ aria-haspopup="menu"
+ aria-expanded={officerMenuOpen}
+ aria-controls="security-officer-menu"
+ onClick={() => {
+ positionOfficerMenu();
+ setOfficerMenuOpen((current) => !current);
+ }}
+ className="ml-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-background text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+ >
+ <Menu className="h-5 w-5" />
+ <span className="sr-only">{officerMenuOpen ? "Close" : "Open"} officer menu</span>
+ </button>
+
+ {officerMenuOpen && typeof document !== "undefined" && createPortal(
+ <>
+ <button
+ type="button"
+ aria-label="Close officer menu"
+ onClick={() => setOfficerMenuOpen(false)}
+ className="fixed inset-0 z-[64] cursor-default bg-transparent"
+ style={{ transform: "none" }}
+ />
+ <div
+ id="security-officer-menu"
+ role="menu"
+ className="fixed z-[65] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl"
+ style={{
+ top: officerMenuPosition.top,
+ right: officerMenuPosition.right,
+ maxHeight: `calc(100dvh - ${officerMenuPosition.top + 16}px)`,
+ }}
+ >
+ <div className="border-b border-border px-2 pb-3">
+ <p className="font-semibold">{officerName}</p>
+ <p className="mt-1 truncate text-xs text-muted-foreground">
+ {officer?.email ?? "No email available"}
+ </p>
+ </div>
+ <div className="grid grid-cols-2 gap-2 py-3 text-sm">
+ <div className="rounded-2xl bg-muted p-3">
+ <p className="text-xs text-muted-foreground">Gate</p>
+ <p className="mt-1 truncate font-semibold">{dutyValue(officer?.gate)}</p>
+ </div>
+ <div className="rounded-2xl bg-muted p-3">
+ <p className="text-xs text-muted-foreground">Team</p>
+ <p className="mt-1 truncate font-semibold">{dutyValue(officer?.team)}</p>
+ </div>
+ </div>
+ <div className="grid gap-2">
+ <Link
+ href="/security/profile"
+ onClick={() => setOfficerMenuOpen(false)}
+ className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold transition hover:bg-muted"
+ >
+ <UserCircle className="h-5 w-5 text-primary" />
+ View Profile
+ </Link>
+ <button
+ type="button"
+ onClick={handleLogout}
+ className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+ >
+ <LogOut className="h-5 w-5" />
+ Logout
+ </button>
+ </div>
+ </div>
+ </>,
+ document.body,
+ )}
+ </div>
+
+ <div className="hidden items-center gap-3 p-3 md:flex lg:px-4">
+ <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
+ {officerInitials}
+ </div>
+ <div className="min-w-0">
+ <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary">
+ Security dashboard
+ </p>
+ <h1 className="truncate text-base font-bold">{officerName}</h1>
+ </div>
+
+ <div className="ml-auto flex items-center divide-x divide-border">
+ <div className="min-w-24 px-4">
+ <p className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+ <MapPin className="h-3.5 w-3.5 text-primary" /> Gate
+ </p>
+ <p className="mt-0.5 max-w-32 truncate text-sm font-semibold">
+ {dutyValue(officer?.gate)}
+ </p>
+ </div>
+ <div className="min-w-24 px-4">
+ <p className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+ <IdCard className="h-3.5 w-3.5 text-primary" /> Team
+ </p>
+ <p className="mt-0.5 max-w-32 truncate text-sm font-semibold">
+ {dutyValue(officer?.team)}
+ </p>
  </div>
  </div>
 
- <div className="grid gap-0 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
- <div className="p-6 sm:p-8">
- <div className="flex items-center gap-3">
- <MapPin className="h-5 w-5 text-primary" />
- <p className="text-sm font-medium text-muted-foreground">Gate duty</p>
- </div>
- <p className="mt-3 text-2xl font-bold">{dutyValue(officer?.gate)}</p>
- </div>
- <div className="p-6 sm:p-8">
- <div className="flex items-center gap-3">
- <IdCard className="h-5 w-5 text-primary" />
- <p className="text-sm font-medium text-muted-foreground">Team</p>
- </div>
- <p className="mt-3 text-2xl font-bold">{dutyValue(officer?.team)}</p>
- </div>
- </div>
+ <Link
+ href="/security/profile"
+ aria-label="View profile"
+ className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+ >
+ <UserCircle className="h-5 w-5 text-primary" />
+ <span className="hidden xl:inline">Profile</span>
+ </Link>
+ <button
+ type="button"
+ onClick={handleLogout}
+ aria-label="Logout"
+ className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+ >
+ <LogOut className="h-5 w-5" />
+ <span className="hidden xl:inline">Logout</span>
+ </button>
  </div>
  </header>
 
- <section className="grid items-stretch gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+ <section className="grid items-stretch gap-4 sm:gap-6 xl:grid-cols-[1.05fr_0.95fr]">
  <VerificationCard
  accessCode={accessCode}
  setAccessCode={setAccessCode}
  verifyCode={verifyCode}
  scannerOpen={() => setScannerOpen(true)}
+ loading={verificationLoading}
  />
 
- <div className="flex h-full flex-col gap-6">
- <section className="rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50">
- <div className="flex items-start gap-4">
- <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
- <ShieldCheck className="h-6 w-6" />
+ <div className="flex h-full flex-col gap-4 sm:gap-6">
+ <section className="rounded-3xl border border-border bg-card p-4 shadow-sm shadow-muted/50 sm:p-6">
+ <div className="flex items-start gap-3 sm:gap-4">
+ <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-11 sm:w-11">
+ <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
  </div>
- <div>
- <h2 className="text-xl font-bold">Duty checklist</h2>
- <div className="mt-4 space-y-3 text-sm text-muted-foreground">
- <p className="flex items-center gap-2"><QrCode className="h-4 w-4 text-primary" /> Scan or enter each visitor access code.</p>
- <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Confirm visitor details before allowing entry.</p>
- <p className="flex items-center gap-2"><LogOut className="h-4 w-4 text-primary" /> Check visitors out when they leave the estate.</p>
+ <div className="min-w-0">
+ <h2 className="text-lg font-bold sm:text-xl">Duty checklist</h2>
+ <div className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground sm:mt-4 sm:space-y-3 sm:text-sm">
+ <p className="flex items-start gap-2"><QrCode className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Scan or enter each visitor access code.</p>
+ <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Confirm visitor details before allowing entry.</p>
+ <p className="flex items-start gap-2"><LogOut className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Check visitors out when they leave the estate.</p>
  </div>
  </div>
  </div>
  </section>
 
- <VerificationResultCard
- visitorName={visitorName}
- visitorPhone={visitorPhone}
- plateNumber={plateNumber}
- status={status}
- isExpired={isExpired}
- allowEntry={allowEntry}
- checkOutVisitor={checkOutVisitor}
- />
  </div>
  </section>
 
@@ -547,7 +724,7 @@ function SecurityContent() {
  <ActivityTable
  activity={activity}
  setSelectedVisitor={setSelectedVisitor}
- getVisitorStatus={getVisitorStatus}
+ getVisitorStatus={(visitor) => getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })}
  />
  </div>
 
@@ -556,6 +733,22 @@ function SecurityContent() {
  visitorStatusConfig={visitorStatusConfig}
  StatusIcon={StatusIcon}
  onClose={() => setSelectedVisitor(null)}
+ />
+ <VerificationResultCard
+ visitorName={visitorName}
+ visitorPhone={visitorPhone}
+ plateNumber={plateNumber}
+ status={status}
+ isExpired={isExpired}
+ allowEntry={allowEntry}
+ checkOutVisitor={checkOutVisitor}
+ loading={transitionLoading}
+ close={() => {
+ setVisitorName("");
+ setVisitorId("");
+ setStatus("");
+ setIsExpired(false);
+ }}
  />
  <ScannerModal
  open={scannerOpen}

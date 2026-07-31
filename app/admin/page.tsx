@@ -6,6 +6,7 @@ import {
  Activity,
  AlertTriangle,
  BarChart3,
+ ChevronRight,
  ClipboardList,
  Clock3,
  DoorOpen,
@@ -21,9 +22,15 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/app/components/ui/AppShell";
 import { Card } from "@/app/components/ui/Card";
+import {
+ AccountStatusChart,
+ MetricBarChart,
+} from "@/app/components/ui/DashboardCharts";
+import { DashboardLoadingNotice } from "@/app/components/ui/DashboardLoading";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { supabase } from "@/lib/supabase";
+import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
 
 type RecentVisitor = {
  id: string;
@@ -67,14 +74,26 @@ const fallbackOverview: AdminOverview = {
  recentVisitors: [],
 };
 
-const quickActions = [
+const actionGroups = [
+ {
+ title: "Access operations",
+ description: "Monitor and audit visitor movement across the estate.",
+ actions: [
  { label: "Currently Inside", href: "/admin/currently-inside", description: "See every visitor still inside the estate.", icon: DoorOpen },
  { label: "Visitor History", href: "/admin/visitor-history", description: "Review visitor records, check-ins, and exits.", icon: ClipboardList },
  { label: "Access Logs", href: "/admin/access-logs", description: "Audit code verification activity across gates.", icon: Activity },
- { label: "Analytics", href: "/admin/analytics", description: "Track visitor flow and operational trends.", icon: BarChart3 },
+ ],
+ },
+ {
+ title: "People & administration",
+ description: "Manage estate accounts, teams, and operating preferences.",
+ actions: [
  { label: "Residents", href: "/admin/residents", description: "Manage resident profiles and estate homes.", icon: UsersRound },
  { label: "Security Personnel", href: "/admin/security", description: "Manage gate officers, teams, and status.", icon: ShieldCheck },
- { label: "Estate Settings", href: "/admin/settings", description: "Adjust access rules and local preferences.", icon: Settings },
+ { label: "Analytics", href: "/admin/analytics", description: "Track visitor flow and operational trends.", icon: BarChart3 },
+ { label: "Profile & Settings", href: "/admin/settings", description: "Review your profile and estate preferences.", icon: Settings },
+ ],
+ },
 ];
 
 const createActions = [
@@ -88,24 +107,6 @@ function formatDate(value: string | null) {
  dateStyle: "medium",
  timeStyle: "short",
  }).format(new Date(value));
-}
-
-function statusClassName(status: string | null) {
- switch (status) {
- case "entered":
- return "bg-emerald-100 text-emerald-700";
- case "exited":
- return "bg-primary/15 text-primary";
- case "revoked":
- return "bg-destructive/15 text-destructive";
- default:
- return "bg-muted text-muted-foreground";
- }
-}
-
-function displayStatus(status: string | null) {
- if (!status) return "Pending";
- return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function AdminPage() {
@@ -128,7 +129,7 @@ export default function AdminPage() {
  activeSecurity,
  inactiveSecurity,
  recentVisitors,
- authUser,
+ authSession,
  ] = await Promise.all([
  supabase.from("visitors").select("id", { count: "exact", head: true }).gte("created_at", startOfToday),
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("status", "entered"),
@@ -140,7 +141,7 @@ export default function AdminPage() {
  supabase.from("security_personnel").select("id", { count: "exact", head: true }).eq("is_active", true),
  supabase.from("security_personnel").select("id", { count: "exact", head: true }).eq("is_active", false),
  supabase.from("visitors").select("id, visitor_name, resident_name, status, created_at").order("created_at", { ascending: false }).limit(6),
- supabase.auth.getUser(),
+ supabase.auth.getSession(),
  ]);
 
  const failedRequest = [
@@ -162,8 +163,8 @@ export default function AdminPage() {
  return;
  }
 
- if (authUser.data.user) {
- const { data: profile } = await supabase.from("profiles").select("role").eq("id", authUser.data.user.id).single();
+ if (authSession.data.session?.user) {
+ const { data: profile } = await supabase.from("profiles").select("role").eq("id", authSession.data.session.user.id).single();
  setIsSuperAdmin(profile?.role === "super_admin");
  }
 
@@ -219,11 +220,45 @@ export default function AdminPage() {
  </div>
  </div>
 
+ {loading && <DashboardLoadingNotice label="Loading estate operations and account activity…" />}
+
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
  <StatCard label="Visitors Today" value={loading ? "..." : overview.access.visitorsToday} icon={<Activity className="h-6 w-6 text-primary" />} />
  <StatCard label="Currently Inside" value={loading ? "..." : overview.access.currentlyInside} icon={<DoorOpen className="h-6 w-6 text-primary" />} />
  <StatCard label="Checked Out" value={loading ? "..." : overview.access.checkedOut} icon={<Clock3 className="h-6 w-6 text-primary" />} />
  <StatCard label="Revoked Passes" value={loading ? "..." : overview.access.revokedPasses} icon={<AlertTriangle className="h-6 w-6 text-destructive" />} />
+ </section>
+
+ <section className="grid gap-6 xl:grid-cols-2">
+ <MetricBarChart
+ title="Visitor access snapshot"
+ description="A live comparison of today’s visitor flow and access states."
+ loading={loading}
+ data={[
+ { label: "Created today", value: overview.access.visitorsToday },
+ { label: "Currently inside", value: overview.access.currentlyInside },
+ { label: "Checked out", value: overview.access.checkedOut },
+ { label: "Pending", value: overview.access.pendingPasses },
+ { label: "Revoked", value: overview.access.revokedPasses },
+ ]}
+ />
+ <AccountStatusChart
+ title="Estate account health"
+ description="Active and inactive resident and security accounts."
+ loading={loading}
+ data={[
+ {
+ label: "Residents",
+ active: overview.estateAccounts.activeResidents,
+ inactive: overview.estateAccounts.inactiveResidents,
+ },
+ {
+ label: "Security",
+ active: overview.estateAccounts.activeSecurity,
+ inactive: overview.estateAccounts.inactiveSecurity,
+ },
+ ]}
+ />
  </section>
 
  <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -292,18 +327,33 @@ export default function AdminPage() {
  })}
  </section>
 
- <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
- {quickActions.map((action) => {
+ {actionGroups.map((group) => (
+ <section key={group.title} aria-labelledby={`group-${group.title.replaceAll(" ", "-").toLowerCase()}`}>
+ <div className="mb-4">
+ <h2 id={`group-${group.title.replaceAll(" ", "-").toLowerCase()}`} className="text-lg font-bold">
+ {group.title}
+ </h2>
+ <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
+ </div>
+ <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+ {group.actions.map((action) => {
  const Icon = action.icon;
  return (
- <Link key={action.href} href={action.href} className="rounded-3xl border border-border bg-card p-5 shadow-sm shadow-muted/50 transition hover:border-primary/40 hover:bg-primary/10">
- <Icon className="h-6 w-6 text-primary" />
+ <Link key={action.href} href={action.href} className="group rounded-3xl border border-border bg-card p-5 shadow-sm shadow-muted/50 transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-md">
+ <div className="flex items-start justify-between gap-4">
+ <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+ <Icon className="h-6 w-6" />
+ </span>
+ <ChevronRight className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+ </div>
  <h3 className="mt-4 font-bold">{action.label}</h3>
  <p className="mt-2 text-sm leading-6 text-muted-foreground">{action.description}</p>
  </Link>
  );
  })}
+ </div>
  </section>
+ ))}
 
  <Card className="p-0">
  <div className="border-b border-border p-6">
@@ -322,7 +372,7 @@ export default function AdminPage() {
  <p className="font-semibold">{visitor.visitor_name}</p>
  <p className="mt-1 text-sm text-muted-foreground">Visiting {visitor.resident_name} · {formatDate(visitor.created_at)}</p>
  </div>
- <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>{displayStatus(visitor.status)}</span>
+ <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${visitorStatusClassName(visitor.status)}`}>{displayVisitorStatus(visitor.status)}</span>
  </article>
  ))}
  </div>

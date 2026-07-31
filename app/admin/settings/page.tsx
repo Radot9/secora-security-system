@@ -24,7 +24,6 @@ export default function EstateSettingsPage() {
  <PageHeader
  title="Estate Settings"
  subtitle="Review operational access defaults for the estate"
- backHref="/admin"
  />
 
  <Card>

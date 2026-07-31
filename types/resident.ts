@@ -4,6 +4,7 @@ export interface Resident {
   email: string;
   phone: string;
   house_number: string;
-  street: string;
+  street: string | null;
+  close: string | null;
   is_active: boolean;
 }

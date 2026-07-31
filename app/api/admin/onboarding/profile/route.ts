@@ -3,7 +3,10 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
  try {
- const { profile } = await requireApiRole(["admin", "super_admin"]);
+ const { profile } = await requireApiRole(["admin", "super_admin"], {
+ allowPasswordChangeRequired: true,
+ allowIncompleteOnboarding: true,
+ });
  const { data: invitation, error } = await supabaseAdmin.from("admin_invitations")
  .select("id, profile_completed_at, status, expires_at, accepted_at")
  .eq("auth_user_id", profile.id)
@@ -21,7 +24,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
  try {
- const { profile } = await requireApiRole(["admin", "super_admin"]);
+ const { profile } = await requireApiRole(["admin", "super_admin"], {
+ allowPasswordChangeRequired: true,
+ allowIncompleteOnboarding: true,
+ });
  const body = await request.json();
  const fullName = String(body.fullName ?? "").trim();
  const phone = String(body.phone ?? "").trim();

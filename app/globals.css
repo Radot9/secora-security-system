@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-sans: var(--font-sans);
   --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,72 +51,72 @@
 :root {
   --font-family-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   --font-family-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
+  --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.508 0.118 165.612);
   --primary-foreground: oklch(0.979 0.021 166.113);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
-  --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.879 0.169 91.605);
+  --chart-2: oklch(0.769 0.188 70.08);
+  --chart-3: oklch(0.666 0.179 58.318);
+  --chart-4: oklch(0.555 0.163 48.998);
+  --chart-5: oklch(0.473 0.137 46.201);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.596 0.145 163.225);
   --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.432 0.095 166.913);
   --primary-foreground: oklch(0.979 0.021 166.113);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
-  --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
-  --sidebar: oklch(0.21 0.006 285.885);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.879 0.169 91.605);
+  --chart-2: oklch(0.769 0.188 70.08);
+  --chart-3: oklch(0.666 0.179 58.318);
+  --chart-4: oklch(0.555 0.163 48.998);
+  --chart-5: oklch(0.473 0.137 46.201);
+  --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.696 0.17 162.48);
   --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -126,10 +126,23 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-family-sans);
+    min-width: 20rem;
+    font-synthesis: none;
   }
   html {
     @apply font-sans;
     font-family: var(--font-family-sans);
+    background: var(--background);
+    scroll-behavior: smooth;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 24%, transparent);
   }
 }
 
@@ -142,10 +155,495 @@
     @apply flex w-full max-w-none flex-col gap-8;
   }
 
+  .admin-content > main {
+    min-height: auto;
+  }
+
+  .resident-content > main {
+    min-height: auto;
+  }
+
   @media (min-width: 1024px) {
     .resident-shell {
-      padding-left: 8rem;
+      padding-left: 2.5rem;
       padding-right: 2.5rem;
+      padding-bottom: 2.5rem;
     }
+  }
+}
+
+/* Secora's Apple-inspired material and motion layer. */
+:where(button, a[href], [role="button"]) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:where(button, a[href], [role="button"]):not(:disabled) {
+  transform-origin: center;
+}
+
+:where(button, a[href], [role="button"]):not(:disabled):active {
+  transform: scale(0.975);
+  transition: transform 90ms ease-out;
+}
+
+:where(button, a[href], input, textarea, select, [role="button"]):focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem color-mix(in oklch, var(--ring) 24%, transparent);
+}
+
+:where(.rounded-3xl.border.bg-card),
+.apple-card {
+  box-shadow:
+    0 1px 0 color-mix(in oklch, white 72%, transparent) inset,
+    0 1rem 2.8rem color-mix(in oklch, var(--foreground) 8%, transparent);
+  -webkit-backdrop-filter: blur(1rem) saturate(150%);
+  backdrop-filter: blur(1rem) saturate(150%);
+}
+
+.apple-card {
+  position: relative;
+  transition:
+    border-color 220ms ease,
+    box-shadow 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.apple-card[data-interactive="true"] {
+  cursor: pointer;
+}
+
+.apple-card[data-interactive="true"]:active {
+  transform: scale(0.985);
+}
+
+.brand-mark {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, white 34%, transparent);
+  border-radius: 1.05rem;
+  color: var(--primary-foreground);
+  background:
+    linear-gradient(145deg, color-mix(in oklch, white 16%, transparent), transparent 42%),
+    linear-gradient(150deg, color-mix(in oklch, var(--primary) 88%, white), var(--primary));
+  box-shadow:
+    0 0.0625rem 0 color-mix(in oklch, white 55%, transparent) inset,
+    0 0.65rem 1.5rem color-mix(in oklch, var(--primary) 28%, transparent);
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0.12rem;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px color-mix(in oklch, white 9%, transparent) inset;
+  pointer-events: none;
+}
+
+.brand-mark--small {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.85rem;
+}
+
+.brand-mark--large {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1.3rem;
+}
+
+.apple-primary-button,
+.apple-secondary-button,
+.apple-icon-button {
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 260ms ease,
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.apple-primary-button {
+  box-shadow:
+    0 0.0625rem 0 color-mix(in oklch, white 24%, transparent) inset,
+    0 0.5rem 1.25rem color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
+.apple-secondary-button,
+.apple-icon-button {
+  background-color: color-mix(in oklch, var(--card) 72%, transparent);
+  -webkit-backdrop-filter: blur(1rem) saturate(150%);
+  backdrop-filter: blur(1rem) saturate(150%);
+}
+
+.apple-input {
+  min-height: 3.25rem;
+  background-color: color-mix(in oklch, var(--background) 78%, transparent);
+  box-shadow:
+    0 0.0625rem 0 color-mix(in oklch, white 45%, transparent) inset,
+    0 0 0 0 transparent;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 260ms ease;
+}
+
+.apple-input::placeholder {
+  color: color-mix(in oklch, var(--muted-foreground) 78%, transparent);
+}
+
+.apple-input:focus {
+  border-color: color-mix(in oklch, var(--ring) 58%, transparent);
+  background-color: color-mix(in oklch, var(--card) 94%, transparent);
+  box-shadow:
+    0 0 0 0.2rem color-mix(in oklch, var(--ring) 15%, transparent),
+    0 0.5rem 1.4rem color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+.stat-card {
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  right: -2.5rem;
+  bottom: -3.5rem;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+  pointer-events: none;
+}
+
+.app-sidebar {
+  background: color-mix(in oklch, var(--sidebar) 92%, transparent);
+  box-shadow: 1rem 0 3rem color-mix(in oklch, var(--foreground) 4%, transparent);
+  -webkit-backdrop-filter: blur(2rem) saturate(165%);
+  backdrop-filter: blur(2rem) saturate(165%);
+}
+
+.app-toolbar {
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+  background: color-mix(in oklch, var(--card) 84%, transparent);
+  box-shadow: 0 0.65rem 2rem color-mix(in oklch, var(--foreground) 4%, transparent);
+  -webkit-backdrop-filter: blur(1.7rem) saturate(180%);
+  backdrop-filter: blur(1.7rem) saturate(180%);
+}
+
+.app-nav-link,
+.app-tab-link {
+  transition:
+    color 180ms ease,
+    background-color 220ms ease,
+    box-shadow 260ms ease,
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.app-nav-link:hover {
+  color: var(--sidebar-accent-foreground);
+  background: color-mix(in oklch, var(--sidebar-accent) 78%, transparent);
+}
+
+.app-nav-link[data-active="true"] {
+  color: var(--sidebar-primary);
+  background: color-mix(in oklch, var(--sidebar-primary) 13%, transparent);
+  box-shadow:
+    0 0.0625rem 0 color-mix(in oklch, white 32%, transparent) inset,
+    0 0 0 1px color-mix(in oklch, var(--sidebar-primary) 12%, transparent) inset;
+}
+
+.app-mobile-nav {
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility 0s linear 380ms;
+}
+
+.app-mobile-nav-backdrop {
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.app-mobile-nav-panel {
+  transform: translate3d(-105%, 0, 0);
+  transition: transform 380ms cubic-bezier(0.2, 0.86, 0.2, 1);
+  will-change: transform;
+}
+
+.app-mobile-nav[data-open="true"] {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.app-mobile-nav[data-open="true"] .app-mobile-nav-backdrop {
+  opacity: 1;
+}
+
+.app-mobile-nav[data-open="true"] .app-mobile-nav-panel {
+  transform: translate3d(0, 0, 0);
+}
+
+.app-bottom-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 60;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in oklch, var(--border) 65%, transparent);
+  background: color-mix(in oklch, var(--card) 88%, transparent);
+  box-shadow: 0 -1rem 2.5rem color-mix(in oklch, var(--foreground) 7%, transparent);
+  -webkit-backdrop-filter: blur(1.8rem) saturate(180%);
+  backdrop-filter: blur(1.8rem) saturate(180%);
+}
+
+.app-tab-link:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--muted) 72%, transparent);
+}
+
+.app-tab-link[data-active="true"] {
+  color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 11%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 8%, transparent) inset;
+}
+
+.apple-dialog-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding:
+    max(0.75rem, env(safe-area-inset-top))
+    max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom))
+    max(0.75rem, env(safe-area-inset-left));
+  isolation: isolate;
+}
+
+.apple-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in oklch, var(--foreground) 42%, transparent);
+  opacity: 0;
+  -webkit-backdrop-filter: blur(0);
+  backdrop-filter: blur(0);
+  transition:
+    opacity 220ms ease,
+    backdrop-filter 280ms ease;
+}
+
+.apple-dialog-surface {
+  width: 100%;
+  max-height: calc(var(--dialog-viewport-height, 100dvh) - 1.5rem);
+  margin-block: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid color-mix(in oklch, var(--border) 84%, transparent);
+  border-radius: 1.75rem;
+  color: var(--card-foreground);
+  background: color-mix(in oklch, var(--card) 94%, transparent);
+  box-shadow:
+    0 0.0625rem 0 color-mix(in oklch, white 42%, transparent) inset,
+    0 2rem 6rem color-mix(in oklch, var(--foreground) 24%, transparent);
+  opacity: 0;
+  filter: blur(0.4rem);
+  transform: translate3d(0, 0.75rem, 0) scale(0.97);
+  transform-origin: 50% 52%;
+  -webkit-backdrop-filter: blur(2.25rem) saturate(175%);
+  backdrop-filter: blur(2.25rem) saturate(175%);
+  transition:
+    opacity 190ms ease,
+    filter 260ms ease,
+    transform 360ms cubic-bezier(0.2, 0.88, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.apple-dialog-layer[data-state="open"] .apple-dialog-backdrop {
+  opacity: 1;
+  -webkit-backdrop-filter: blur(0.35rem);
+  backdrop-filter: blur(0.35rem);
+}
+
+.apple-dialog-layer[data-state="open"] .apple-dialog-surface {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.login-shell {
+  background: var(--background);
+}
+
+.login-panel {
+  max-width: 31rem;
+  justify-self: center;
+}
+
+.login-feature {
+  display: flex;
+  min-height: 5.5rem;
+  flex-direction: column;
+  gap: 0.65rem;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+  border-radius: 1.15rem;
+  background: color-mix(in oklch, var(--card) 48%, transparent);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.35;
+  -webkit-backdrop-filter: blur(1rem);
+  backdrop-filter: blur(1rem);
+}
+
+.login-orb {
+  position: absolute;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 11%, transparent);
+  filter: blur(0.15rem);
+  pointer-events: none;
+}
+
+.login-orb--one {
+  top: -9rem;
+  right: 9%;
+  width: 23rem;
+  height: 23rem;
+}
+
+.login-orb--two {
+  bottom: -12rem;
+  left: 5%;
+  width: 28rem;
+  height: 28rem;
+  opacity: 0.55;
+}
+
+@media (hover: hover) {
+  .apple-card[data-interactive="true"]:hover,
+  a.apple-card:hover {
+    border-color: color-mix(in oklch, var(--primary) 35%, var(--border));
+    box-shadow:
+      0 1px 0 color-mix(in oklch, white 72%, transparent) inset,
+      0 1.35rem 3.25rem color-mix(in oklch, var(--foreground) 11%, transparent);
+    transform: translateY(-0.125rem);
+  }
+
+  .apple-primary-button:hover {
+    box-shadow:
+      0 0.0625rem 0 color-mix(in oklch, white 28%, transparent) inset,
+      0 0.75rem 1.7rem color-mix(in oklch, var(--primary) 30%, transparent);
+    transform: translateY(-0.0625rem);
+  }
+
+  .apple-secondary-button:hover,
+  .apple-icon-button:hover {
+    background-color: color-mix(in oklch, var(--muted) 80%, transparent);
+  }
+}
+
+@keyframes secora-materialize {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.6rem, 0) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body > main,
+  .admin-content > main,
+  .resident-content > main {
+    animation: secora-materialize 420ms cubic-bezier(0.2, 0.82, 0.2, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .apple-dialog-surface,
+  .app-mobile-nav-panel {
+    filter: none;
+    transform: none;
+  }
+
+  .app-mobile-nav {
+    transition-delay: 0s !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --card: oklch(1 0 0);
+    --sidebar: oklch(0.985 0 0);
+  }
+
+  .dark {
+    --card: oklch(0.205 0 0);
+    --sidebar: oklch(0.205 0 0);
+  }
+
+  .app-sidebar,
+  .app-toolbar,
+  .app-bottom-bar,
+  .apple-card,
+  .apple-dialog-backdrop,
+  .apple-dialog-surface,
+  .apple-secondary-button,
+  .apple-icon-button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: oklch(0.38 0.025 165 / 72%);
+    --muted-foreground: oklch(0.34 0.025 165);
+  }
+
+  .dark {
+    --border: oklch(0.92 0.012 163 / 62%);
+    --muted-foreground: oklch(0.84 0.018 163);
+  }
+
+  .app-toolbar,
+  .app-sidebar,
+  .app-bottom-bar,
+  .apple-card,
+  .apple-dialog-surface {
+    background: var(--card);
   }
 }

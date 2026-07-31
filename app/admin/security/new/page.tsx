@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
 import { generatePassword } from "@/lib/utils/generatePassword";
 import SuccessDialog from "@/app/components/ui/SuccessDialog";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 export default function NewResidentPage() {
  const [loading, setLoading] = useState(false);
@@ -51,10 +51,9 @@ export default function NewResidentPage() {
 
  const result = await response.json();
 
- //Duplicate email error handling
  if (!response.ok) {
  if (result.error?.toLowerCase().includes("already")) {
- toast.warning("A resident with this email address already exists.");
+ toast.warning("A security officer with this email address already exists.");
  } else {
  toast.error(result.error);
  }
@@ -69,18 +68,14 @@ export default function NewResidentPage() {
  password,
  });
 
- // Open the success dialog
  setDialogOpen(true);
- } catch (error) {
- console.error(error);
-
- toast.error("Unable to create resident.");
+ } catch {
+ toast.error("Unable to create security officer.");
  } finally {
  setLoading(false);
  }
  }
 
- // Reset the form after the success dialog is closed
  function handleDialogClose() {
  setDialogOpen(false);
 
@@ -88,28 +83,17 @@ export default function NewResidentPage() {
  setEmail("");
  setPhone("");
 
- // Reset security-specific fields
  setGate("");
  setTeam("");
 
- // Generate a new temporary password
  setPassword(generatePassword());
 
- // Clear the created officer information
  setCreatedOfficer(null);
  }
 
  return (
  <AppShell size="default">
  <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
- <Link
- href="/admin/security"
- className="inline-flex w-fit items-center gap-2 rounded-xl px-2 py-1 text-sm text-muted-foreground transition hover:text-primary"
- >
- <ArrowLeft className="h-4 w-4" />
- Back to Security Personnel
- </Link>
-
  <PageHeader
  title="Add Security Officer"
  subtitle="Create a new security personnel account"
@@ -220,7 +204,7 @@ export default function NewResidentPage() {
  disabled={loading}
  className="inline-flex items-center gap-2 rounded-2xl bg-primary/100 px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
  >
- <Save className="h-5 w-5" />
+ {loading ? <LoadingSpinner className="h-5 w-5" /> : <Save className="h-5 w-5" />}
 
  {loading ? "Creating..." : "Create Security Officer"}
  </button>
@@ -237,6 +221,7 @@ export default function NewResidentPage() {
  email={createdOfficer?.email ?? ""}
  password={createdOfficer?.password ?? ""}
  phone={createdOfficer?.phone}
+ accountLabel="security officer account"
  />
  </AppShell>
  );

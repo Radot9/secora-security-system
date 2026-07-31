@@ -13,14 +13,14 @@ export function StatCard({
  icon,
 }: StatCardProps) {
  return (
- <Card>
+ <Card className="stat-card">
  {icon && (
  <div className="mb-4">
  {icon}
  </div>
  )}
 
- <p className="text-3xl font-bold">
+ <p className="text-3xl font-bold tracking-[-0.035em] tabular-nums">
  {value}
  </p>
 

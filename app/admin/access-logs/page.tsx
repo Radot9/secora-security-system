@@ -9,6 +9,7 @@ import { AppShell } from "@/app/components/ui/AppShell";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 
 export default function AccessLogsPage() {
  const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -22,7 +23,7 @@ export default function AccessLogsPage() {
  async function loadLogs() {
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
+ .select("id, visitor_name, visitor_phone, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
  .order("created_at", { ascending: false })
  .limit(100);
 
@@ -46,7 +47,7 @@ export default function AccessLogsPage() {
  const term = search.trim().toLowerCase();
 
  return activity.filter((item) => {
- const displayStatus = getDisplayStatus(item);
+ const displayStatus = getDisplayVisitorStatus({ status: item.status, expiresAt: item.expires_at });
  const matchesStatus = status === "all" || displayStatus === status;
  const matchesSearch =
  !term ||
@@ -65,13 +66,13 @@ export default function AccessLogsPage() {
  <PageHeader
  title="Access Logs"
  subtitle="Review recent visitor verification and movement activity"
- backHref="/admin"
  />
 
  <div className="grid gap-3 md:grid-cols-[1fr_220px]">
  <div className="relative">
  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
  <input
+ aria-label="Search access logs"
  value={search}
  onChange={(event) => setSearch(event.target.value)}
  placeholder="Search by visitor, resident, phone or code..."
@@ -80,6 +81,7 @@ export default function AccessLogsPage() {
  </div>
 
  <select
+ aria-label="Filter access logs by status"
  value={status}
  onChange={(event) => setStatus(event.target.value)}
  className="rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
@@ -114,6 +116,7 @@ export default function AccessLogsPage() {
  <th className="px-5 py-4 font-semibold">Status</th>
  <th className="px-5 py-4 font-semibold">Entry</th>
  <th className="px-5 py-4 font-semibold">Exit</th>
+ <th className="px-5 py-4 font-semibold">Security Officers</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-border">
@@ -132,7 +135,7 @@ export default function AccessLogsPage() {
  {item.access_code}
  </td>
  <td className="px-5 py-4">
- <StatusBadge status={getDisplayStatus(item)} />
+ <StatusBadge status={getDisplayVisitorStatus({ status: item.status, expiresAt: item.expires_at })} />
  </td>
  <td className="px-5 py-4 text-foreground">
  {item.entry_time
@@ -144,6 +147,10 @@ export default function AccessLogsPage() {
  ? new Date(item.exit_time).toLocaleString()
  : "Still inside"}
  </td>
+ <td className="px-5 py-4 text-foreground">
+ <p>In: {item.checked_in_by_name || "Not recorded"}</p>
+ <p className="mt-1">Out: {item.checked_out_by_name || "Not recorded"}</p>
+ </td>
  </tr>
  ))}
  </tbody>
@@ -154,16 +161,4 @@ export default function AccessLogsPage() {
  </div>
  </AppShell>
  );
-}
-
-function getDisplayStatus(item: ActivityItem) {
- if (
- item.status === "pending" &&
- item.expires_at &&
- new Date(item.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return item.status;
 }

@@ -8,6 +8,8 @@ import { PageHeader } from "@/app/components/ui/PageHeader";
 import { Card } from "@/app/components/ui/Card";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import { toast } from "sonner";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 
 type Visitor = {
  id: string;
@@ -21,6 +23,8 @@ type Visitor = {
  entry_time?: string;
  exit_time?: string;
  expires_at?: string;
+ checked_in_by_name?: string;
+ checked_out_by_name?: string;
 };
 
 export default function VisitorHistoryPage() {
@@ -33,11 +37,12 @@ export default function VisitorHistoryPage() {
  async function loadVisitors() {
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
- .order("created_at", { ascending: false });
+ .select("id, visitor_name, visitor_phone, plate_number, resident_name, access_code, status, created_at, entry_time, exit_time, expires_at, checked_in_by_name, checked_out_by_name")
+ .order("created_at", { ascending: false })
+ .limit(250);
 
  if (error) {
- console.error(error);
+ toast.error("Unable to load visitor history.");
  return;
  }
 
@@ -58,18 +63,6 @@ export default function VisitorHistoryPage() {
  );
  });
 
- function getVisitorStatus(visitor: Visitor) {
- if (
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return visitor.status;
- }
-
  return (
  <AppShell size="default">
  <div className="flex flex-col gap-6">
@@ -80,6 +73,7 @@ export default function VisitorHistoryPage() {
 
  <input
  type="text"
+ aria-label="Search visitor history"
  placeholder="Search visitors..."
  value={search}
  onChange={(e) => setSearch(e.target.value)}
@@ -109,10 +103,13 @@ export default function VisitorHistoryPage() {
  Code: {visitor.access_code}
  </p>
  </div>
-
- <StatusBadge status={getVisitorStatus(visitor)} />
+ <div>
+ <p className="text-xs text-muted-foreground">Security Officers</p>
+ <p className="text-sm">In: {visitor.checked_in_by_name || "Not recorded"} · Out: {visitor.checked_out_by_name || "Not recorded"}</p>
  </div>
 
+ <StatusBadge status={getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })} />
+ </div>
  <div className="mt-4 grid gap-3 md:grid-cols-2">
  <div>
  <p className="text-xs text-muted-foreground">Entry Time</p>
@@ -133,6 +130,14 @@ export default function VisitorHistoryPage() {
  : "Still Inside"}
  </p>
  </div>
+ <div>
+ <p className="text-sm text-muted-foreground">Checked In By</p>
+ <p>{visitor.checked_in_by_name || "Not recorded"}</p>
+ </div>
+ <div>
+ <p className="text-sm text-muted-foreground">Checked Out By</p>
+ <p>{visitor.checked_out_by_name || "Not recorded"}</p>
+ </div>
  </div>
  </Card>
  ))}
@@ -140,18 +145,20 @@ export default function VisitorHistoryPage() {
  )}
  </div>
 
- {/* Visitor History Modal */}
-
  {selectedVisitor && (
  <div
  className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
+ role="presentation"
  onClick={() => setSelectedVisitor(null)}
  >
  <div
  className="w-full max-w-lg rounded-3xl bg-card p-6"
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby="visitor-details-title"
  onClick={(e) => e.stopPropagation()}
  >
- <h2 className="text-2xl font-bold">Visitor Details</h2>
+ <h2 id="visitor-details-title" className="text-2xl font-bold">Visitor Details</h2>
 
  <div className="mt-6 space-y-4">
  <div>
@@ -167,7 +174,7 @@ export default function VisitorHistoryPage() {
  <div>
  <p className="text-sm text-muted-foreground">Status</p>
  <div className="mt-1">
- <StatusBadge status={getVisitorStatus(selectedVisitor)} />
+ <StatusBadge status={getDisplayVisitorStatus({ status: selectedVisitor.status, expiresAt: selectedVisitor.expires_at })} />
  </div>
  </div>
 
@@ -191,6 +198,7 @@ export default function VisitorHistoryPage() {
  </div>
 
  <button
+ type="button"
  onClick={() => setSelectedVisitor(null)}
  className="mt-6 w-full rounded-2xl bg-primary/100 px-4 py-3 font-semibold text-primary-foreground"
  >

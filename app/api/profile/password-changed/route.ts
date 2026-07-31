@@ -4,7 +4,10 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST() {
  try {
- const { profile } = await requireApiRole(["super_admin", "admin", "resident", "security"]);
+ const { profile } = await requireApiRole(["super_admin", "admin", "resident", "security"], {
+ allowPasswordChangeRequired: true,
+ allowIncompleteOnboarding: true,
+ });
  const isAdministrator = profile.role === "admin" || profile.role === "super_admin";
  const completedAt = new Date().toISOString();
 

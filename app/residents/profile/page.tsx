@@ -7,15 +7,16 @@ import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import ProfileCard from "@/app/components/profile/ProfileCard";
 import ProfileField from "@/app/components/profile/ProfileField";
-import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
 import { ResidentBottomNav } from "@/app/components/ResidentBottomNav";
+import { formatResidentLocation } from "@/lib/resident-address";
 
 interface ResidentProfile {
  full_name: string;
  email: string;
  phone: string;
  house_number: string;
- street: string;
+ street: string | null;
+ close: string | null;
 }
 
 export default function ResidentProfilePage() {
@@ -44,7 +45,8 @@ export default function ResidentProfilePage() {
  email,
  phone,
  house_number,
- street
+ street,
+ close
  `,
  )
  .eq("user_id", user.id)
@@ -83,7 +85,7 @@ export default function ResidentProfilePage() {
 
  <PageHeader
  title="My Profile"
- subtitle="Manage your personal information"
+ subtitle="Review your personal and residence information"
  />
 
  <ProfileCard title="Personal Information">
@@ -108,14 +110,10 @@ export default function ResidentProfilePage() {
  value={resident?.house_number ?? "-"}
  />
 
- <ProfileField
- label="Street"
- value={resident?.street ?? "-"}
- />
+ <ProfileField label="Location Type" value={resident?.close ? "Close" : "Street"} />
+ <ProfileField label={resident?.close ? "Close Name" : "Street Name"} value={resident ? formatResidentLocation(resident) : "-"} />
 
  </ProfileCard>
-
- <ChangePasswordCard />
 
  </div>
  <ResidentBottomNav />

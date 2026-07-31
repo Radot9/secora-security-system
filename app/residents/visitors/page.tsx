@@ -9,11 +9,13 @@ import { Visitor } from "@/types/visitors";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
 import { ResidentBottomNav } from "../../components/ResidentBottomNav";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
 
 export default function VisitorsPage() {
  const [visitors, setVisitors] = useState<Visitor[]>([]);
  const [loading, setLoading] = useState(true);
  const [search, setSearch] = useState("");
+ const [showExpiredOnly, setShowExpiredOnly] = useState(false);
 
  useEffect(() => {
  let isMounted = true;
@@ -22,6 +24,9 @@ export default function VisitorsPage() {
  const {
  data: { user },
  } = await supabase.auth.getUser();
+ if (isMounted) {
+ setShowExpiredOnly(new URLSearchParams(window.location.search).get("status") === "expired");
+ }
 
  if (!user) {
  if (isMounted) setLoading(false);
@@ -64,9 +69,13 @@ export default function VisitorsPage() {
  const filteredVisitors = useMemo(() => {
  const query = search.trim().toLowerCase();
 
- if (!query) return visitors;
+ const statusFiltered = showExpiredOnly
+ ? visitors.filter((visitor) => getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at }) === "expired")
+ : visitors;
 
- return visitors.filter((visitor) => {
+ if (!query) return statusFiltered;
+
+ return statusFiltered.filter((visitor) => {
  return (
  visitor.visitor_name.toLowerCase().includes(query) ||
  visitor.visitor_phone.toLowerCase().includes(query) ||
@@ -74,19 +83,7 @@ export default function VisitorsPage() {
  visitor.plate_number?.toLowerCase().includes(query)
  );
  });
- }, [search, visitors]);
-
- function getVisitorStatus(visitor: Visitor) {
- if (
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ) {
- return "expired";
- }
-
- return visitor.status;
- }
+ }, [search, showExpiredOnly, visitors]);
 
  return (
  <AppShell size="full" residentSidebar>
@@ -96,6 +93,7 @@ export default function VisitorsPage() {
  <h1 className="text-2xl font-bold tracking-tight">Visitors</h1>
  <p className="mt-2 text-sm text-muted-foreground">
  Manage guest access for your home
+ {showExpiredOnly ? " · Showing expired codes" : ""}
  </p>
  </div>
  <Link
@@ -142,6 +140,7 @@ export default function VisitorsPage() {
  <th className="px-3 py-3 font-medium">Status</th>
  <th className="px-3 py-3 font-medium">Time in</th>
  <th className="px-4 py-3 font-medium">Time out</th>
+ <th className="px-4 py-3 font-medium">Security officers</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-border">
@@ -157,7 +156,7 @@ export default function VisitorsPage() {
  {visitor.access_code}
  </td>
  <td className="whitespace-nowrap px-3 py-4">
- <StatusBadge status={getVisitorStatus(visitor)} />
+ <StatusBadge status={getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at })} />
  </td>
  <td className="whitespace-nowrap px-3 py-4 text-foreground">
  {visitor.entry_time
@@ -168,6 +167,10 @@ export default function VisitorsPage() {
  {visitor.exit_time
  ? new Date(visitor.exit_time).toLocaleTimeString()
  : "--"}
+ </td>
+ <td className="whitespace-nowrap px-4 py-4 text-foreground">
+ <p>In: {visitor.checked_in_by_name || "--"}</p>
+ <p>Out: {visitor.checked_out_by_name || "--"}</p>
  </td>
  </tr>
  ))}

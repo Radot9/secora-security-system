@@ -51,7 +51,7 @@ export default function AdministratorDetailsPage() {
  return (
  <AppShell size="default">
  <div className="space-y-8">
- <PageHeader title={administrator.full_name ?? "Administrator"} subtitle={administrator.email} backHref="/admin/administrators" />
+ <PageHeader title={administrator.full_name ?? "Administrator"} subtitle={administrator.email} />
  <section className="grid gap-6 rounded-3xl border border-border bg-card p-6 md:grid-cols-2">
  <div><p className="text-sm text-muted-foreground">Phone</p><p className="mt-1 font-semibold">{administrator.phone ?? "Not provided"}</p></div>
  <div><p className="text-sm text-muted-foreground">Onboarding</p><p className="mt-1 font-semibold">{administrator.onboarding_completed_at ? "Complete" : "Pending"}</p></div>

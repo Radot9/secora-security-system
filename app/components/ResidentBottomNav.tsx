@@ -60,8 +60,10 @@ const items = [
 export function ResidentBottomNav() {
  const pathname = usePathname();
 
- const renderItems = (variant: "bottom" | "sidebar") =>
- items.map((item) => {
+ return (
+ <nav className="app-bottom-bar fixed inset-x-0 bottom-0 z-50 px-3 pt-2 lg:hidden">
+ <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+ {items.map((item) => {
  const isActive =
  item.href === "/residents"
  ? pathname === item.href
@@ -71,70 +73,17 @@ export function ResidentBottomNav() {
  <Link
  key={item.href}
  href={item.href}
- className={
- variant === "bottom"
- ? `flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium transition focus:outline-none focus:ring-2 focus:ring-ring ${
- isActive
- ? "bg-primary/10 text-primary"
- : "text-muted-foreground hover:bg-muted hover:text-foreground"
- }`
- : `flex min-h-12 items-center justify-center gap-0 rounded-2xl px-0 text-sm font-semibold transition-all duration-200 hover:justify-start hover:gap-3 hover:px-4 focus:outline-none focus:ring-2 focus:ring-ring group-hover:justify-start group-hover:gap-3 group-hover:px-4 group-focus-within:justify-start group-focus-within:gap-3 group-focus-within:px-4 ${
- isActive
- ? "bg-primary/10 text-primary"
- : "text-muted-foreground hover:bg-muted hover:text-foreground"
- }`
- }
+ data-active={isActive}
+ className="app-tab-link flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted-foreground"
  >
  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
  {item.icon}
  </span>
- <span
- className="w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:w-auto group-hover:opacity-100 group-focus-within:w-auto group-focus-within:opacity-100"
- >
- {item.label}
- </span>
+ <span>{item.label}</span>
  </Link>
  );
- });
-
- return (
- <>
- <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-3 pb-4 pt-2 shadow-lg shadow-border/60 backdrop-blur lg:hidden">
- <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
- {renderItems("bottom")}
+ })}
  </div>
  </nav>
-
- <aside
- className={`group fixed bottom-0 left-0 top-0 z-50 hidden flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-4 py-6 text-sidebar-foreground shadow-xl shadow-border/50 transition-[width] duration-300 ease-out lg:flex ${
- "w-24 hover:w-72 focus-within:w-72"
- }`}
- >
- <div className="flex items-center">
- <Link
- href="/residents"
- className="flex w-full min-w-0 items-center justify-center gap-0 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring group-hover:justify-start group-hover:gap-3 group-focus-within:justify-start group-focus-within:gap-3"
- >
- <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-lg font-black text-primary">
- S
- </div>
- <div
- className="w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover:w-auto group-hover:opacity-100 group-focus-within:w-auto group-focus-within:opacity-100"
- >
- <p className="text-sm font-bold uppercase tracking-[0.28em] text-primary">
- Security
- </p>
- <p className="text-xs font-semibold tracking-[0.32em] text-muted-foreground">
- System
- </p>
- </div>
- </Link>
- </div>
-
- <div className="mt-10 flex flex-1 flex-col gap-2">
- {renderItems("sidebar")}
- </div>
- </aside>
- </>
  );
 }

@@ -18,6 +18,11 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/app/components/ui/AppShell";
 import { Card } from "@/app/components/ui/Card";
+import {
+ AccountStatusChart,
+ MetricBarChart,
+} from "@/app/components/ui/DashboardCharts";
+import { DashboardLoadingNotice } from "@/app/components/ui/DashboardLoading";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 
@@ -135,17 +140,21 @@ export default function SuperAdminDashboardPage() {
  const [loading, setLoading] = useState(true);
 
  const loadOverview = useCallback(async () => {
+ try {
  const response = await fetch("/api/admin/super-admin/overview", { cache: "no-store" });
  const result = await response.json();
 
  if (!response.ok) {
  toast.error(result.error ?? "Unable to load Super Admin dashboard.");
- setLoading(false);
  return;
  }
 
  setOverview(result.overview);
+ } catch {
+ toast.error("Unable to reach the Super Admin dashboard service.");
+ } finally {
  setLoading(false);
+ }
  }, []);
 
  useEffect(() => {
@@ -182,7 +191,6 @@ export default function SuperAdminDashboardPage() {
  <PageHeader
  title="Super Admin Dashboard"
  subtitle="Privileged access, administrator onboarding, and estate account health."
- backHref="/admin"
  />
  <Link
  href="/admin/administrators"
@@ -192,6 +200,8 @@ export default function SuperAdminDashboardPage() {
  Manage Administrators
  </Link>
  </div>
+
+ {loading && <DashboardLoadingNotice label="Loading privileged access and estate health…" />}
 
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
  <StatCard
@@ -213,6 +223,47 @@ export default function SuperAdminDashboardPage() {
  label="Currently Inside"
  value={loading ? "..." : overview.access.currentlyInside}
  icon={<DoorOpen className="h-6 w-6 text-primary" />}
+ />
+ </section>
+
+ <section className="grid gap-6 xl:grid-cols-2">
+ <MetricBarChart
+ title="Privileged access health"
+ description="Administrator access, invitations, and onboarding items requiring oversight."
+ loading={loading}
+ data={[
+ {
+ label: "Super Admins",
+ value: overview.administrators.activeSuperAdmins,
+ },
+ { label: "Admins", value: overview.administrators.activeAdmins },
+ {
+ label: "Invitations",
+ value: overview.administrators.pendingInvitations,
+ },
+ { label: "Inactive", value: overview.administrators.inactive },
+ {
+ label: "Onboarding",
+ value: overview.administrators.incompleteOnboarding,
+ },
+ ]}
+ />
+ <AccountStatusChart
+ title="Estate account health"
+ description="Active and inactive estate accounts by responsibility."
+ loading={loading}
+ data={[
+ {
+ label: "Residents",
+ active: overview.estateAccounts.activeResidents,
+ inactive: overview.estateAccounts.inactiveResidents,
+ },
+ {
+ label: "Security",
+ active: overview.estateAccounts.activeSecurity,
+ inactive: overview.estateAccounts.inactiveSecurity,
+ },
+ ]}
  />
  </section>
 

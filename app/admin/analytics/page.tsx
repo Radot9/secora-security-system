@@ -4,14 +4,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, Clock3, ShieldCheck, UsersRound } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
-import { ActivityItem } from "@/types/activity";
 import { AppShell } from "@/app/components/ui/AppShell";
-import { Card } from "@/app/components/ui/Card";
+import { MetricBarChart } from "@/app/components/ui/DashboardCharts";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
+import { getDisplayVisitorStatus } from "@/lib/visitor-status";
+
+type AnalyticsVisitor = {
+ id: string;
+ status: string;
+ created_at: string;
+ expires_at: string | null;
+};
 
 export default function AnalyticsPage() {
- const [visitors, setVisitors] = useState<ActivityItem[]>([]);
+ const [visitors, setVisitors] = useState<AnalyticsVisitor[]>([]);
  const [loading, setLoading] = useState(true);
 
  useEffect(() => {
@@ -20,8 +27,9 @@ export default function AnalyticsPage() {
  async function loadAnalytics() {
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
- .order("created_at", { ascending: false });
+ .select("id, status, created_at, expires_at")
+ .order("created_at", { ascending: false })
+ .limit(1000);
 
  if (!isMounted) return;
 
@@ -77,12 +85,7 @@ export default function AnalyticsPage() {
  const totals = new Map<string, number>();
 
  visitors.forEach((visitor) => {
- const status =
- visitor.status === "pending" &&
- visitor.expires_at &&
- new Date(visitor.expires_at) < new Date()
- ? "expired"
- : visitor.status;
+ const status = getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at });
 
  totals.set(status, (totals.get(status) || 0) + 1);
  });
@@ -96,7 +99,6 @@ export default function AnalyticsPage() {
  <PageHeader
  title="Analytics"
  subtitle="Track visitor volume, estate occupancy and pass outcomes"
- backHref="/admin"
  />
 
  {loading ? (
@@ -128,40 +130,15 @@ export default function AnalyticsPage() {
  />
  </section>
 
- <Card>
- <h2 className="text-lg font-semibold">Visitor status mix</h2>
-
- {statusRows.length === 0 ? (
- <p className="mt-6 text-sm text-muted-foreground">
- No visitor records available yet.
- </p>
- ) : (
- <div className="mt-6 flex flex-col gap-4">
- {statusRows.map(([status, count]) => {
- const width = visitors.length
- ? `${Math.max((count / visitors.length) * 100, 6)}%`
- : "0%";
-
- return (
- <div key={status}>
- <div className="mb-2 flex items-center justify-between text-sm">
- <span className="font-medium capitalize">
- {status}
- </span>
- <span className="text-muted-foreground">{count}</span>
- </div>
- <div className="h-3 rounded-full bg-muted">
- <div
- className="h-3 rounded-full bg-primary/100"
- style={{ width }}
+ <MetricBarChart
+ title="Visitor status mix"
+ description="The distribution of the visitor records currently included in analytics."
+ data={statusRows.map(([status, count]) => ({
+ label: status.charAt(0).toUpperCase() + status.slice(1),
+ value: count,
+ }))}
+ emptyMessage="No visitor records are available yet."
  />
- </div>
- </div>
- );
- })}
- </div>
- )}
- </Card>
  </>
  )}
  </div>

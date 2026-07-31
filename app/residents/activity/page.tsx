@@ -40,7 +40,7 @@ export default function ActivityPage() {
 
  const { data, error } = await supabase
  .from("visitors")
- .select("*")
+ .select("id, visitor_name, visitor_phone, purpose_of_visit, plate_number, resident_id, resident_name, access_code, status, validity_duration_minutes, entry_time, exit_time, expires_at, created_at, checked_in_by, checked_in_by_name, checked_out_by, checked_out_by_name")
  .eq("resident_id", resident.id)
  .order("created_at", { ascending: false })
  .limit(50);
@@ -134,6 +134,8 @@ export default function ActivityPage() {
  <p className="mt-1 text-sm text-muted-foreground">
  {item.label} at {new Date(item.time).toLocaleString()}
  </p>
+ {item.label === "Checked in" && <p className="mt-1 text-xs text-muted-foreground">Officer: {item.visitor.checked_in_by_name || "Not recorded"}</p>}
+ {item.label === "Checked out" && <p className="mt-1 text-xs text-muted-foreground">Officer: {item.visitor.checked_out_by_name || "Not recorded"}</p>}
  </div>
  <StatusBadge status={item.status} />
  </article>
