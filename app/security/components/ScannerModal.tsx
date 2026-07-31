@@ -20,9 +20,9 @@ export default function ScannerModal({
  open={open}
  onClose={onClose}
  labelledBy="scanner-dialog-title"
- surfaceClassName="max-w-lg p-6"
+ surfaceClassName="max-w-lg p-4 sm:p-6"
  >
- <div className="mb-6 flex items-center justify-between">
+ <div className="mb-4 flex items-center justify-between sm:mb-6">
  <h2 id="scanner-dialog-title" className="text-xl font-semibold text-foreground">
  Scan Visitor QR Code
  </h2>
@@ -37,8 +37,15 @@ export default function ScannerModal({
  </button>
  </div>
 
- <div className="overflow-hidden rounded-2xl">
+ <div className="mx-auto w-full overflow-hidden rounded-2xl">
  <Scanner
+ styles={{
+ container: {
+ width: "min(100%, calc(var(--dialog-viewport-height, 100dvh) - 10rem))",
+ height: "auto",
+ margin: "0 auto",
+ },
+ }}
  onScan={(results) => {
  if (!results.length) return;
 
@@ -47,7 +54,7 @@ export default function ScannerModal({
  />
  </div>
 
- <p className="mt-5 text-center text-sm text-muted-foreground">
+ <p className="mt-4 text-center text-sm text-muted-foreground sm:mt-5">
  Point the camera at the visitor QR code.
  </p>
  </AnimatedDialog>

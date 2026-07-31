@@ -26,6 +26,7 @@ import {
  AccountStatusChart,
  MetricBarChart,
 } from "@/app/components/ui/DashboardCharts";
+import { DashboardLoadingNotice } from "@/app/components/ui/DashboardLoading";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { supabase } from "@/lib/supabase";
@@ -128,7 +129,7 @@ export default function AdminPage() {
  activeSecurity,
  inactiveSecurity,
  recentVisitors,
- authUser,
+ authSession,
  ] = await Promise.all([
  supabase.from("visitors").select("id", { count: "exact", head: true }).gte("created_at", startOfToday),
  supabase.from("visitors").select("id", { count: "exact", head: true }).eq("status", "entered"),
@@ -140,7 +141,7 @@ export default function AdminPage() {
  supabase.from("security_personnel").select("id", { count: "exact", head: true }).eq("is_active", true),
  supabase.from("security_personnel").select("id", { count: "exact", head: true }).eq("is_active", false),
  supabase.from("visitors").select("id, visitor_name, resident_name, status, created_at").order("created_at", { ascending: false }).limit(6),
- supabase.auth.getUser(),
+ supabase.auth.getSession(),
  ]);
 
  const failedRequest = [
@@ -162,8 +163,8 @@ export default function AdminPage() {
  return;
  }
 
- if (authUser.data.user) {
- const { data: profile } = await supabase.from("profiles").select("role").eq("id", authUser.data.user.id).single();
+ if (authSession.data.session?.user) {
+ const { data: profile } = await supabase.from("profiles").select("role").eq("id", authSession.data.session.user.id).single();
  setIsSuperAdmin(profile?.role === "super_admin");
  }
 
@@ -218,6 +219,8 @@ export default function AdminPage() {
  </Link>
  </div>
  </div>
+
+ {loading && <DashboardLoadingNotice label="Loading estate operations and account activity…" />}
 
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
  <StatCard label="Visitors Today" value={loading ? "..." : overview.access.visitorsToday} icon={<Activity className="h-6 w-6 text-primary" />} />

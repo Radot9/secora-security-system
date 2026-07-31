@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { ResidentBottomNav } from "../components/ResidentBottomNav";
 import { AppShell } from "../components/ui/AppShell";
 import { Card } from "../components/ui/Card";
+import { DashboardLoadingNotice } from "../components/ui/DashboardLoading";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatCard } from "../components/ui/StatCard";
 import { supabase } from "@/lib/supabase";
@@ -103,8 +104,9 @@ export default function ResidentsPage() {
 
  const loadDashboard = useCallback(async () => {
  const {
- data: { user },
- } = await supabase.auth.getUser();
+ data: { session },
+ } = await supabase.auth.getSession();
+ const user = session?.user;
 
  if (!user) {
  setLoading(false);
@@ -207,6 +209,8 @@ export default function ResidentsPage() {
  Add Visitor
  </Link>
  </div>
+
+ {loading && <DashboardLoadingNotice label="Loading your home and visitor activity…" />}
 
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
  <StatCard label="Total Visitors" value={loading ? "..." : overview.totalVisitors} icon={<UsersRound className="h-6 w-6 text-primary" />} />

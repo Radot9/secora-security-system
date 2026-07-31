@@ -25,8 +25,9 @@ export async function proxy(request: NextRequest) {
  },
  );
 
- // This validates the session and refreshes expired auth cookies when needed.
- await supabase.auth.getUser();
+ // Verify the token locally when asymmetric signing keys are available.
+ // getClaims also refreshes a session that is close to expiring.
+ await supabase.auth.getClaims();
 
  return response;
 }

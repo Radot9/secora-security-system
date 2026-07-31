@@ -22,6 +22,7 @@ import {
  AccountStatusChart,
  MetricBarChart,
 } from "@/app/components/ui/DashboardCharts";
+import { DashboardLoadingNotice } from "@/app/components/ui/DashboardLoading";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 
@@ -139,17 +140,21 @@ export default function SuperAdminDashboardPage() {
  const [loading, setLoading] = useState(true);
 
  const loadOverview = useCallback(async () => {
+ try {
  const response = await fetch("/api/admin/super-admin/overview", { cache: "no-store" });
  const result = await response.json();
 
  if (!response.ok) {
  toast.error(result.error ?? "Unable to load Super Admin dashboard.");
- setLoading(false);
  return;
  }
 
  setOverview(result.overview);
+ } catch {
+ toast.error("Unable to reach the Super Admin dashboard service.");
+ } finally {
  setLoading(false);
+ }
  }, []);
 
  useEffect(() => {
@@ -195,6 +200,8 @@ export default function SuperAdminDashboardPage() {
  Manage Administrators
  </Link>
  </div>
+
+ {loading && <DashboardLoadingNotice label="Loading privileged access and estate health…" />}
 
  <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
  <StatCard

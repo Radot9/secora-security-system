@@ -1,7 +1,18 @@
+import { Suspense } from "react";
+
+import { DashboardRouteLoading } from "@/app/components/ui/DashboardLoading";
 import { requireRole } from "@/lib/auth/requireRole";
 import { ResidentDesktopShell } from "./ResidentDesktopShell";
 
-export default async function ResidentsLayout({ children }: { children: React.ReactNode }) {
+export default function ResidentsLayout({ children }: { children: React.ReactNode }) {
+ return (
+ <Suspense fallback={<DashboardRouteLoading label="Preparing your resident dashboard" />}>
+ <AuthorizedResidentsLayout>{children}</AuthorizedResidentsLayout>
+ </Suspense>
+ );
+}
+
+async function AuthorizedResidentsLayout({ children }: { children: React.ReactNode }) {
  const { user, profile } = await requireRole("resident");
  const displayName: string = profile.full_name?.trim() || "Resident";
  const email: string = profile.email || user.email || "";

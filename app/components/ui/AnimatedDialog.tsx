@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 type AnimatedDialogProps = {
@@ -14,6 +14,17 @@ type AnimatedDialogProps = {
 
 const EXIT_DURATION_MS = 280;
 
+type ViewportBounds = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+type DialogLayerStyle = CSSProperties & {
+  "--dialog-viewport-height": string;
+};
+
 export function AnimatedDialog({
   open,
   onClose,
@@ -24,6 +35,7 @@ export function AnimatedDialog({
 }: AnimatedDialogProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
+  const [viewportBounds, setViewportBounds] = useState<ViewportBounds | null>(null);
 
   useEffect(() => {
     let mountFrame = 0;
@@ -56,6 +68,10 @@ export function AnimatedDialog({
   useEffect(() => {
     if (!mounted) return;
 
+    if (open && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -70,13 +86,50 @@ export function AnimatedDialog({
     };
   }, [canDismiss, mounted, onClose, open]);
 
+  useEffect(() => {
+    if (!mounted) return;
+
+    const visualViewport = window.visualViewport;
+
+    function syncViewport() {
+      setViewportBounds({
+        top: visualViewport?.offsetTop ?? 0,
+        left: visualViewport?.offsetLeft ?? 0,
+        width: visualViewport?.width ?? window.innerWidth,
+        height: visualViewport?.height ?? window.innerHeight,
+      });
+    }
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    visualViewport?.addEventListener("resize", syncViewport);
+    visualViewport?.addEventListener("scroll", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      visualViewport?.removeEventListener("resize", syncViewport);
+      visualViewport?.removeEventListener("scroll", syncViewport);
+    };
+  }, [mounted]);
+
   if (!mounted || typeof document === "undefined") return null;
+
+  const layerStyle: DialogLayerStyle | undefined = viewportBounds
+    ? {
+        top: viewportBounds.top,
+        left: viewportBounds.left,
+        width: viewportBounds.width,
+        height: viewportBounds.height,
+        "--dialog-viewport-height": `${viewportBounds.height}px`,
+      }
+    : undefined;
 
   return createPortal(
     <div
       className="apple-dialog-layer"
       data-state={visible && open ? "open" : "closed"}
       aria-hidden={!open}
+      style={layerStyle}
     >
       <button
         type="button"
