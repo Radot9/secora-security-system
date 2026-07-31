@@ -9,7 +9,6 @@ import {
  Phone,
  Plus,
  ShieldCheck,
- Sparkles,
  UserRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -228,23 +227,8 @@ export default function GenerateCodePage() {
 
     <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
      <Card className="overflow-hidden p-0">
-      <div className="m-4 rounded-3xl bg-primary/10 p-6">
-       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-         <Sparkles className="h-6 w-6" />
-        </div>
-        <div>
-         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">New visitor</p>
-         <h2 className="mt-2 text-2xl font-black tracking-tight">Create access details</h2>
-         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Access codes must stay valid for at least 30 minutes. We will notify you with a toast if anything is missing.
-         </p>
-        </div>
-       </div>
-      </div>
-
  <form className="grid gap-5 p-6" onSubmit={(event) => { event.preventDefault(); void handleGenerateCode(); }}>
-       <div className="grid gap-5 md:grid-cols-2">
+       <div className="grid gap-5">
         <label htmlFor="visitor-name" className="space-y-2">
          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <UserRound className="h-4 w-4 text-primary" />

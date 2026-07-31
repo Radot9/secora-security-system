@@ -11,6 +11,7 @@ import {
  DoorOpen,
  IdCard,
  MapPin,
+ Menu,
  QrCode,
  ShieldCheck,
  ShieldX,
@@ -448,66 +449,117 @@ function SecurityContent() {
  }
 
  return (
- <main className="min-h-screen bg-background px-4 py-10 text-foreground lg:px-10">
- <div className="flex w-full max-w-none flex-col gap-8">
- <header className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm shadow-muted/50">
- <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
- <div className="bg-primary/10 p-6 sm:p-8">
- <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
- <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-primary text-2xl font-black text-primary-foreground shadow-sm">
+ <main className="min-h-screen bg-background px-4 py-4 text-foreground sm:py-6 lg:px-10 lg:py-10">
+ <div className="flex w-full max-w-none flex-col gap-4 sm:gap-6 lg:gap-8">
+ <header className="overflow-visible rounded-3xl border border-border bg-card shadow-sm shadow-muted/50 md:overflow-hidden">
+ <div className="flex items-center gap-3 p-3 md:hidden">
+ <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
  {officerInitials}
  </div>
- <div className="flex-1">
- <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
+ <div className="min-w-0 flex-1">
+ <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary">
  Security dashboard
  </p>
- <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground">
- {officerName}
- </h1>
- <p className="mt-2 text-sm leading-6 text-muted-foreground">
- Verify visitor passes, manage gate entry, and review recent access activity.
+ <h1 className="truncate text-base font-bold">{officerName}</h1>
+ <p className="truncate text-xs text-muted-foreground">
+ {dutyValue(officer?.gate)} · {dutyValue(officer?.team)}
  </p>
- <div className="mt-5 flex flex-wrap gap-3">
+ </div>
+
+ <details className="group relative ml-auto">
+ <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-2xl border border-border bg-background text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring [&::-webkit-details-marker]:hidden">
+ <Menu className="h-5 w-5" />
+ <span className="sr-only">Open officer menu</span>
+ </summary>
+ <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(18rem,calc(100vw-2rem))] rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl">
+ <div className="border-b border-border px-2 pb-3">
+ <p className="font-semibold">{officerName}</p>
+ <p className="mt-1 truncate text-xs text-muted-foreground">
+ {officer?.email ?? "No email available"}
+ </p>
+ </div>
+ <div className="grid grid-cols-2 gap-2 py-3 text-sm">
+ <div className="rounded-2xl bg-muted p-3">
+ <p className="text-xs text-muted-foreground">Gate</p>
+ <p className="mt-1 truncate font-semibold">{dutyValue(officer?.gate)}</p>
+ </div>
+ <div className="rounded-2xl bg-muted p-3">
+ <p className="text-xs text-muted-foreground">Team</p>
+ <p className="mt-1 truncate font-semibold">{dutyValue(officer?.team)}</p>
+ </div>
+ </div>
+ <div className="grid gap-2">
  <Link
  href="/security/profile"
- className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-card px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10"
+ className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold transition hover:bg-muted"
  >
- <UserCircle className="h-5 w-5" />
+ <UserCircle className="h-5 w-5 text-primary" />
  View Profile
  </Link>
  <button
  type="button"
  onClick={handleLogout}
- className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+ className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
  >
  <LogOut className="h-5 w-5" />
  Logout
  </button>
  </div>
  </div>
+ </details>
+ </div>
+
+ <div className="hidden items-center gap-3 p-3 md:flex lg:px-4">
+ <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
+ {officerInitials}
+ </div>
+ <div className="min-w-0">
+ <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary">
+ Security dashboard
+ </p>
+ <h1 className="truncate text-base font-bold">{officerName}</h1>
+ </div>
+
+ <div className="ml-auto flex items-center divide-x divide-border">
+ <div className="min-w-24 px-4">
+ <p className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+ <MapPin className="h-3.5 w-3.5 text-primary" /> Gate
+ </p>
+ <p className="mt-0.5 max-w-32 truncate text-sm font-semibold">
+ {dutyValue(officer?.gate)}
+ </p>
+ </div>
+ <div className="min-w-24 px-4">
+ <p className="flex items-center gap-1.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+ <IdCard className="h-3.5 w-3.5 text-primary" /> Team
+ </p>
+ <p className="mt-0.5 max-w-32 truncate text-sm font-semibold">
+ {dutyValue(officer?.team)}
+ </p>
  </div>
  </div>
 
- <div className="grid gap-0 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
- <div className="p-6 sm:p-8">
- <div className="flex items-center gap-3">
- <MapPin className="h-5 w-5 text-primary" />
- <p className="text-sm font-medium text-muted-foreground">Gate duty</p>
- </div>
- <p className="mt-3 text-2xl font-bold">{dutyValue(officer?.gate)}</p>
- </div>
- <div className="p-6 sm:p-8">
- <div className="flex items-center gap-3">
- <IdCard className="h-5 w-5 text-primary" />
- <p className="text-sm font-medium text-muted-foreground">Team</p>
- </div>
- <p className="mt-3 text-2xl font-bold">{dutyValue(officer?.team)}</p>
- </div>
- </div>
+ <Link
+ href="/security/profile"
+ aria-label="View profile"
+ className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+ >
+ <UserCircle className="h-5 w-5 text-primary" />
+ <span className="hidden xl:inline">Profile</span>
+ </Link>
+ <button
+ type="button"
+ onClick={handleLogout}
+ aria-label="Logout"
+ className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+ >
+ <LogOut className="h-5 w-5" />
+ <span className="hidden xl:inline">Logout</span>
+ </button>
  </div>
  </header>
 
- <section className="grid items-stretch gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+ <section className="grid items-stretch gap-4 sm:gap-6 xl:grid-cols-[1.05fr_0.95fr]">
  <VerificationCard
  accessCode={accessCode}
  setAccessCode={setAccessCode}
@@ -516,18 +568,18 @@ function SecurityContent() {
  loading={verificationLoading}
  />
 
- <div className="flex h-full flex-col gap-6">
- <section className="rounded-3xl border border-border bg-card p-6 shadow-sm shadow-muted/50">
- <div className="flex items-start gap-4">
- <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
- <ShieldCheck className="h-6 w-6" />
+ <div className="flex h-full flex-col gap-4 sm:gap-6">
+ <section className="rounded-3xl border border-border bg-card p-4 shadow-sm shadow-muted/50 sm:p-6">
+ <div className="flex items-start gap-3 sm:gap-4">
+ <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-11 sm:w-11">
+ <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
  </div>
- <div>
- <h2 className="text-xl font-bold">Duty checklist</h2>
- <div className="mt-4 space-y-3 text-sm text-muted-foreground">
- <p className="flex items-center gap-2"><QrCode className="h-4 w-4 text-primary" /> Scan or enter each visitor access code.</p>
- <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Confirm visitor details before allowing entry.</p>
- <p className="flex items-center gap-2"><LogOut className="h-4 w-4 text-primary" /> Check visitors out when they leave the estate.</p>
+ <div className="min-w-0">
+ <h2 className="text-lg font-bold sm:text-xl">Duty checklist</h2>
+ <div className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground sm:mt-4 sm:space-y-3 sm:text-sm">
+ <p className="flex items-start gap-2"><QrCode className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Scan or enter each visitor access code.</p>
+ <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Confirm visitor details before allowing entry.</p>
+ <p className="flex items-start gap-2"><LogOut className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Check visitors out when they leave the estate.</p>
  </div>
  </div>
  </div>

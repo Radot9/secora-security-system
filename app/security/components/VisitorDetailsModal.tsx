@@ -25,8 +25,11 @@ export default function VisitorDetailsModal({
  onClick={onClose}
  >
  <div
- className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card p-6"
- onClick={(e) => e.stopPropagation()}
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby="visitor-details-title"
+ className="apple-card max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-border bg-card p-6"
+ onClick={(event) => event.stopPropagation()}
  >
  <div className="text-center">
  <div
@@ -35,7 +38,7 @@ export default function VisitorDetailsModal({
  <StatusIcon className="h-10 w-10" />
  </div>
 
- <h2 className="mt-4 text-2xl font-bold">
+ <h2 id="visitor-details-title" className="mt-4 text-2xl font-bold">
  {visitorStatusConfig.title}
  </h2>
 
@@ -96,8 +99,9 @@ export default function VisitorDetailsModal({
  </div>
 
  <button
+ type="button"
  onClick={onClose}
- className="mt-6 w-full rounded-2xl bg-primary/100 px-4 py-3 font-semibold text-primary-foreground"
+ className="apple-primary-button mt-6 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
  >
  Close
  </button>

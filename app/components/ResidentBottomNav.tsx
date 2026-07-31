@@ -61,7 +61,7 @@ export function ResidentBottomNav() {
  const pathname = usePathname();
 
  return (
- <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-3 pb-4 pt-2 shadow-lg shadow-border/60 backdrop-blur lg:hidden">
+ <nav className="app-bottom-bar fixed inset-x-0 bottom-0 z-50 px-3 pt-2 lg:hidden">
  <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
  {items.map((item) => {
  const isActive =
@@ -73,11 +73,8 @@ export function ResidentBottomNav() {
  <Link
  key={item.href}
  href={item.href}
- className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium transition focus:outline-none focus:ring-2 focus:ring-ring ${
- isActive
- ? "bg-primary/10 text-primary"
- : "text-muted-foreground hover:bg-muted hover:text-foreground"
- }`}
+ data-active={isActive}
+ className="app-tab-link flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted-foreground"
  >
  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
  {item.icon}

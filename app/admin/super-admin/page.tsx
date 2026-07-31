@@ -18,6 +18,10 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/app/components/ui/AppShell";
 import { Card } from "@/app/components/ui/Card";
+import {
+ AccountStatusChart,
+ MetricBarChart,
+} from "@/app/components/ui/DashboardCharts";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 
@@ -212,6 +216,47 @@ export default function SuperAdminDashboardPage() {
  label="Currently Inside"
  value={loading ? "..." : overview.access.currentlyInside}
  icon={<DoorOpen className="h-6 w-6 text-primary" />}
+ />
+ </section>
+
+ <section className="grid gap-6 xl:grid-cols-2">
+ <MetricBarChart
+ title="Privileged access health"
+ description="Administrator access, invitations, and onboarding items requiring oversight."
+ loading={loading}
+ data={[
+ {
+ label: "Super Admins",
+ value: overview.administrators.activeSuperAdmins,
+ },
+ { label: "Admins", value: overview.administrators.activeAdmins },
+ {
+ label: "Invitations",
+ value: overview.administrators.pendingInvitations,
+ },
+ { label: "Inactive", value: overview.administrators.inactive },
+ {
+ label: "Onboarding",
+ value: overview.administrators.incompleteOnboarding,
+ },
+ ]}
+ />
+ <AccountStatusChart
+ title="Estate account health"
+ description="Active and inactive estate accounts by responsibility."
+ loading={loading}
+ data={[
+ {
+ label: "Residents",
+ active: overview.estateAccounts.activeResidents,
+ inactive: overview.estateAccounts.inactiveResidents,
+ },
+ {
+ label: "Security",
+ active: overview.estateAccounts.activeSecurity,
+ inactive: overview.estateAccounts.inactiveSecurity,
+ },
+ ]}
  />
  </section>
 

@@ -5,7 +5,7 @@ import { Activity, Clock3, ShieldCheck, UsersRound } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { AppShell } from "@/app/components/ui/AppShell";
-import { Card } from "@/app/components/ui/Card";
+import { MetricBarChart } from "@/app/components/ui/DashboardCharts";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { getDisplayVisitorStatus } from "@/lib/visitor-status";
@@ -130,40 +130,15 @@ export default function AnalyticsPage() {
  />
  </section>
 
- <Card>
- <h2 className="text-lg font-semibold">Visitor status mix</h2>
-
- {statusRows.length === 0 ? (
- <p className="mt-6 text-sm text-muted-foreground">
- No visitor records available yet.
- </p>
- ) : (
- <div className="mt-6 flex flex-col gap-4">
- {statusRows.map(([status, count]) => {
- const width = visitors.length
- ? `${Math.max((count / visitors.length) * 100, 6)}%`
- : "0%";
-
- return (
- <div key={status}>
- <div className="mb-2 flex items-center justify-between text-sm">
- <span className="font-medium capitalize">
- {status}
- </span>
- <span className="text-muted-foreground">{count}</span>
- </div>
- <div className="h-3 rounded-full bg-muted">
- <div
- className="h-3 rounded-full bg-primary/100"
- style={{ width }}
+ <MetricBarChart
+ title="Visitor status mix"
+ description="The distribution of the visitor records currently included in analytics."
+ data={statusRows.map(([status, count]) => ({
+ label: status.charAt(0).toUpperCase() + status.slice(1),
+ value: count,
+ }))}
+ emptyMessage="No visitor records are available yet."
  />
- </div>
- </div>
- );
- })}
- </div>
- )}
- </Card>
  </>
  )}
  </div>

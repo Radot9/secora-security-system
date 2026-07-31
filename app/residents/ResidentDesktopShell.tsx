@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
+import { BrandMark } from "@/app/components/ui/BrandMark";
 
 type ResidentDesktopShellProps = {
  children: ReactNode;
@@ -80,14 +81,12 @@ export function ResidentDesktopShell({
 
  return (
  <div className="min-h-screen bg-background text-foreground">
- <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
+ <aside className="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
  <div className="flex h-20 items-center border-b border-sidebar-border px-5">
  <Link href="/residents" className="flex items-center gap-3">
- <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sidebar-primary font-bold text-sidebar-primary-foreground">
- S
- </span>
+ <BrandMark size="small" />
  <span>
- <span className="block text-base font-bold">Secora</span>
+ <span className="block text-base font-bold tracking-[-0.02em]">Secora</span>
  <span className="block text-xs text-muted-foreground">Resident Portal</span>
  </span>
  </Link>
@@ -108,11 +107,8 @@ export function ResidentDesktopShell({
  key={item.href}
  href={item.href}
  aria-current={active ? "page" : undefined}
- className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
- active
- ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
- : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
- }`}
+ data-active={active}
+ className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground"
  >
  <Icon className="h-5 w-5 shrink-0" />
  {item.label}
@@ -127,7 +123,7 @@ export function ResidentDesktopShell({
  <div className="border-t border-sidebar-border p-3">
  <Link
  href="/residents/profile"
- className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-sidebar-accent"
+ className="app-nav-link flex items-center gap-3 rounded-xl p-3"
  >
  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
  {initials}
@@ -142,7 +138,7 @@ export function ResidentDesktopShell({
  </aside>
 
  <div className="lg:pl-72">
- <header className="sticky top-0 z-30 hidden border-b border-border bg-card/95 px-6 py-3 shadow-sm backdrop-blur lg:block">
+ <header className="app-toolbar sticky top-0 z-30 hidden px-6 py-3 lg:block">
  <div className="flex min-h-12 items-center justify-between gap-3">
  <div className="flex min-w-0 items-center gap-2">
  {pathname !== "/residents" && (
@@ -150,7 +146,7 @@ export function ResidentDesktopShell({
  type="button"
  onClick={() => router.back()}
  aria-label="Go back to previous page"
- className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border hover:bg-muted"
+ className="apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border"
  >
  <ArrowLeft className="h-5 w-5" />
  </button>
@@ -166,7 +162,7 @@ export function ResidentDesktopShell({
  <div className="flex items-center gap-2">
  <Link
  href="/residents/profile"
- className="flex min-w-0 items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-muted"
+ className="app-nav-link flex min-w-0 items-center gap-3 rounded-xl px-3 py-2"
  aria-label="Open resident profile"
  >
  <span className="min-w-0 text-right">
@@ -180,7 +176,7 @@ export function ResidentDesktopShell({
  <button
  type="button"
  onClick={handleLogout}
- className="flex h-11 items-center justify-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+ className="apple-secondary-button flex h-11 items-center justify-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-destructive/40 hover:text-destructive"
  >
  <LogOut className="h-5 w-5" />
  <span className="hidden xl:inline">Logout</span>

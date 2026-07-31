@@ -1,8 +1,8 @@
 "use client";
 
 import { CheckCircle2, Copy, Mail, MessageCircle, X } from "lucide-react";
-import { useEffect } from "react";
 import { toast } from "sonner";
+import { AnimatedDialog } from "./AnimatedDialog";
 
 interface SuccessDialogProps {
  open: boolean;
@@ -32,17 +32,6 @@ export default function SuccessDialog({
  const websiteUrl =
  process.env.NEXT_PUBLIC_SITE_URL ||
  (typeof window !== "undefined" ? window.location.origin : "");
- useEffect(() => {
- if (!open) return;
- const closeOnEscape = (event: KeyboardEvent) => {
- if (event.key === "Escape") onClose();
- };
- window.addEventListener("keydown", closeOnEscape);
- return () => window.removeEventListener("keydown", closeOnEscape);
- }, [onClose, open]);
-
- if (!open) return null;
-
  async function copyCredentials() {
  const credentials = `Welcome to Secora Security System, ${fullName}!
 
@@ -104,8 +93,12 @@ When you log in using these details, you will be prompted immediately to change 
 Thomas Ajufo Estate Administration`);
 
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-5" role="presentation">
- <div className="w-full max-w-lg rounded-3xl bg-card p-8 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="success-dialog-title">
+ <AnimatedDialog
+ open={open}
+ onClose={onClose}
+ labelledBy="success-dialog-title"
+ surfaceClassName="max-w-lg p-8"
+ >
  <div className="flex items-start justify-between">
  <div className="flex items-center gap-3">
  <div className="rounded-full bg-primary/15 p-3">
@@ -121,7 +114,7 @@ Thomas Ajufo Estate Administration`);
  </div>
  </div>
 
- <button type="button" onClick={onClose} aria-label="Close success dialog" className="rounded-xl p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+ <button type="button" onClick={onClose} aria-label="Close success dialog" className="apple-icon-button rounded-xl p-2 text-muted-foreground hover:text-foreground">
  <X className="h-6 w-6 text-muted-foreground" />
  </button>
  </div>
@@ -159,7 +152,7 @@ Thomas Ajufo Estate Administration`);
  <button
  type="button"
  onClick={copyCredentials}
- className="inline-flex items-center justify-center gap-2 rounded-2xl bg-card px-5 py-3 font-semibold text-foreground transition hover:bg-muted"
+ className="apple-secondary-button inline-flex items-center justify-center gap-2 rounded-2xl bg-card px-5 py-3 font-semibold text-foreground"
  >
  <Copy className="h-5 w-5" />
  Copy Credentials
@@ -169,7 +162,7 @@ Thomas Ajufo Estate Administration`);
  <a
  href={`https://wa.me/${phone}?text=${whatsappMessage}`}
  target="_blank"
- className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90"
+ className="apple-primary-button inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground"
  >
  <MessageCircle className="h-5 w-5" />
  Send via WhatsApp
@@ -178,7 +171,7 @@ Thomas Ajufo Estate Administration`);
 
  <a
  href={`mailto:${email}?subject=${emailSubject}&body=${emailBody}`}
- className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90"
+ className="apple-primary-button inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground"
  >
  <Mail className="h-5 w-5" />
  Send via Email
@@ -188,12 +181,11 @@ Thomas Ajufo Estate Administration`);
  type="button"
  onClick={onClose}
  autoFocus
- className="rounded-2xl border border-border px-5 py-3 font-semibold transition hover:bg-muted"
+ className="apple-secondary-button rounded-2xl border border-border px-5 py-3 font-semibold"
  >
  Done
  </button>
  </div>
- </div>
- </div>
+ </AnimatedDialog>
  );
 }

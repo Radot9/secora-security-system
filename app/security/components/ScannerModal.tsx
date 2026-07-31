@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { Scanner } from "@yudiel/react-qr-scanner";
+import { AnimatedDialog } from "@/app/components/ui/AnimatedDialog";
 
 interface ScannerModalProps {
  open: boolean;
@@ -14,20 +15,23 @@ export default function ScannerModal({
  onClose,
  onScan,
 }: ScannerModalProps) {
- if (!open) return null;
-
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4">
- <div className="w-full max-w-lg rounded-3xl bg-card p-6 shadow-2xl">
-
+ <AnimatedDialog
+ open={open}
+ onClose={onClose}
+ labelledBy="scanner-dialog-title"
+ surfaceClassName="max-w-lg p-6"
+ >
  <div className="mb-6 flex items-center justify-between">
- <h2 className="text-xl font-semibold text-foreground">
+ <h2 id="scanner-dialog-title" className="text-xl font-semibold text-foreground">
  Scan Visitor QR Code
  </h2>
 
  <button
+ type="button"
  onClick={onClose}
- className="rounded-xl p-2 text-muted-foreground hover:bg-muted"
+ aria-label="Close QR scanner"
+ className="apple-icon-button rounded-xl p-2 text-muted-foreground hover:text-foreground"
  >
  <X className="h-5 w-5" />
  </button>
@@ -46,7 +50,6 @@ export default function ScannerModal({
  <p className="mt-5 text-center text-sm text-muted-foreground">
  Point the camera at the visitor QR code.
  </p>
- </div>
- </div>
+ </AnimatedDialog>
  );
 }

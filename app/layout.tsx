@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { Outfit, Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geistHeading = Geist({subsets:['latin'],variable:'--font-heading'});
+
+const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
 
 const systemThemeScript = `
 (function () {
@@ -29,7 +35,8 @@ export default function RootLayout({
  return (
  <html
  lang="en"
- className="h-full antialiased font-sans"
+ className={cn("h-full antialiased font-sans", "font-sans", outfit.variable, geistHeading.variable)}
+ data-scroll-behavior="smooth"
  suppressHydrationWarning
  >
  <head>

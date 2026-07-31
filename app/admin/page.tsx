@@ -22,6 +22,10 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/app/components/ui/AppShell";
 import { Card } from "@/app/components/ui/Card";
+import {
+ AccountStatusChart,
+ MetricBarChart,
+} from "@/app/components/ui/DashboardCharts";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { supabase } from "@/lib/supabase";
@@ -220,6 +224,38 @@ export default function AdminPage() {
  <StatCard label="Currently Inside" value={loading ? "..." : overview.access.currentlyInside} icon={<DoorOpen className="h-6 w-6 text-primary" />} />
  <StatCard label="Checked Out" value={loading ? "..." : overview.access.checkedOut} icon={<Clock3 className="h-6 w-6 text-primary" />} />
  <StatCard label="Revoked Passes" value={loading ? "..." : overview.access.revokedPasses} icon={<AlertTriangle className="h-6 w-6 text-destructive" />} />
+ </section>
+
+ <section className="grid gap-6 xl:grid-cols-2">
+ <MetricBarChart
+ title="Visitor access snapshot"
+ description="A live comparison of today’s visitor flow and access states."
+ loading={loading}
+ data={[
+ { label: "Created today", value: overview.access.visitorsToday },
+ { label: "Currently inside", value: overview.access.currentlyInside },
+ { label: "Checked out", value: overview.access.checkedOut },
+ { label: "Pending", value: overview.access.pendingPasses },
+ { label: "Revoked", value: overview.access.revokedPasses },
+ ]}
+ />
+ <AccountStatusChart
+ title="Estate account health"
+ description="Active and inactive resident and security accounts."
+ loading={loading}
+ data={[
+ {
+ label: "Residents",
+ active: overview.estateAccounts.activeResidents,
+ inactive: overview.estateAccounts.inactiveResidents,
+ },
+ {
+ label: "Security",
+ active: overview.estateAccounts.activeSecurity,
+ inactive: overview.estateAccounts.inactiveSecurity,
+ },
+ ]}
+ />
  </section>
 
  <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

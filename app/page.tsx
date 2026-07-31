@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ArrowRight, LockKeyhole, ScanLine, UsersRound } from "lucide-react";
 
 import { InputField } from "./components/InputField";
 import { resolveEmailLinkSession } from "@/lib/auth/email-link-session";
 import { supabase } from "@/lib/supabase";
 import { LoadingSpinner } from "./components/ui/LoadingSpinner";
+import { BrandMark } from "./components/ui/BrandMark";
 
 type LoginProfile = {
  role: string;
@@ -155,48 +157,89 @@ export default function Home() {
 
  if (checkingEmailLink) {
  return (
- <main className="flex min-h-screen items-center justify-center bg-background px-4 text-muted-foreground">
- Signing you in...
+ <main className="login-shell flex min-h-screen items-center justify-center px-4 text-muted-foreground">
+ <div className="apple-card flex items-center gap-3 rounded-3xl border border-border bg-card px-6 py-5">
+ <LoadingSpinner className="h-5 w-5" />
+ <span className="font-medium">Signing you in securely…</span>
+ </div>
  </main>
  );
  }
 
  return (
- <main className="flex min-h-screen items-center justify-center bg-background px-4">
- <div className="w-full max-w-md">
- <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
- <div className="text-center">
- <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground">
- S
+ <main className="login-shell relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+ <div className="login-orb login-orb--one" aria-hidden="true" />
+ <div className="login-orb login-orb--two" aria-hidden="true" />
+
+ <div className="relative grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] xl:gap-20">
+ <section className="hidden flex-col justify-center lg:flex">
+ <div className="flex items-center gap-3">
+ <BrandMark />
+ <div>
+ <p className="text-lg font-bold tracking-[-0.025em]">Secora</p>
+ <p className="text-xs font-medium text-muted-foreground">Estate security system</p>
+ </div>
  </div>
 
- <h1 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
- Secora
+ <p className="mt-12 w-fit rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+ Calm, confident access
+ </p>
+ <h1 className="mt-6 max-w-xl text-5xl font-bold leading-[1.02] tracking-[-0.045em] text-foreground xl:text-6xl">
+ Security that feels effortless.
  </h1>
+ <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
+ One clear place for residents, gate officers, and administrators to manage every arrival with confidence.
+ </p>
 
+ <div className="mt-10 grid max-w-xl gap-3 sm:grid-cols-3">
+ {[
+ { label: "Protected accounts", icon: LockKeyhole },
+ { label: "Fast pass checks", icon: ScanLine },
+ { label: "Clear role access", icon: UsersRound },
+ ].map((item) => {
+ const Icon = item.icon;
+ return (
+ <div key={item.label} className="login-feature">
+ <Icon className="h-5 w-5 text-primary" />
+ <span>{item.label}</span>
+ </div>
+ );
+ })}
+ </div>
+
+ </section>
+
+ <section className="apple-card login-panel w-full rounded-[2rem] border border-border bg-card p-6 sm:p-9">
+ <div className="flex items-center gap-3 lg:hidden">
+ <BrandMark size="small" />
+ <div>
+ <p className="font-bold tracking-[-0.02em]">Secora</p>
+ <p className="text-xs text-muted-foreground">Estate security system</p>
+ </div>
+ </div>
+
+ <div className="mt-8 lg:mt-0">
+ <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+ Secure sign in
+ </p>
+ <h2 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-foreground">
+ Welcome back
+ </h2>
  <p className="mt-2 text-sm leading-6 text-muted-foreground">
- Secure access for residents, security personnel and estate
- administrators.
+ Enter your account details to continue to your portal.
  </p>
  </div>
- <form className="mt-8 space-y-6" onSubmit={handleLogin}>
- <div>
- <label
- htmlFor="email"
- className="mb-2 block text-sm font-medium text-foreground"
- >
- Email Address
- </label>
 
- <input
+ <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+ <InputField
  id="email"
+ label="Email address"
  type="email"
  value={email}
  onChange={(e) => setEmail(e.target.value)}
  placeholder="Enter your email"
- className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+ autoComplete="email"
  />
- </div>
 
  <InputField
  id="password"
@@ -208,12 +251,12 @@ export default function Home() {
  autoComplete="current-password"
  />
 
- <div className="text-right">
+ <div className="flex justify-end">
  <button
  type="button"
  onClick={handlePasswordReset}
  disabled={resetLoading || loginLoading}
- className="text-sm font-medium text-primary transition hover:underline"
+ className="rounded-lg px-1 py-1 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
  >
  {resetLoading ? "Sending link..." : "Forgot or change password?"}
  </button>
@@ -222,15 +265,19 @@ export default function Home() {
  <button
  type="submit"
  disabled={loginLoading}
- className="w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+ className="apple-primary-button flex min-h-13 w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
  >
  <span className="inline-flex items-center justify-center gap-2">
  {loginLoading && <LoadingSpinner />}
  {loginLoading ? "Signing in..." : "Sign In"}
+ {!loginLoading && <ArrowRight className="h-4 w-4" />}
  </span>
  </button>
  </form>
- </div>
+ <p className="mt-7 text-center text-xs leading-5 text-muted-foreground">
+ Access is restricted to authorized Secora accounts.
+ </p>
+ </section>
  </div>
  </main>
  );

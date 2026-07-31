@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
+import { BrandMark } from "@/app/components/ui/BrandMark";
 
 type AdminNavigationShellProps = {
  children: ReactNode;
@@ -114,11 +115,9 @@ export function AdminNavigationShell({
  <div className="flex h-full flex-col">
  <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
  <Link href="/admin" onClick={closeMenu} className="flex items-center gap-3">
- <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sidebar-primary font-bold text-sidebar-primary-foreground">
- S
- </span>
+ <BrandMark size="small" />
  <span>
- <span className="block text-base font-bold">Secora</span>
+ <span className="block text-base font-bold tracking-[-0.02em]">Secora</span>
  <span className="block text-xs text-muted-foreground">Administration</span>
  </span>
  </Link>
@@ -126,7 +125,7 @@ export function AdminNavigationShell({
  type="button"
  onClick={closeMenu}
  aria-label="Close navigation"
- className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-sidebar-accent lg:hidden"
+ className="apple-icon-button flex h-11 w-11 items-center justify-center rounded-xl hover:bg-sidebar-accent lg:hidden"
  >
  <X className="h-5 w-5" />
  </button>
@@ -148,11 +147,8 @@ export function AdminNavigationShell({
  href={item.href}
  onClick={closeMenu}
  aria-current={active ? "page" : undefined}
- className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
- active
- ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
- : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
- }`}
+ data-active={active}
+ className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground"
  >
  <Icon className="h-5 w-5 shrink-0" />
  {item.label}
@@ -172,11 +168,8 @@ export function AdminNavigationShell({
  <Link
  href="/admin/super-admin"
  onClick={closeMenu}
- className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
- isActivePath(pathname, "/admin/super-admin")
- ? "bg-sidebar-primary text-sidebar-primary-foreground"
- : "hover:bg-sidebar-accent"
- }`}
+ data-active={isActivePath(pathname, "/admin/super-admin")}
+ className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold"
  >
  <UserCog className="h-5 w-5" />
  Super Admin
@@ -184,11 +177,8 @@ export function AdminNavigationShell({
  <Link
  href="/admin/administrators"
  onClick={closeMenu}
- className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
- isActivePath(pathname, "/admin/administrators")
- ? "bg-sidebar-primary text-sidebar-primary-foreground"
- : "hover:bg-sidebar-accent"
- }`}
+ data-active={isActivePath(pathname, "/admin/administrators")}
+ className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold"
  >
  <UserPlus className="h-5 w-5" />
  Administrators
@@ -202,7 +192,7 @@ export function AdminNavigationShell({
  <Link
  href="/admin/settings"
  onClick={closeMenu}
- className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-sidebar-accent"
+ className="app-nav-link flex items-center gap-3 rounded-xl p-3"
  >
  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
  {initials || "A"}
@@ -219,33 +209,36 @@ export function AdminNavigationShell({
 
  return (
  <div className="min-h-screen bg-background text-foreground">
- <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
+ <aside className="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
  {sidebar}
  </aside>
 
- {menuOpen && (
- <div className="fixed inset-0 z-50 lg:hidden">
+ <div
+ className="app-mobile-nav fixed inset-0 z-50 lg:hidden"
+ data-open={menuOpen}
+ aria-hidden={!menuOpen}
+ >
  <button
  type="button"
  aria-label="Close navigation overlay"
  onClick={closeMenu}
- className="absolute inset-0 bg-foreground/40"
+ tabIndex={menuOpen ? 0 : -1}
+ className="app-mobile-nav-backdrop absolute inset-0 bg-foreground/40"
  />
- <aside className="relative h-full w-[min(18rem,88vw)] border-r border-sidebar-border bg-sidebar shadow-2xl">
+ <aside className="app-mobile-nav-panel app-sidebar relative h-full w-[min(18rem,88vw)] border-r border-sidebar-border bg-sidebar shadow-2xl">
  {sidebar}
  </aside>
  </div>
- )}
 
  <div className="lg:pl-72">
- <header className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
+ <header className="app-toolbar sticky top-0 z-30 px-4 py-3 sm:px-6">
  <div className="flex min-h-12 items-center justify-between gap-3">
  <div className="flex min-w-0 items-center gap-2">
  <button
  type="button"
  onClick={() => setMenuOpen(true)}
  aria-label="Open navigation"
- className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border hover:bg-muted lg:hidden"
+ className="apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border lg:hidden"
  >
  <Menu className="h-5 w-5" />
  </button>
@@ -254,7 +247,7 @@ export function AdminNavigationShell({
  type="button"
  onClick={() => router.back()}
  aria-label="Go back to previous page"
- className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border hover:bg-muted"
+ className="apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border"
  >
  <ArrowLeft className="h-5 w-5" />
  </button>
@@ -271,7 +264,7 @@ export function AdminNavigationShell({
  <Link
  href="/admin/settings"
  aria-label="Open profile and settings"
- className="hidden min-w-0 items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-muted sm:flex"
+ className="app-nav-link hidden min-w-0 items-center gap-3 rounded-xl px-3 py-2 sm:flex"
  >
  <span className="min-w-0 text-right">
  <span className="block max-w-40 truncate text-sm font-semibold">{displayName}</span>
@@ -284,7 +277,7 @@ export function AdminNavigationShell({
  <Link
  href="/admin/settings"
  aria-label="Profile and settings"
- className="flex h-11 w-11 items-center justify-center rounded-xl border border-border hover:bg-muted sm:hidden"
+ className="apple-icon-button flex h-11 w-11 items-center justify-center rounded-xl border border-border sm:hidden"
  >
  <Settings className="h-5 w-5" />
  </Link>
@@ -292,7 +285,7 @@ export function AdminNavigationShell({
  type="button"
  onClick={handleLogout}
  disabled={loggingOut}
- className="flex h-11 items-center justify-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
+ className="apple-secondary-button flex h-11 items-center justify-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-destructive/40 hover:text-destructive disabled:opacity-60"
  >
  <LogOut className="h-5 w-5" />
  <span className="hidden xl:inline">{loggingOut ? "Signing out..." : "Logout"}</span>
