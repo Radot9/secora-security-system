@@ -33,7 +33,7 @@ export default function SuccessDialog({
  process.env.NEXT_PUBLIC_SITE_URL ||
  (typeof window !== "undefined" ? window.location.origin : "");
  async function copyCredentials() {
- const credentials = `Welcome to Secora Security System, ${fullName}!
+ const credentials = `Welcome to Entriseq Estate Security, ${fullName}!
 
 Your ${accountLabel} has been created successfully.
 
@@ -55,7 +55,7 @@ When you log in, you will be prompted immediately to change your temporary passw
  }
 
  const whatsappMessage =
- encodeURIComponent(`Welcome to Secora Security System 🏡
+ encodeURIComponent(`Welcome to Entriseq Estate Security 🏡
 
 Your ${accountLabel} has been created successfully.
 
@@ -73,9 +73,9 @@ When you log in using these details, you will be prompted immediately to change 
 
 Welcome to Thomas Ajufo Estate.`);
 
- const emailSubject = encodeURIComponent(`Your Secora ${accountLabel}`);
+ const emailSubject = encodeURIComponent(`Your Entriseq ${accountLabel}`);
 
- const emailBody = encodeURIComponent(`Welcome to Secora Security System, ${fullName}!
+ const emailBody = encodeURIComponent(`Welcome to Entriseq Estate Security, ${fullName}!
 
 Your ${accountLabel} has been created successfully.
 

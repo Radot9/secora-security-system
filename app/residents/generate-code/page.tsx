@@ -14,7 +14,6 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { AppShell } from "../../components/ui/AppShell";
 import { Card } from "../../components/ui/Card";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -369,7 +368,7 @@ export default function GenerateCodePage() {
        <div className="flex items-center justify-between gap-4">
         <div>
          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Recent</p>
-         <h2 className="mt-2 text-xl font-bold">Visitor passes</h2>
+         <h2 className="mt-2 text-xl font-bold">My passes</h2>
         </div>
         <Link href="/residents/visitors" className="text-sm font-semibold text-primary transition hover:text-primary/80">
          View all
@@ -415,7 +414,6 @@ export default function GenerateCodePage() {
      </div>
     </section>
    </div>
-   <ResidentBottomNav />
   </AppShell>
  );
 }

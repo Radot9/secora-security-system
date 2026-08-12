@@ -7,7 +7,6 @@ import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import ProfileCard from "@/app/components/profile/ProfileCard";
 import ProfileField from "@/app/components/profile/ProfileField";
-import { ResidentBottomNav } from "@/app/components/ResidentBottomNav";
 import { formatResidentLocation } from "@/lib/resident-address";
 
 interface ResidentProfile {
@@ -74,7 +73,6 @@ export default function ResidentProfilePage() {
  <div className="py-20 text-center">
  Loading profile...
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
  }
@@ -116,7 +114,6 @@ export default function ResidentProfilePage() {
  </ProfileCard>
 
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

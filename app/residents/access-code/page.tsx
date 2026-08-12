@@ -7,7 +7,6 @@ import { Ban, Car, CheckCircle2, ClipboardList, Copy, Phone, QrCode, Share2, Use
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { AppShell } from "../../components/ui/AppShell";
 import { Card } from "../../components/ui/Card";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -51,7 +50,7 @@ function AccessCodeContent() {
  const passText = useMemo(() => {
  if (!accessCode || !visitor) return "";
  return [
- `Secora visitor pass`,
+ `Entriseq visitor pass`,
  `Visitor: ${visitor.visitor_name}`,
  `Phone: ${visitor.visitor_phone}`,
  `Purpose: ${visitor.purpose_of_visit || "N/A"}`,
@@ -158,7 +157,7 @@ function AccessCodeContent() {
  const publicPassUrl = getPublicPassUrl();
  if (navigator.share) {
  await navigator.share({
- title: "Secora Visitor Pass",
+ title: "Entriseq Visitor Pass",
  text: `${passText}\nQR visitor pass: ${publicPassUrl}`,
  url: publicPassUrl,
  });
@@ -196,7 +195,6 @@ function AccessCodeContent() {
  <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground">
  Loading visitor pass...
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
  }
@@ -214,7 +212,6 @@ function AccessCodeContent() {
  </Link>
  </div>
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
  }
@@ -340,7 +337,6 @@ function AccessCodeContent() {
  </button>
  </section>
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

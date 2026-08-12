@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
  Activity,
  ArrowLeft,
  BarChart3,
+ Bell,
  ChevronRight,
  ClipboardList,
  DoorOpen,
@@ -60,6 +61,10 @@ const navigationGroups: { label: string; items: NavigationItem[] }[] = [
  ],
  },
  {
+ label: "Communication",
+ items: [{ label: "Announcements", href: "/admin/announcements", icon: Bell }],
+ },
+ {
  label: "Reports",
  items: [{ label: "Analytics", href: "/admin/analytics", icon: BarChart3 }],
  },
@@ -71,6 +76,7 @@ const pageNames: Record<string, string> = {
  "/admin/visitor-history": "Visitor History",
  "/admin/access-logs": "Access Logs",
  "/admin/analytics": "Analytics",
+ "/admin/announcements": "Announcements",
  "/admin/residents": "Residents",
  "/admin/residents/new": "Create Resident",
  "/admin/security": "Security Personnel",
@@ -96,6 +102,7 @@ export function AdminNavigationShell({
  const pathname = usePathname();
  const router = useRouter();
  const [menuOpen, setMenuOpen] = useState(false);
+ const [desktopMenuOpen, setDesktopMenuOpen] = useState(true);
  const [loggingOut, setLoggingOut] = useState(false);
 
  const currentPage =
@@ -104,6 +111,21 @@ export function AdminNavigationShell({
 
  const closeMenu = () => setMenuOpen(false);
 
+ useEffect(() => {
+ if (!menuOpen) return;
+ const previousOverflow = document.body.style.overflow;
+ const closeOnEscape = (event: KeyboardEvent) => {
+ if (event.key === "Escape") setMenuOpen(false);
+ };
+
+ document.body.style.overflow = "hidden";
+ window.addEventListener("keydown", closeOnEscape);
+ return () => {
+ document.body.style.overflow = previousOverflow;
+ window.removeEventListener("keydown", closeOnEscape);
+ };
+ }, [menuOpen]);
+
  async function handleLogout() {
  setLoggingOut(true);
  await supabase.auth.signOut();
@@ -111,30 +133,36 @@ export function AdminNavigationShell({
  router.refresh();
  }
 
- const sidebar = (
+ function renderSidebar(
+ onToggle: () => void,
+ onNavigate?: () => void,
+ collapsed = false,
+ ) {
+ return (
  <div className="flex h-full flex-col">
- <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
- <Link href="/admin" onClick={closeMenu} className="flex items-center gap-3">
+ <div className="app-sidebar-header relative flex h-20 items-center justify-between border-b border-sidebar-border px-5">
+ {!collapsed ? <Link href="/admin" onClick={onNavigate} className="app-sidebar-brand flex min-w-0 items-center gap-3">
  <BrandMark size="small" />
- <span>
- <span className="block text-base font-bold tracking-[-0.02em]">Secora</span>
+ <span className="app-sidebar-copy min-w-0">
+ <span className="block text-base font-bold tracking-[-0.02em]">Entriseq</span>
  <span className="block text-xs text-muted-foreground">Administration</span>
  </span>
- </Link>
+ </Link> : null}
  <button
  type="button"
- onClick={closeMenu}
- aria-label="Close navigation"
- className="apple-icon-button flex h-11 w-11 items-center justify-center rounded-xl hover:bg-sidebar-accent lg:hidden"
+ onClick={onToggle}
+ aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+ aria-expanded={!collapsed}
+ className="app-sidebar-toggle apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-sidebar-accent"
  >
- <X className="h-5 w-5" />
+ {collapsed ? <Menu className="h-5 w-5" aria-hidden="true" /> : <X className="h-5 w-5" aria-hidden="true" />}
  </button>
  </div>
 
  <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Admin navigation">
  {navigationGroups.map((group) => (
  <div key={group.label}>
- <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+ <p className="app-sidebar-section-label mb-2 px-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
  {group.label}
  </p>
  <div className="space-y-1">
@@ -145,13 +173,14 @@ export function AdminNavigationShell({
  <Link
  key={item.href}
  href={item.href}
- onClick={closeMenu}
+ title={collapsed ? item.label : undefined}
+ onClick={onNavigate}
  aria-current={active ? "page" : undefined}
  data-active={active}
  className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground"
  >
  <Icon className="h-5 w-5 shrink-0" />
- {item.label}
+ <span className="app-sidebar-copy">{item.label}</span>
  </Link>
  );
  })}
@@ -161,27 +190,29 @@ export function AdminNavigationShell({
 
  {isSuperAdmin && (
  <div>
- <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+ <p className="app-sidebar-section-label mb-2 px-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
  Administration
  </p>
  <div className="space-y-1">
  <Link
  href="/admin/super-admin"
- onClick={closeMenu}
+ title={collapsed ? "Super Admin" : undefined}
+ onClick={onNavigate}
  data-active={isActivePath(pathname, "/admin/super-admin")}
  className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold"
  >
  <UserCog className="h-5 w-5" />
- Super Admin
+ <span className="app-sidebar-copy">Super Admin</span>
  </Link>
  <Link
  href="/admin/administrators"
- onClick={closeMenu}
+ title={collapsed ? "Administrators" : undefined}
+ onClick={onNavigate}
  data-active={isActivePath(pathname, "/admin/administrators")}
  className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold"
  >
  <UserPlus className="h-5 w-5" />
- Administrators
+ <span className="app-sidebar-copy">Administrators</span>
  </Link>
  </div>
  </div>
@@ -191,32 +222,39 @@ export function AdminNavigationShell({
  <div className="border-t border-sidebar-border p-3">
  <Link
  href="/admin/settings"
- onClick={closeMenu}
- className="app-nav-link flex items-center gap-3 rounded-xl p-3"
+ title={collapsed ? `${displayName} · ${roleLabel}` : undefined}
+ onClick={onNavigate}
+ className="app-nav-link app-sidebar-profile flex items-center gap-3 rounded-xl p-3"
  >
  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
  {initials || "A"}
  </span>
- <span className="min-w-0 flex-1">
+ <span className="app-sidebar-copy min-w-0 flex-1">
  <span className="block truncate text-sm font-semibold">{displayName}</span>
  <span className="block truncate text-xs text-muted-foreground">{roleLabel}</span>
  </span>
- <ChevronRight className="h-4 w-4 text-muted-foreground" />
+ <ChevronRight className="app-sidebar-copy h-4 w-4 text-muted-foreground" />
  </Link>
  </div>
  </div>
  );
+ }
 
  return (
  <div className="min-h-screen bg-background text-foreground">
- <aside className="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
- {sidebar}
+ <aside
+ id="admin-desktop-navigation"
+ data-expanded={desktopMenuOpen}
+ className="app-desktop-sidebar app-sidebar fixed inset-y-0 left-0 z-40 hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block"
+ >
+ {renderSidebar(() => setDesktopMenuOpen((open) => !open), undefined, !desktopMenuOpen)}
  </aside>
 
  <div
  className="app-mobile-nav fixed inset-0 z-50 lg:hidden"
  data-open={menuOpen}
  aria-hidden={!menuOpen}
+ inert={!menuOpen}
  >
  <button
  type="button"
@@ -225,23 +263,31 @@ export function AdminNavigationShell({
  tabIndex={menuOpen ? 0 : -1}
  className="app-mobile-nav-backdrop absolute inset-0 bg-foreground/40"
  />
- <aside className="app-mobile-nav-panel app-sidebar relative h-full w-[min(18rem,88vw)] border-r border-sidebar-border bg-sidebar shadow-2xl">
- {sidebar}
+ <aside id="admin-mobile-navigation" className="app-mobile-nav-panel app-sidebar relative h-full w-[min(18rem,88vw)] border-r border-sidebar-border bg-sidebar shadow-2xl">
+ {renderSidebar(closeMenu, closeMenu)}
  </aside>
  </div>
 
- <div className="lg:pl-72">
+ <div className="app-shell-content" data-sidebar-open={desktopMenuOpen}>
  <header className="app-toolbar sticky top-0 z-30 px-4 py-3 sm:px-6">
  <div className="flex min-h-12 items-center justify-between gap-3">
  <div className="flex min-w-0 items-center gap-2">
+ <div className="flex shrink-0 items-center gap-2 lg:hidden">
+ <Link href="/admin" className="flex items-center gap-2" aria-label="Entriseq administration dashboard">
+ <BrandMark size="small" />
+ <span className="hidden text-sm font-bold min-[430px]:inline">Entriseq</span>
+ </Link>
  <button
  type="button"
  onClick={() => setMenuOpen(true)}
  aria-label="Open navigation"
- className="apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border lg:hidden"
+ aria-expanded={menuOpen}
+ aria-controls="admin-mobile-navigation"
+ className="apple-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border"
  >
  <Menu className="h-5 w-5" />
  </button>
+ </div>
  {pathname !== "/admin" && (
  <button
  type="button"

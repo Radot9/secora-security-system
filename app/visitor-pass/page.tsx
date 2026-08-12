@@ -21,14 +21,14 @@ function VisitorPassContent() {
  const url = window.location.href;
  if (navigator.share) {
  await navigator.share({
- title: "Secora Visitor Pass",
- text: `Secora visitor access code: ${accessCode}`,
+ title: "Entriseq Visitor Pass",
+ text: `Entriseq visitor access code: ${accessCode}`,
  url,
  });
  return;
  }
 
- await navigator.clipboard.writeText(`Secora visitor access code: ${accessCode}\nVisitor pass: ${url}`);
+ await navigator.clipboard.writeText(`Entriseq visitor access code: ${accessCode}\nVisitor pass: ${url}`);
  toast.success("Visitor pass link copied.");
  }
 
@@ -39,7 +39,7 @@ function VisitorPassContent() {
  <QrCode className="mx-auto h-10 w-10 text-muted-foreground" />
  <h1 className="mt-4 text-2xl font-bold">Invalid visitor pass</h1>
  <p className="mt-2 text-sm leading-6 text-muted-foreground">
- Ask the resident to send you a new Secora visitor pass.
+ Ask the resident to send you a new Entriseq visitor pass.
  </p>
  </div>
  </main>
@@ -53,7 +53,7 @@ function VisitorPassContent() {
  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-foreground/15">
  <ShieldCheck className="h-7 w-7" />
  </div>
- <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em]">Secora</p>
+ <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em]">Entriseq</p>
  <h1 className="mt-1 text-2xl font-bold">Visitor Pass</h1>
  </header>
 
@@ -89,7 +89,7 @@ function VisitorPassContent() {
  </div>
 
  <Link href="/" className="mt-6 inline-block text-sm font-semibold text-primary hover:underline">
- Secora Security System
+ Entriseq Estate Security
  </Link>
  </div>
  </article>

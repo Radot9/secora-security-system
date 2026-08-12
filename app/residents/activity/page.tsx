@@ -1,6 +1,5 @@
 "use client";
 
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { AppShell } from "../../components/ui/AppShell";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
@@ -144,7 +143,6 @@ export default function ActivityPage() {
  )}
  </Card>
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

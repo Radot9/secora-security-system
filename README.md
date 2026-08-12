@@ -1,6 +1,6 @@
-# Secora Estate Access Management System
+# Entriseq Estate Access Management System
 
-Secora is a Next.js and Supabase application for managing visitor access in a gated residential estate. The current MVP focuses on the existing visitor-management scope: residents create visitor passes, security officers verify and check visitors in/out, and administrators manage residents, security personnel, visitor history, access logs, analytics, and privileged administrator access.
+Entriseq is a Next.js and Supabase application for managing visitor access in a gated residential estate. The current MVP focuses on the existing visitor-management scope: residents create visitor passes, security officers verify and check visitors in/out, and administrators manage residents, security personnel, visitor history, access logs, analytics, and privileged administrator access.
 
 Postponed product areas such as resident ID cards, landlord/tenant credentials, worker credentials, NFC, card replacement, property management, and multi-estate support are intentionally out of scope for this codebase phase.
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { AppShell } from "../../components/ui/AppShell";
 
 import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
@@ -18,7 +17,6 @@ export default function SettingsPage() {
 
  <ChangePasswordCard />
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

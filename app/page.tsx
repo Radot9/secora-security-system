@@ -181,7 +181,7 @@ export default function Home() {
  <div className="flex items-center gap-3">
  <BrandMark />
  <div>
- <p className="text-lg font-bold tracking-[-0.025em]">Secora</p>
+ <p className="text-lg font-bold tracking-[-0.025em]">Entriseq</p>
  <p className="text-xs font-medium text-muted-foreground">Estate security system</p>
  </div>
  </div>
@@ -218,7 +218,7 @@ export default function Home() {
  <div className="flex items-center gap-3 lg:hidden">
  <BrandMark size="small" />
  <div>
- <p className="font-bold tracking-[-0.02em]">Secora</p>
+ <p className="font-bold tracking-[-0.02em]">Entriseq</p>
  <p className="text-xs text-muted-foreground">Estate security system</p>
  </div>
  </div>
@@ -280,7 +280,7 @@ export default function Home() {
  </button>
  </form>
  <p className="mt-7 text-center text-xs leading-5 text-muted-foreground">
- Access is restricted to authorized Secora accounts.
+ Access is restricted to authorized Entriseq accounts.
  </p>
  </section>
  </div>

@@ -8,14 +8,28 @@ import { supabase } from "@/lib/supabase";
 import { Visitor } from "@/types/visitors";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { StatusBadge } from "@/app/components/ui/StatusBadge";
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { getDisplayVisitorStatus } from "@/lib/visitor-status";
+
+const passFilters = ["all", "pending", "entered", "revoked", "expired"] as const;
+type PassFilter = (typeof passFilters)[number];
+
+const filterLabels: Record<PassFilter, string> = {
+ all: "All passes",
+ pending: "Pending passes",
+ entered: "Currently inside",
+ revoked: "Revoked passes",
+ expired: "Expired codes",
+};
+
+function isPassFilter(value: string | null): value is PassFilter {
+ return value !== null && passFilters.includes(value as PassFilter);
+}
 
 export default function VisitorsPage() {
  const [visitors, setVisitors] = useState<Visitor[]>([]);
  const [loading, setLoading] = useState(true);
  const [search, setSearch] = useState("");
- const [showExpiredOnly, setShowExpiredOnly] = useState(false);
+ const [statusFilter, setStatusFilter] = useState<PassFilter>("all");
 
  useEffect(() => {
  let isMounted = true;
@@ -24,9 +38,8 @@ export default function VisitorsPage() {
  const {
  data: { user },
  } = await supabase.auth.getUser();
- if (isMounted) {
- setShowExpiredOnly(new URLSearchParams(window.location.search).get("status") === "expired");
- }
+ const requestedFilter = new URLSearchParams(window.location.search).get("status");
+ if (isMounted && isPassFilter(requestedFilter)) setStatusFilter(requestedFilter);
 
  if (!user) {
  if (isMounted) setLoading(false);
@@ -69,9 +82,9 @@ export default function VisitorsPage() {
  const filteredVisitors = useMemo(() => {
  const query = search.trim().toLowerCase();
 
- const statusFiltered = showExpiredOnly
- ? visitors.filter((visitor) => getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at }) === "expired")
- : visitors;
+ const statusFiltered = statusFilter === "all"
+ ? visitors
+ : visitors.filter((visitor) => getDisplayVisitorStatus({ status: visitor.status, expiresAt: visitor.expires_at }) === statusFilter);
 
  if (!query) return statusFiltered;
 
@@ -83,22 +96,23 @@ export default function VisitorsPage() {
  visitor.plate_number?.toLowerCase().includes(query)
  );
  });
- }, [search, showExpiredOnly, visitors]);
+ }, [search, statusFilter, visitors]);
+ const showExpiredOnly = statusFilter === "expired";
 
  return (
  <AppShell size="full" residentSidebar>
  <div className="resident-page">
  <header className="flex items-center justify-between gap-4">
  <div>
- <h1 className="text-2xl font-bold tracking-tight">Visitors</h1>
+ <h1 className="text-2xl font-bold tracking-tight">My Passes</h1>
  <p className="mt-2 text-sm text-muted-foreground">
- Manage guest access for your home
+ {filterLabels[statusFilter]} for your home
  {showExpiredOnly ? " · Showing expired codes" : ""}
  </p>
  </div>
  <Link
  href="/residents/generate-code"
- aria-label="Add new visitor"
+ aria-label="Generate a new pass"
  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/100 text-primary-foreground shadow-sm transition hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring"
  >
  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -106,6 +120,20 @@ export default function VisitorsPage() {
  </svg>
  </Link>
  </header>
+
+ <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Filter passes by status">
+ {passFilters.map((filter) => (
+ <Link
+ key={filter}
+ href={`/residents/visitors?status=${filter}`}
+ onClick={() => setStatusFilter(filter)}
+ aria-current={statusFilter === filter ? "page" : undefined}
+ className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-colors ${statusFilter === filter ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}
+ >
+ {filterLabels[filter]}
+ </Link>
+ ))}
+ </div>
 
  <div className="relative">
  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -124,7 +152,7 @@ export default function VisitorsPage() {
  </div>
  ) : filteredVisitors.length === 0 ? (
  <div className="px-5 py-16 text-center">
- <h2 className="font-semibold">No visitors found</h2>
+ <h2 className="font-semibold">No {filterLabels[statusFilter].toLowerCase()} found</h2>
  <p className="mt-2 text-sm text-muted-foreground">
  Create a visitor pass or adjust your search.
  </p>
@@ -180,7 +208,6 @@ export default function VisitorsPage() {
  )}
  </section>
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

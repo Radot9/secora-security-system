@@ -99,7 +99,7 @@ export default function AdministratorsPage() {
  <article key={invitation.id} className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
  <div><p className="font-semibold">{invitation.full_name}</p><p className="mt-1 text-sm text-muted-foreground">{invitation.email} · Expires {new Date(invitation.expires_at).toLocaleString()}</p></div>
  <div className="flex gap-2">
- <button onClick={() => setConfirmation({ title: "Resend invitation?", description: `Send a new Secora invitation to ${invitation.email}?`, label: "Resend", run: () => invitationAction(invitation.id, "resend") })} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-semibold"><RotateCw className="h-4 w-4" />Resend</button>
+ <button onClick={() => setConfirmation({ title: "Resend invitation?", description: `Send a new Entriseq invitation to ${invitation.email}?`, label: "Resend", run: () => invitationAction(invitation.id, "resend") })} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-semibold"><RotateCw className="h-4 w-4" />Resend</button>
  <button onClick={() => setConfirmation({ title: "Revoke invitation?", description: `${invitation.email} will no longer be able to complete administrator onboarding.`, label: "Revoke", destructive: true, run: () => invitationAction(invitation.id, "revoke") })} className="inline-flex items-center gap-2 rounded-xl bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive"><Ban className="h-4 w-4" />Revoke</button>
  </div>
  </article>
