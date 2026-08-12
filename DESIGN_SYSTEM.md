@@ -1,8 +1,8 @@
-# Secora Security System Design System v1.1
+# Entriseq Estate Security Design System v1.1
 
 ## Design Philosophy
 
-Secora is a modern estate security platform designed for:
+Entriseq is a modern estate security platform designed for:
 
 * Residents
 * Security Personnel

@@ -7,18 +7,32 @@ export class ApiAuthorizationError extends Error {
  }
 }
 
-export async function requireApiRole(allowedRoles: readonly UserRole[]) {
- const supabase = await createSupabaseServerClient();
- const { data: { user }, error: userError } = await supabase.auth.getUser();
+type ApiRoleOptions = {
+ allowPasswordChangeRequired?: boolean;
+ allowIncompleteOnboarding?: boolean;
+};
 
- if (userError || !user) {
+export async function requireApiRole(
+ allowedRoles: readonly UserRole[],
+ options: ApiRoleOptions = {},
+) {
+ const supabase = await createSupabaseServerClient();
+ const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+ const userId = claimsData?.claims.sub;
+
+ if (claimsError || !userId) {
  throw new ApiAuthorizationError("Please sign in to continue.", 401);
  }
+
+ const user = {
+ id: userId,
+ email: typeof claimsData.claims.email === "string" ? claimsData.claims.email : undefined,
+ };
 
  const { data, error } = await supabase
  .from("profiles")
  .select("id, email, full_name, phone, role, is_active, must_change_password, onboarding_completed_at")
- .eq("id", user.id)
+ .eq("id", userId)
  .single();
 
  if (error || !data || !isUserRole(data.role)) {
@@ -28,6 +42,16 @@ export async function requireApiRole(allowedRoles: readonly UserRole[]) {
  const profile = data as ProfileAccess;
  if (!profile.is_active) {
  throw new ApiAuthorizationError("Your account is inactive. Contact a Super Admin.", 403);
+ }
+ if (profile.must_change_password && !options.allowPasswordChangeRequired) {
+ throw new ApiAuthorizationError("Change your temporary password before continuing.", 403);
+ }
+ if (
+ (profile.role === "admin" || profile.role === "super_admin") &&
+ !profile.onboarding_completed_at &&
+ !options.allowIncompleteOnboarding
+ ) {
+ throw new ApiAuthorizationError("Complete administrator onboarding before continuing.", 403);
  }
  if (!canAccessRole(profile.role, allowedRoles)) {
  throw new ApiAuthorizationError("You do not have permission to perform this action.", 403);

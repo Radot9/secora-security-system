@@ -11,6 +11,10 @@ export interface Visitor {
   validity_duration_minutes: number | null;
   entry_time: string | null;
   exit_time: string | null;
+  checked_in_by: string | null;
+  checked_in_by_name: string | null;
+  checked_out_by: string | null;
+  checked_out_by_name: string | null;
   expires_at: string;
   created_at: string;
 }

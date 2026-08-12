@@ -7,11 +7,11 @@ import { Ban, Car, CheckCircle2, ClipboardList, Copy, Phone, QrCode, Share2, Use
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
-import { ResidentBottomNav } from "../../components/ResidentBottomNav";
 import { AppShell } from "../../components/ui/AppShell";
 import { Card } from "../../components/ui/Card";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { supabase } from "@/lib/supabase";
+import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-status";
 
 type Visitor = {
  visitor_name: string;
@@ -22,24 +22,6 @@ type Visitor = {
  expires_at: string | null;
  status: string;
 };
-
-function statusClassName(status: string) {
- switch (status) {
- case "revoked":
- return "bg-destructive/15 text-destructive";
- case "entered":
- return "bg-emerald-100 text-emerald-700";
- case "exited":
- return "bg-primary/15 text-primary";
- default:
- return "bg-primary/15 text-primary";
- }
-}
-
-function displayStatus(status: string) {
- if (status === "revoked") return "Revoked";
- return status.charAt(0).toUpperCase() + status.slice(1);
-}
 
 function formatDuration(minutes: number | null) {
  if (!minutes) return "Duration not available";
@@ -56,18 +38,19 @@ function formatDuration(minutes: number | null) {
 
 function AccessCodeContent() {
  const searchParams = useSearchParams();
- const accessCode = searchParams.get("code");
+ const requestedAccessCode = searchParams.get("code");
+ const [accessCode, setAccessCode] = useState(requestedAccessCode);
  const [visitor, setVisitor] = useState<Visitor | null>(null);
- const [loading, setLoading] = useState(Boolean(accessCode));
+ const [loading, setLoading] = useState(true);
 
- const qrValue = accessCode ? `/security?code=${accessCode}` : "";
+ const qrValue = accessCode || "";
  const expiresAt = visitor?.expires_at ? new Date(visitor.expires_at).toLocaleString() : "No expiry set";
  const validityDuration = visitor ? formatDuration(visitor.validity_duration_minutes) : "Duration not available";
 
  const passText = useMemo(() => {
  if (!accessCode || !visitor) return "";
  return [
- `Secora visitor pass`,
+ `Entriseq visitor pass`,
  `Visitor: ${visitor.visitor_name}`,
  `Phone: ${visitor.visitor_phone}`,
  `Purpose: ${visitor.purpose_of_visit || "N/A"}`,
@@ -82,7 +65,46 @@ function AccessCodeContent() {
  let mounted = true;
 
  async function loadVisitor() {
- if (!accessCode) {
+ let codeToLoad = requestedAccessCode;
+
+ if (!codeToLoad) {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+
+ if (!user) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ const { data: resident } = await supabase
+ .from("residents")
+ .select("id")
+ .eq("user_id", user.id)
+ .maybeSingle();
+
+ if (!resident) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ const { data: latestVisitor, error: latestError } = await supabase
+ .from("visitors")
+ .select("access_code")
+ .eq("resident_id", resident.id)
+ .order("created_at", { ascending: false })
+ .limit(1)
+ .maybeSingle();
+
+ if (latestError || !latestVisitor?.access_code) {
+ if (mounted) setLoading(false);
+ return;
+ }
+
+ codeToLoad = latestVisitor.access_code;
+ }
+
+ if (!codeToLoad) {
  setLoading(false);
  return;
  }
@@ -90,7 +112,7 @@ function AccessCodeContent() {
  const { data, error } = await supabase
  .from("visitors")
  .select("visitor_name, visitor_phone, purpose_of_visit, validity_duration_minutes, plate_number, expires_at, status")
- .eq("access_code", accessCode)
+ .eq("access_code", codeToLoad)
  .single();
 
  if (!mounted) return;
@@ -101,6 +123,7 @@ function AccessCodeContent() {
  return;
  }
 
+ setAccessCode(codeToLoad);
  setVisitor(data);
  setLoading(false);
  }
@@ -110,13 +133,17 @@ function AccessCodeContent() {
  return () => {
  mounted = false;
  };
- }, [accessCode]);
+ }, [requestedAccessCode]);
+
+ function getPublicPassUrl() {
+ return `${window.location.origin}/visitor-pass?code=${encodeURIComponent(accessCode ?? "")}`;
+ }
 
  async function copyPassInfo() {
  if (!passText) return;
 
  try {
- await navigator.clipboard.writeText(passText);
+ await navigator.clipboard.writeText(`${passText}\nQR visitor pass: ${getPublicPassUrl()}`);
  toast.success("Access code info copied.");
  } catch {
  toast.error("Unable to copy this access code.");
@@ -127,10 +154,12 @@ function AccessCodeContent() {
  if (!passText) return;
 
  try {
+ const publicPassUrl = getPublicPassUrl();
  if (navigator.share) {
  await navigator.share({
- title: "Secora Visitor Pass",
- text: passText,
+ title: "Entriseq Visitor Pass",
+ text: `${passText}\nQR visitor pass: ${publicPassUrl}`,
+ url: publicPassUrl,
  });
  return;
  }
@@ -144,13 +173,15 @@ function AccessCodeContent() {
  async function revokeCode() {
  if (!accessCode) return;
 
- const { error } = await supabase
- .from("visitors")
- .update({ status: "revoked" })
- .eq("access_code", accessCode);
+ const response = await fetch("/api/residents/visitors/revoke", {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ accessCode }),
+ });
+ const result = await response.json();
 
- if (error) {
- toast.error(error.message);
+ if (!response.ok) {
+ toast.error(result.error ?? "Unable to revoke this access code.");
  return;
  }
 
@@ -158,7 +189,17 @@ function AccessCodeContent() {
  toast.success("Access code revoked.");
  }
 
- if (!accessCode) {
+ if (loading) {
+ return (
+ <AppShell size="full" residentSidebar>
+ <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground">
+ Loading visitor pass...
+ </div>
+ </AppShell>
+ );
+ }
+
+ if (!accessCode || !visitor) {
  return (
  <AppShell size="full" residentSidebar>
  <div className="flex min-h-[70vh] items-center justify-center text-center">
@@ -171,18 +212,6 @@ function AccessCodeContent() {
  </Link>
  </div>
  </div>
- <ResidentBottomNav />
- </AppShell>
- );
- }
-
- if (loading || !visitor) {
- return (
- <AppShell size="full" residentSidebar>
- <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground">
- Loading visitor pass...
- </div>
- <ResidentBottomNav />
  </AppShell>
  );
  }
@@ -191,7 +220,7 @@ function AccessCodeContent() {
  <AppShell size="full" residentSidebar>
  <div className="resident-page">
  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
- <PageHeader title="Access Code Generated" subtitle="Copy or share this visitor pass with one click." backHref="/residents" />
+ <PageHeader title="Access Code Generated" subtitle="Copy or share this visitor pass with one click." />
  <button
  type="button"
  onClick={copyPassInfo}
@@ -257,8 +286,8 @@ function AccessCodeContent() {
  <div className="space-y-5 p-6">
  <div>
  <p className="text-sm text-muted-foreground">Status</p>
- <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(visitor.status)}`}>
- {displayStatus(visitor.status)}
+ <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${visitorStatusClassName(visitor.status)}`}>
+ {displayVisitorStatus(visitor.status)}
  </span>
  </div>
  <div>
@@ -274,7 +303,7 @@ function AccessCodeContent() {
  <CheckCircle2 className="h-4 w-4" />
  Ready to share
  </div>
- <p className="mt-2 text-sm leading-6 text-muted-foreground">The copy button includes the visitor name, phone number, purpose, duration, code, plate, and expiry.</p>
+ <p className="mt-2 text-sm leading-6 text-muted-foreground">The copy button includes the visitor details, access code, expiry, and a link to the QR visitor pass.</p>
  </div>
  </div>
  </div>
@@ -308,7 +337,6 @@ function AccessCodeContent() {
  </button>
  </section>
  </div>
- <ResidentBottomNav />
  </AppShell>
  );
 }

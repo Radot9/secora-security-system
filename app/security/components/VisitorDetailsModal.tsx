@@ -1,4 +1,5 @@
 import { ActivityItem } from "@/types/activity";
+import { AnimatedDialog } from "@/app/components/ui/AnimatedDialog";
 
 interface VisitorDetailsModalProps {
  visitor: ActivityItem | null;
@@ -20,13 +21,11 @@ export default function VisitorDetailsModal({
  if (!visitor) return null;
 
  return (
- <div
- className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
- onClick={onClose}
- >
- <div
- className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card p-6"
- onClick={(e) => e.stopPropagation()}
+ <AnimatedDialog
+ open={Boolean(visitor)}
+ onClose={onClose}
+ labelledBy="visitor-details-title"
+ surfaceClassName="max-w-lg p-5 sm:p-6"
  >
  <div className="text-center">
  <div
@@ -35,7 +34,7 @@ export default function VisitorDetailsModal({
  <StatusIcon className="h-10 w-10" />
  </div>
 
- <h2 className="mt-4 text-2xl font-bold">
+ <h2 id="visitor-details-title" className="mt-4 text-2xl font-bold">
  {visitorStatusConfig.title}
  </h2>
 
@@ -65,11 +64,6 @@ export default function VisitorDetailsModal({
  />
 
  <DetailRow
- label="Access Code"
- value={visitor.access_code}
- />
-
- <DetailRow
  label="Entry Time"
  value={
  visitor.entry_time
@@ -77,6 +71,7 @@ export default function VisitorDetailsModal({
  : "Not entered"
  }
  />
+ <DetailRow label="Checked In By" value={visitor.checked_in_by_name || "Not recorded"} />
 
  <DetailRow
  label="Exit Time"
@@ -86,6 +81,7 @@ export default function VisitorDetailsModal({
  : "Still inside"
  }
  />
+ <DetailRow label="Checked Out By" value={visitor.checked_out_by_name || "Not recorded"} />
 
  <DetailRow
  label="Expires"
@@ -99,13 +95,13 @@ export default function VisitorDetailsModal({
  </div>
 
  <button
+ type="button"
  onClick={onClose}
- className="mt-6 w-full rounded-2xl bg-primary/100 px-4 py-3 font-semibold text-primary-foreground"
+ className="apple-primary-button mt-6 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
  >
  Close
  </button>
- </div>
- </div>
+ </AnimatedDialog>
  );
 }
 

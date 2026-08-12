@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
  const userId = authData.user.id;
  const { error: profileError } = await supabaseAdmin.from("profiles").insert({
- id: userId, email, full_name: fullName, phone, role: "security", is_active: true,
+ id: userId, email, full_name: fullName, phone, role: "security", is_active: true, must_change_password: true,
  });
  if (profileError) {
  await supabaseAdmin.auth.admin.deleteUser(userId);

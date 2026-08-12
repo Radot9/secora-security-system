@@ -17,4 +17,8 @@ export interface ActivityItem {
   entry_time?: string | null;
   exit_time?: string | null;
   expires_at?: string | null;
+  checked_in_by?: string | null;
+  checked_in_by_name?: string | null;
+  checked_out_by?: string | null;
+  checked_out_by_name?: string | null;
 }

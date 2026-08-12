@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { Outfit, Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
 
-const systemThemeScript = `
+const geistHeading = Geist({subsets:['latin'],variable:'--font-heading'});
+
+const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
+
+const themeScript = `
 (function () {
-  function applyTheme(event) {
-    var prefersDark = event ? event.matches : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.classList.toggle("dark", prefersDark);
-    document.documentElement.style.colorScheme = prefersDark ? "dark" : "light";
-  }
-
-  var mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applyTheme(mediaQuery);
-  mediaQuery.addEventListener("change", applyTheme);
+  var storedTheme = localStorage.getItem("entriseq-theme-v1");
+  var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var isDark = storedTheme === "dark" || (storedTheme !== "light" && prefersDark);
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 })();
 `;
 
 export const metadata: Metadata = {
- title: "Secora Security System",
- description: "Security system for Secora Powered Estate",
+ title: "Entriseq Estate Security",
+ description: "Visitor access, safety, announcements, and community for your estate.",
 };
 
 export default function RootLayout({
@@ -29,12 +31,13 @@ export default function RootLayout({
  return (
  <html
  lang="en"
- className="h-full antialiased font-sans"
+ className={cn("h-full antialiased font-sans", outfit.variable, geistHeading.variable)}
+ data-scroll-behavior="smooth"
  suppressHydrationWarning
  >
  <head>
  <meta name="color-scheme" content="light dark" />
- <script dangerouslySetInnerHTML={{ __html: systemThemeScript }} />
+ <script dangerouslySetInnerHTML={{ __html: themeScript }} />
  </head>
  <body className="flex min-h-full flex-col">
  <Toaster position="bottom-right" richColors closeButton />

@@ -13,85 +13,50 @@ export default function ActivityTable({
 }: ActivityTableProps) {
  return (
  <section>
- <div className="flex items-center justify-between">
  <div>
- <h2 className="text-xl font-bold tracking-tight">
- Recent Verifications
- </h2>
+ <h2 className="text-xl font-bold tracking-tight">Recent Verifications</h2>
  <p className="mt-1 text-sm text-muted-foreground">
- Visitor checks from the last 24 hours.
+ Completed gate activity from the last 24 hours.
  </p>
- </div>
  </div>
 
  <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm shadow-muted/50">
  {activity.length === 0 ? (
  <div className="px-5 py-14 text-center">
- <h3 className="font-semibold">No verification activity yet</h3>
+ <h3 className="font-semibold">No completed verification activity yet</h3>
  <p className="mt-2 text-sm text-muted-foreground">
- Visitor scans and code checks from the last 24 hours will appear here.
+ Checked-in and checked-out visitors will appear here.
  </p>
  </div>
  ) : (
  activity.map((item) => {
  const displayStatus = getVisitorStatus(item);
-
- const isDenied =
- displayStatus === "expired" || displayStatus === "revoked";
+ const isDenied = displayStatus === "expired" || displayStatus === "revoked";
 
  return (
  <article
  key={item.id}
  onClick={() => setSelectedVisitor(item)}
- className="cursor-pointer flex items-center gap-4 border-b border-border px-5 py-5 last:border-b-0 hover:bg-background"
+ className="flex cursor-pointer items-center gap-4 border-b border-border px-5 py-5 last:border-b-0 hover:bg-background"
  >
- <span
- className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
- isDenied
- ? "bg-destructive/10 text-destructive"
- : "bg-primary/10 text-primary"
- }`}
- >
- <svg
- viewBox="0 0 24 24"
- className="h-6 w-6"
- fill="none"
- stroke="currentColor"
- strokeWidth="2"
- >
- {isDenied ? (
- <path d="m6 6 12 12M18 6 6 18" />
- ) : (
- <path d="m5 13 4 4L19 7" />
- )}
+ <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isDenied ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+ <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+ {isDenied ? <path d="m6 6 12 12M18 6 6 18" /> : <path d="m5 13 4 4L19 7" />}
  </svg>
  </span>
 
  <div className="min-w-0 flex-1">
  <h3 className="font-bold">{item.visitor_name}</h3>
-
  <p className="mt-1 truncate text-sm text-muted-foreground">
- Code: {item.access_code} •{" "}
- <span
- className={
- displayStatus === "entered"
- ? "text-primary font-semibold"
- : displayStatus === "pending"
- ? "text-accent-foreground font-semibold"
- : displayStatus === "expired"
- ? "text-secondary-foreground font-semibold"
- : displayStatus === "revoked"
- ? "text-destructive font-semibold"
- : "text-muted-foreground font-semibold"
- }
- >
- {displayStatus}
- </span>
+ <span className="font-semibold text-foreground">{displayStatus}</span> verification
+ </p>
+ <p className="mt-1 truncate text-xs text-muted-foreground">
+ In: {item.checked_in_by_name || "Not checked in"} · Out: {item.checked_out_by_name || "Not checked out"}
  </p>
  </div>
 
  <time className="text-sm text-muted-foreground">
- {new Date(item.created_at).toLocaleTimeString()}
+ {new Date(item.exit_time || item.entry_time || item.created_at).toLocaleTimeString()}
  </time>
  </article>
  );

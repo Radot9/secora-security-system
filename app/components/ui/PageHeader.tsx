@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 interface PageHeaderProps {
  title: string;
@@ -17,22 +18,19 @@ export function PageHeader({
  <Link
  href={backHref}
  aria-label="Go back"
- className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+ className="apple-icon-button relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card"
  >
- <span
- aria-hidden="true"
- className="h-3 w-3 rotate-45 border-b-2 border-l-2 border-border"
- />
+ <ChevronLeft className="h-5 w-5" strokeWidth={2.25} />
  </Link>
  )}
 
  <div>
- <h1 className="text-2xl font-bold tracking-tight">
+ <h1 className="text-2xl font-bold tracking-[-0.025em] sm:text-3xl">
  {title}
  </h1>
 
  {subtitle && (
- <p className="mt-2 text-sm text-muted-foreground">
+ <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
  {subtitle}
  </p>
  )}
