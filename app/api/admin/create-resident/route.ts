@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
+import { TEMPORARY_ACCOUNT_PASSWORD } from "@/lib/auth/temporary-password";
 
 export async function POST(request: Request) {
  try {
@@ -7,13 +8,12 @@ export async function POST(request: Request) {
  const body = await request.json();
  const fullName = String(body.fullName ?? "").trim();
  const email = String(body.email ?? "").trim().toLowerCase();
- const password = String(body.password ?? "");
  const phone = String(body.phone ?? "").trim();
  const houseNumber = String(body.houseNumber ?? "").trim();
  const locationType = String(body.locationType ?? "").trim();
  const locationName = String(body.locationName ?? "").trim();
 
- if (!fullName || !email || !password || !phone || !houseNumber || !locationName) {
+ if (!fullName || !email || !phone || !houseNumber || !locationName) {
  return Response.json({ error: "All fields are required." }, { status: 400 });
  }
  if (locationType !== "street" && locationType !== "close") {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
  email,
- password,
+ password: TEMPORARY_ACCOUNT_PASSWORD,
  email_confirm: true,
  });
  if (authError || !authData.user) {

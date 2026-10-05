@@ -200,7 +200,6 @@ export default function ResidentsPage() {
  return (
  <AppShell size="full" residentSidebar>
  <div className="resident-page">
- <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
  <div className="flex items-center gap-4">
  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary shadow-sm shadow-primary/10">
  {initials(resident?.full_name)}
@@ -210,24 +209,16 @@ export default function ResidentsPage() {
  subtitle={`${address}, Thomas Ajufo Estate`}
  />
  </div>
- <Link
- href="/residents/generate-code"
- className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
- >
- <TicketPlus className="h-5 w-5" />
- Generate Pass
- </Link>
- </div>
 
  {loading && <DashboardLoadingNotice label="Loading your home and visitor activity…" />}
 
  <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
  <Link href="/residents/generate-code" data-interactive="true" className="resident-pass-card apple-card group relative min-h-64 overflow-hidden rounded-3xl border border-primary/25 p-7 text-white sm:p-8">
  <div className="relative z-10 max-w-md">
- <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Visitor access</p>
+ <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200">Visitor access</p>
  <h2 className="mt-4 text-3xl font-bold tracking-tight">Generate a visitor pass</h2>
  <p className="mt-3 max-w-sm text-sm leading-6 text-slate-300">Invite family, friends, and service providers with a secure, time-limited access code.</p>
- <span className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-lg transition group-hover:bg-amber-300"><TicketPlus className="h-5 w-5" />Create pass</span>
+ <span className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-lg transition group-hover:bg-emerald-100"><TicketPlus className="h-5 w-5" />Create pass</span>
  </div>
  <div className="resident-pass-card__ticket" aria-hidden="true"><QrCode className="h-16 w-16" /><span className="mt-3 text-xs font-black tracking-[0.22em]">ENTRISEQ</span></div>
  </Link>

@@ -17,13 +17,13 @@ export function AppShell({
 }: AppShellProps) {
  const widths = {
  compact: "max-w-3xl",
- default: "max-w-6xl",
+ default: "max-w-7xl",
  wide: "max-w-7xl",
- full: "max-w-none",
+ full: "max-w-7xl",
  };
 
  return (
- <main className={`${residentSidebar ? "resident-shell" : "min-h-screen bg-background px-4 py-10 text-foreground"} ${className}`}>
+ <main className={`${residentSidebar ? "resident-shell" : "app-page-shell"} ${className}`}>
  <div className={`mx-auto w-full ${widths[size]} ${contentClassName}`}>
  {children}
  </div>

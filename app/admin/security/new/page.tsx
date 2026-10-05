@@ -5,9 +5,9 @@ import { useState } from "react";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
-import { generatePassword } from "@/lib/utils/generatePassword";
 import SuccessDialog from "@/app/components/ui/SuccessDialog";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { TEMPORARY_ACCOUNT_PASSWORD } from "@/lib/auth/temporary-password";
 
 export default function NewResidentPage() {
  const [loading, setLoading] = useState(false);
@@ -17,8 +17,6 @@ export default function NewResidentPage() {
  const [phone, setPhone] = useState("");
  const [gate, setGate] = useState("");
  const [team, setTeam] = useState("");
- const [password, setPassword] = useState(() => generatePassword());
-
  const [dialogOpen, setDialogOpen] = useState(false);
 
  const [createdOfficer, setCreatedOfficer] = useState<{
@@ -42,7 +40,6 @@ export default function NewResidentPage() {
  body: JSON.stringify({
  fullName,
  email,
- password,
  phone,
  gate,
  team,
@@ -65,7 +62,7 @@ export default function NewResidentPage() {
  fullName,
  email,
  phone,
- password,
+ password: TEMPORARY_ACCOUNT_PASSWORD,
  });
 
  setDialogOpen(true);
@@ -85,8 +82,6 @@ export default function NewResidentPage() {
 
  setGate("");
  setTeam("");
-
- setPassword(generatePassword());
 
  setCreatedOfficer(null);
  }
@@ -109,6 +104,8 @@ export default function NewResidentPage() {
  type="text"
  value={fullName}
  onChange={(e) => setFullName(e.target.value)}
+ autoComplete="name"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -119,9 +116,11 @@ export default function NewResidentPage() {
  </label>
 
  <input
- type="text"
+ type="email"
  value={email}
  onChange={(e) => setEmail(e.target.value)}
+ autoComplete="email"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -133,9 +132,11 @@ export default function NewResidentPage() {
  </label>
 
  <input
- type="text"
+ type="tel"
  value={phone}
  onChange={(e) => setPhone(e.target.value)}
+ autoComplete="tel"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -145,22 +146,16 @@ export default function NewResidentPage() {
  Temporary Password
  </label>
 
- <div className="flex gap-3">
  <input
  type="text"
- value={password}
+ value={TEMPORARY_ACCOUNT_PASSWORD}
  readOnly
- className="flex-1 rounded-2xl border border-border bg-muted px-4 py-3 outline-none"
+ aria-describedby="temporary-password-help"
+ className="w-full rounded-2xl border border-border bg-muted px-4 py-3 font-mono tracking-[0.2em] outline-none"
  />
-
- <button
- type="button"
- onClick={() => setPassword(generatePassword())}
- className="rounded-2xl bg-secondary px-4 text-secondary-foreground transition hover:bg-muted"
- >
- Generate
- </button>
- </div>
+ <p id="temporary-password-help" className="mt-2 text-xs leading-5 text-muted-foreground">
+ Every new account starts with this code and must change it after signing in.
+ </p>
  </div>
  </div>
 
@@ -172,6 +167,7 @@ export default function NewResidentPage() {
  <select
  value={gate}
  onChange={(e) => setGate(e.target.value)}
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  >
  <option value="">Select Gate</option>
@@ -190,6 +186,7 @@ export default function NewResidentPage() {
  <select
  value={team}
  onChange={(e) => setTeam(e.target.value)}
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  >
  <option value="">Select Team</option>
@@ -219,7 +216,7 @@ export default function NewResidentPage() {
  description="The security officer account has been created successfully."
  fullName={createdOfficer?.fullName ?? ""}
  email={createdOfficer?.email ?? ""}
- password={createdOfficer?.password ?? ""}
+ password={createdOfficer?.password ?? TEMPORARY_ACCOUNT_PASSWORD}
  phone={createdOfficer?.phone}
  accountLabel="security officer account"
  />

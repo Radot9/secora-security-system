@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
+import { TEMPORARY_ACCOUNT_PASSWORD } from "@/lib/auth/temporary-password";
 
 export async function POST(request: Request) {
  try {
@@ -7,17 +8,16 @@ export async function POST(request: Request) {
  const body = await request.json();
  const fullName = String(body.fullName ?? "").trim();
  const email = String(body.email ?? "").trim().toLowerCase();
- const password = String(body.password ?? "");
  const phone = String(body.phone ?? "").trim();
  const gate = String(body.gate ?? "").trim();
  const team = String(body.team ?? "").trim();
 
- if (!fullName || !email || !password || !phone || !gate || !team) {
+ if (!fullName || !email || !phone || !gate || !team) {
  return Response.json({ error: "All fields are required." }, { status: 400 });
  }
 
  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
- email, password, email_confirm: true,
+ email, password: TEMPORARY_ACCOUNT_PASSWORD, email_confirm: true,
  });
  if (authError || !authData.user) {
  const duplicate = authError?.message.toLowerCase().includes("already");

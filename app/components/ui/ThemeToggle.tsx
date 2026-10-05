@@ -1,6 +1,6 @@
 "use client";
 
-import { SunMoon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
  function toggleTheme() {
@@ -18,7 +18,8 @@ export function ThemeToggle() {
  title="Toggle light and dark mode"
  className="apple-icon-button flex h-11 w-11 items-center justify-center rounded-xl border border-border text-foreground"
  >
- <SunMoon className="h-5 w-5 text-primary" />
+ <Moon className="h-5 w-5 text-primary dark:hidden" />
+ <Sun className="hidden h-5 w-5 text-primary dark:block" />
  </button>
  );
 }

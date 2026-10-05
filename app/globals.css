@@ -86,37 +86,37 @@
 }
 
 .dark {
-  --background: oklch(0.115 0.012 245);
-  --foreground: oklch(0.955 0.008 235);
-  --card: oklch(0.165 0.014 245);
-  --card-foreground: oklch(0.955 0.008 235);
-  --popover: oklch(0.18 0.014 245);
-  --popover-foreground: oklch(0.955 0.008 235);
-  --primary: oklch(0.665 0.17 157);
-  --primary-foreground: oklch(0.105 0.025 160);
-  --secondary: oklch(0.205 0.018 245);
-  --secondary-foreground: oklch(0.94 0.008 235);
-  --muted: oklch(0.215 0.016 245);
-  --muted-foreground: oklch(0.69 0.025 240);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.15 0.012 248);
+  --foreground: oklch(0.925 0.008 240);
+  --card: oklch(0.18 0.014 248);
+  --card-foreground: oklch(0.925 0.008 240);
+  --popover: oklch(0.19 0.014 248);
+  --popover-foreground: oklch(0.925 0.008 240);
+  --primary: oklch(0.67 0.16 157);
+  --primary-foreground: oklch(0.13 0.025 160);
+  --secondary: oklch(0.215 0.016 248);
+  --secondary-foreground: oklch(0.91 0.008 240);
+  --muted: oklch(0.225 0.015 248);
+  --muted-foreground: oklch(0.7 0.018 242);
+  --accent: oklch(0.235 0.016 248);
+  --accent-foreground: oklch(0.93 0.008 240);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.32 0.025 245 / 72%);
-  --input: oklch(0.34 0.025 245 / 78%);
-  --ring: oklch(0.665 0.17 157);
+  --border: oklch(0.34 0.022 248 / 52%);
+  --input: oklch(0.35 0.022 248 / 62%);
+  --ring: oklch(0.67 0.16 157);
   --chart-1: oklch(0.665 0.17 157);
   --chart-2: oklch(0.84 0.165 86);
   --chart-3: oklch(0.73 0.18 152);
   --chart-4: oklch(0.76 0.165 75);
   --chart-5: oklch(0.59 0.145 160);
-  --sidebar: oklch(0.135 0.014 245);
-  --sidebar-foreground: oklch(0.91 0.012 235);
+  --sidebar: oklch(0.165 0.014 248);
+  --sidebar-foreground: oklch(0.9 0.01 240);
   --sidebar-primary: oklch(0.7 0.18 157);
-  --sidebar-primary-foreground: oklch(0.105 0.025 160);
-  --sidebar-accent: oklch(0.205 0.018 245);
-  --sidebar-accent-foreground: oklch(0.97 0.008 235);
-  --sidebar-border: oklch(0.3 0.025 245 / 74%);
-  --sidebar-ring: oklch(0.665 0.17 157);
+  --sidebar-primary-foreground: oklch(0.13 0.025 160);
+  --sidebar-accent: oklch(0.215 0.016 248);
+  --sidebar-accent-foreground: oklch(0.93 0.008 240);
+  --sidebar-border: oklch(0.34 0.022 248 / 50%);
+  --sidebar-ring: oklch(0.67 0.16 157);
 }
 
 @layer base {
@@ -147,12 +147,13 @@
 }
 
 @layer components {
+  .app-page-shell,
   .resident-shell {
-    @apply min-h-screen bg-background px-4 py-10 text-foreground;
+    @apply min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 sm:py-8 lg:px-8;
   }
 
   .resident-page {
-    @apply flex w-full max-w-none flex-col gap-8;
+    @apply flex w-full flex-col gap-6 lg:gap-8;
   }
 
   .resident-pass-card {
@@ -174,8 +175,8 @@
     justify-content: center;
     border: 1px solid color-mix(in oklch, white 70%, transparent);
     border-radius: 1.4rem;
-    color: oklch(0.25 0.07 80);
-    background: oklch(0.96 0.025 82);
+    color: oklch(0.22 0.045 248);
+    background: oklch(0.94 0.012 235);
     box-shadow: 0 1rem 2.25rem color-mix(in oklch, black 16%, transparent);
     transform: rotate(7deg);
   }
@@ -211,13 +212,6 @@
     min-height: auto;
   }
 
-  @media (min-width: 1024px) {
-    .resident-shell {
-      padding-left: 2.5rem;
-      padding-right: 2.5rem;
-      padding-bottom: 2.5rem;
-    }
-  }
 }
 
 /* Entriseq's material and motion layer. */

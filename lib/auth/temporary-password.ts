@@ -1,0 +1,1 @@
+export const TEMPORARY_ACCOUNT_PASSWORD = "000000";

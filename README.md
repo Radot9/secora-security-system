@@ -4,6 +4,18 @@ Entriseq is a Next.js and Supabase application for managing visitor access in a 
 
 Postponed product areas such as resident ID cards, landlord/tenant credentials, worker credentials, NFC, card replacement, property management, and multi-estate support are intentionally out of scope for this codebase phase.
 
+## Latest Feature Updates
+
+- Resident and security accounts now use a server-enforced temporary password of `000000`. The creation forms display the password as a read-only value, and new users are required to change it after signing in.
+- Random password generation and the related Generate button have been removed from the account-creation flow.
+- The resident dashboard has a cleaner header with the duplicate green Generate Pass button removed. Visitor passes remain accessible from the primary visitor-access card and navigation.
+- Admin, Super Admin, resident, and security screens now share consistent responsive page margins and a common maximum content width.
+- Admin and Super Admin navigation now includes the same light/dark theme control available to residents.
+- Dark mode now uses one softer cool-charcoal palette across backgrounds, cards, sidebars, inputs, and borders.
+- Account forms now use improved input types, browser autocomplete hints, required-field validation, and clearer temporary-password guidance.
+
+The temporary password is defined once in `lib/auth/temporary-password.ts` and enforced by the server API routes. Clients cannot override it by submitting a different password.
+
 ## Architecture
 
 - **Frontend:** Next.js App Router, React 19, Tailwind CSS v4, shadcn theme tokens, lucide icons.

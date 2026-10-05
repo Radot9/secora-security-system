@@ -24,6 +24,7 @@ import {
 
 import { supabase } from "@/lib/supabase";
 import { BrandMark } from "@/app/components/ui/BrandMark";
+import { ThemeToggle } from "@/app/components/ui/ThemeToggle";
 
 type AdminNavigationShellProps = {
  children: ReactNode;
@@ -307,6 +308,7 @@ export function AdminNavigationShell({
  </div>
 
  <div className="flex items-center gap-2">
+ <ThemeToggle />
  <Link
  href="/admin/settings"
  aria-label="Open profile and settings"

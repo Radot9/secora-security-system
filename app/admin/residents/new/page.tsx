@@ -5,9 +5,9 @@ import { useState } from "react";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
-import { generatePassword } from "@/lib/utils/generatePassword";
 import SuccessDialog from "@/app/components/ui/SuccessDialog";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { TEMPORARY_ACCOUNT_PASSWORD } from "@/lib/auth/temporary-password";
 
 export default function NewResidentPage() {
  const [loading, setLoading] = useState(false);
@@ -18,8 +18,6 @@ export default function NewResidentPage() {
  const [houseNumber, setHouseNumber] = useState("");
  const [locationType, setLocationType] = useState<"street" | "close">("street");
  const [locationName, setLocationName] = useState("");
-
- const [password, setPassword] = useState(() => generatePassword());
 
  const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -44,7 +42,6 @@ export default function NewResidentPage() {
  body: JSON.stringify({
  fullName,
  email,
- password,
  phone,
  houseNumber,
  locationType,
@@ -68,7 +65,7 @@ export default function NewResidentPage() {
  fullName,
  email,
  phone,
- password,
+ password: TEMPORARY_ACCOUNT_PASSWORD,
  });
 
  setFullName("");
@@ -77,7 +74,6 @@ export default function NewResidentPage() {
  setHouseNumber("");
  setLocationType("street");
  setLocationName("");
- setPassword(generatePassword());
  toast.success("Resident account created successfully.");
  setDialogOpen(true);
  } catch {
@@ -108,9 +104,11 @@ export default function NewResidentPage() {
  Full Name
  </label>
  <input
- type="text"
- value={fullName}
- onChange={(e) => setFullName(e.target.value)}
+  type="text"
+  value={fullName}
+  onChange={(e) => setFullName(e.target.value)}
+  autoComplete="name"
+  required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -121,9 +119,11 @@ export default function NewResidentPage() {
  </label>
 
  <input
- type="text"
+ type="email"
  value={email}
  onChange={(e) => setEmail(e.target.value)}
+ autoComplete="email"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -135,9 +135,11 @@ export default function NewResidentPage() {
  </label>
 
  <input
- type="text"
+ type="tel"
  value={phone}
  onChange={(e) => setPhone(e.target.value)}
+ autoComplete="tel"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -147,22 +149,16 @@ export default function NewResidentPage() {
  Temporary Password
  </label>
 
- <div className="flex gap-3">
  <input
  type="text"
- value={password}
+ value={TEMPORARY_ACCOUNT_PASSWORD}
  readOnly
- className="flex-1 rounded-2xl border border-border bg-muted px-4 py-3 outline-none"
+ aria-describedby="temporary-password-help"
+ className="w-full rounded-2xl border border-border bg-muted px-4 py-3 font-mono tracking-[0.2em] outline-none"
  />
-
- <button
- type="button"
- onClick={() => setPassword(generatePassword())}
- className="rounded-2xl bg-secondary px-4 text-secondary-foreground transition hover:bg-muted"
- >
- Generate
- </button>
- </div>
+ <p id="temporary-password-help" className="mt-2 text-xs leading-5 text-muted-foreground">
+ Every new account starts with this code and must change it after signing in.
+ </p>
  </div>
  </div>
 
@@ -176,6 +172,8 @@ export default function NewResidentPage() {
  type="text"
  value={houseNumber}
  onChange={(e) => setHouseNumber(e.target.value)}
+ autoComplete="address-line1"
+ required
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
  </div>
@@ -201,6 +199,7 @@ export default function NewResidentPage() {
  type="text"
  value={locationName}
  onChange={(event) => setLocationName(event.target.value)}
+ required
  placeholder={locationType === "street" ? "Example: Ajufo Street" : "Example: Ofili Close"}
  className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
  />
@@ -228,7 +227,7 @@ export default function NewResidentPage() {
  description="The resident account has been created successfully."
  fullName={createdResident?.fullName ?? ""}
  email={createdResident?.email ?? ""}
- password={createdResident?.password ?? ""}
+ password={createdResident?.password ?? TEMPORARY_ACCOUNT_PASSWORD}
  phone={createdResident?.phone}
  accountLabel="resident account"
  />

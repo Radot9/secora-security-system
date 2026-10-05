@@ -517,8 +517,8 @@ function SecurityContent() {
  }
 
  return (
- <main className="min-h-screen bg-background px-4 py-4 text-foreground sm:py-6 lg:px-10 lg:py-10">
- <div className="flex w-full max-w-none flex-col gap-4 sm:gap-6 lg:gap-8">
+ <main className="app-page-shell">
+ <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-6 lg:gap-8">
  <header className="relative z-50 overflow-visible rounded-3xl border border-border bg-card shadow-sm shadow-muted/50 md:overflow-hidden">
  <div className="flex items-center gap-3 p-3 md:hidden">
  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
