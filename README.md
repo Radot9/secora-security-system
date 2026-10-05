@@ -95,7 +95,9 @@ The test suite currently covers:
 
 ## Deployment
 
-The app is intended to deploy on Vercel.
+The production domain, `entriseq.com`, is deployed through Hostinger from the Git repository. The `npm run build` script uses Next.js' supported Webpack production bundler because Hostinger's build container cannot reliably start the Turbopack CSS worker. Local development continues to use Turbopack through `npm run dev`.
+
+A Vercel deployment is also available as a secondary deployment target.
 
 Required Vercel environment variables:
 
