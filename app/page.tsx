@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowRight, LockKeyhole, ScanLine, UsersRound } from "lucide-react";
 
@@ -33,8 +32,6 @@ export default function Home() {
  const [checkingEmailLink, setCheckingEmailLink] = useState(hasEmailLinkTokens);
  const [loginLoading, setLoginLoading] = useState(false);
  const [resetLoading, setResetLoading] = useState(false);
-
- const router = useRouter();
 
  useEffect(() => {
  if (!hasEmailLinkTokens()) return;
@@ -112,10 +109,9 @@ export default function Home() {
  const destination = dashboardForProfile(profile, source);
  if (!destination) return false;
 
- // Keep the pending UI mounted until the destination replaces this page.
- // Prefetch also lets Next reuse the authenticated route request when possible.
- router.prefetch(destination);
- router.replace(destination);
+ // Use a document navigation after sign-in so the protected server route receives
+ // the newly written Supabase auth cookie instead of reusing a prefetched guest response.
+ window.location.replace(destination);
  return true;
  }
 
