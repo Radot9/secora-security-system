@@ -51,48 +51,48 @@
 :root {
   --font-family-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   --font-family-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  --card: oklch(1 0 0);
+  --card: oklch(0.995 0.004 235 / 82%);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.995 0.004 235 / 94%);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.508 0.118 165.612);
+  --primary: oklch(0.515 0.118 174);
   --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
+  --secondary: oklch(0.965 0.012 235 / 88%);
   --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
+  --muted: oklch(0.958 0.012 235 / 84%);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: oklch(0.955 0.018 228 / 82%);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.76 0.025 235 / 42%);
+  --input: oklch(0.76 0.025 235 / 52%);
+  --ring: oklch(0.59 0.12 174);
   --chart-1: oklch(0.879 0.169 91.605);
   --chart-2: oklch(0.769 0.188 70.08);
   --chart-3: oklch(0.666 0.179 58.318);
   --chart-4: oklch(0.555 0.163 48.998);
   --chart-5: oklch(0.473 0.137 46.201);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0.008 235 / 82%);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
+  --sidebar-primary: oklch(0.515 0.118 174);
   --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.95 0.02 228 / 74%);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
+  --sidebar-border: oklch(0.76 0.025 235 / 38%);
+  --sidebar-ring: oklch(0.59 0.12 174);
+  --background: oklch(0.968 0.012 235);
   --foreground: oklch(0.145 0 0);
 }
 
 .dark {
-  --background: oklch(0.15 0.012 248);
+  --background: oklch(0.145 0.018 245);
   --foreground: oklch(0.925 0.008 240);
-  --card: oklch(0.18 0.014 248);
+  --card: oklch(0.205 0.022 242 / 76%);
   --card-foreground: oklch(0.925 0.008 240);
-  --popover: oklch(0.19 0.014 248);
+  --popover: oklch(0.205 0.022 242 / 94%);
   --popover-foreground: oklch(0.925 0.008 240);
-  --primary: oklch(0.67 0.16 157);
+  --primary: oklch(0.72 0.14 174);
   --primary-foreground: oklch(0.13 0.025 160);
   --secondary: oklch(0.215 0.016 248);
   --secondary-foreground: oklch(0.91 0.008 240);
@@ -103,20 +103,20 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.34 0.022 248 / 52%);
   --input: oklch(0.35 0.022 248 / 62%);
-  --ring: oklch(0.67 0.16 157);
+  --ring: oklch(0.72 0.14 174);
   --chart-1: oklch(0.665 0.17 157);
   --chart-2: oklch(0.84 0.165 86);
   --chart-3: oklch(0.73 0.18 152);
   --chart-4: oklch(0.76 0.165 75);
   --chart-5: oklch(0.59 0.145 160);
-  --sidebar: oklch(0.165 0.014 248);
+  --sidebar: oklch(0.18 0.022 245 / 82%);
   --sidebar-foreground: oklch(0.9 0.01 240);
-  --sidebar-primary: oklch(0.7 0.18 157);
+  --sidebar-primary: oklch(0.72 0.14 174);
   --sidebar-primary-foreground: oklch(0.13 0.025 160);
   --sidebar-accent: oklch(0.215 0.016 248);
   --sidebar-accent-foreground: oklch(0.93 0.008 240);
   --sidebar-border: oklch(0.34 0.022 248 / 50%);
-  --sidebar-ring: oklch(0.67 0.16 157);
+  --sidebar-ring: oklch(0.72 0.14 174);
 }
 
 @layer base {
@@ -128,6 +128,11 @@
     font-family: var(--font-family-sans);
     min-width: 20rem;
     font-synthesis: none;
+    background-image:
+      radial-gradient(circle at 9% 5%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 30rem),
+      radial-gradient(circle at 92% 14%, color-mix(in oklch, oklch(0.72 0.12 235) 9%, transparent), transparent 28rem),
+      linear-gradient(160deg, color-mix(in oklch, white 24%, transparent), transparent 42%);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
@@ -149,7 +154,8 @@
 @layer components {
   .app-page-shell,
   .resident-shell {
-    @apply min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 sm:py-8 lg:px-8;
+    @apply relative min-h-screen px-4 py-6 text-foreground sm:px-6 sm:py-8 lg:px-8;
+    isolation: isolate;
   }
 
   .resident-page {
@@ -231,14 +237,33 @@
 
 :where(.rounded-3xl.border.bg-card),
 .apple-card {
+  border-color: color-mix(in oklch, var(--border) 72%, white 18%);
+  background:
+    linear-gradient(145deg, color-mix(in oklch, white 22%, transparent), transparent 42%),
+    color-mix(in oklch, var(--card) 88%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in oklch, white 4%, transparent) inset,
-    0 0.65rem 1.8rem color-mix(in oklch, black 8%, transparent);
-  -webkit-backdrop-filter: blur(1rem) saturate(150%);
-  backdrop-filter: blur(1rem) saturate(150%);
+    0 1px 0 color-mix(in oklch, white 58%, transparent) inset,
+    0 0 0 1px color-mix(in oklch, white 10%, transparent) inset,
+    0 1rem 2.8rem color-mix(in oklch, black 9%, transparent);
+  -webkit-backdrop-filter: blur(1.35rem) saturate(170%);
+  backdrop-filter: blur(1.35rem) saturate(170%);
 }
 
 .apple-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.apple-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(118deg, color-mix(in oklch, white 18%, transparent), transparent 28% 72%, color-mix(in oklch, var(--primary) 5%, transparent));
+  pointer-events: none;
+}
+
+.apple-card > * {
   position: relative;
 }
 
@@ -320,14 +345,16 @@
 
 .apple-secondary-button,
 .apple-icon-button {
-  background-color: color-mix(in oklch, var(--card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--border) 76%, white 14%);
+  background: linear-gradient(145deg, color-mix(in oklch, white 18%, transparent), transparent 48%), color-mix(in oklch, var(--card) 72%, transparent);
+  box-shadow: 0 1px 0 color-mix(in oklch, white 48%, transparent) inset, 0 0.45rem 1.2rem color-mix(in oklch, black 6%, transparent);
   -webkit-backdrop-filter: blur(1rem) saturate(150%);
   backdrop-filter: blur(1rem) saturate(150%);
 }
 
 .apple-input {
   min-height: 3.25rem;
-  background-color: color-mix(in oklch, var(--background) 78%, transparent);
+  background: linear-gradient(145deg, color-mix(in oklch, white 12%, transparent), transparent 52%), color-mix(in oklch, var(--background) 68%, transparent);
   box-shadow:
     0 0.0625rem 0 color-mix(in oklch, white 45%, transparent) inset,
     0 0 0 0 transparent;
@@ -378,7 +405,10 @@
 }
 
 .app-sidebar {
-  background: color-mix(in oklch, var(--sidebar) 96%, transparent);
+  border-color: color-mix(in oklch, var(--sidebar-border) 70%, white 14%);
+  background:
+    linear-gradient(155deg, color-mix(in oklch, white 16%, transparent), transparent 36%),
+    color-mix(in oklch, var(--sidebar) 88%, transparent);
   box-shadow: 0.75rem 0 2rem color-mix(in oklch, black 10%, transparent);
   -webkit-backdrop-filter: blur(2rem) saturate(165%);
   backdrop-filter: blur(2rem) saturate(165%);
@@ -515,10 +545,44 @@
 
 .app-toolbar {
   border-bottom: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
-  background: color-mix(in oklch, var(--card) 84%, transparent);
+  background: linear-gradient(180deg, color-mix(in oklch, white 12%, transparent), transparent), color-mix(in oklch, var(--card) 78%, transparent);
   box-shadow: 0 0.65rem 2rem color-mix(in oklch, var(--foreground) 4%, transparent);
   -webkit-backdrop-filter: blur(1.7rem) saturate(180%);
   backdrop-filter: blur(1.7rem) saturate(180%);
+}
+
+.community-hero {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 10%, color-mix(in oklch, var(--primary) 24%, transparent), transparent 20rem),
+    radial-gradient(circle at 72% 120%, color-mix(in oklch, oklch(0.72 0.12 235) 18%, transparent), transparent 24rem),
+    linear-gradient(135deg, color-mix(in oklch, var(--card) 92%, transparent), color-mix(in oklch, var(--background) 62%, transparent));
+}
+
+.community-orb {
+  position: absolute;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 15%, transparent);
+  filter: blur(2rem);
+  pointer-events: none;
+}
+
+.community-topic {
+  background: color-mix(in oklch, var(--card) 76%, transparent);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :where(.rounded-3xl.border.bg-card),
+  .apple-card,
+  .app-sidebar,
+  .app-toolbar,
+  .apple-secondary-button,
+  .apple-icon-button,
+  .apple-dialog-surface {
+    background-color: var(--card);
+  }
 }
 
 .app-nav-link {
@@ -729,7 +793,6 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  body > main,
   .admin-content > main,
   .resident-content > main {
     animation: entriseq-materialize 180ms ease-out both;

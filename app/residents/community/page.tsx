@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MessageCircle, Plus, Search, Send, UsersRound, X } from "lucide-react";
+import { MessageCircle, Plus, Search, Send, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/app/components/ui/AppShell";
@@ -142,15 +142,28 @@ export default function CommunityPage() {
  return (
  <AppShell size="full" residentSidebar>
  <div className="resident-page">
- <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
- <PageHeader title="Community Forum" subtitle="Ask questions, share recommendations, and connect with your neighbours." />
- <button type="button" onClick={() => setComposerOpen((open) => !open)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">
+ <section className="community-hero apple-card relative rounded-[2rem] border border-border p-6 sm:p-8">
+ <span className="community-orb -right-16 -top-20" aria-hidden="true" />
+ <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+ <div>
+ <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
+ <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Resident community
+ </div>
+ <PageHeader title="Good neighbours, better connected." subtitle="Ask questions, share trusted recommendations, and stay close to what is happening around your estate." />
+ </div>
+ <button type="button" onClick={() => setComposerOpen((open) => !open)} className="apple-primary-button inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">
  {composerOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}{composerOpen ? "Close" : "Start a discussion"}
  </button>
  </div>
+ <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
+ <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="text-2xl font-bold tabular-nums">{posts.length}</p><p className="mt-1 text-xs text-muted-foreground">Active discussions</p></div>
+ <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="text-2xl font-bold tabular-nums">{comments.length}</p><p className="mt-1 text-xs text-muted-foreground">Neighbour replies</p></div>
+ <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="flex items-center gap-2 text-sm font-bold"><ShieldCheck className="h-5 w-5 text-primary" />Resident-only</p><p className="mt-2 text-xs text-muted-foreground">A safer space for your estate</p></div>
+ </div>
+ </section>
 
  {composerOpen && (
- <Card>
+ <Card className="border-primary/20">
  <h2 className="text-lg font-bold">Start a new discussion</h2>
  <div className="mt-5 grid gap-4">
  <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} placeholder="What would you like to discuss?" className="apple-input w-full rounded-2xl border border-border px-4 py-3 text-sm outline-none" />
@@ -158,7 +171,7 @@ export default function CommunityPage() {
  {categories.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
  </select>
  <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={6000} rows={5} placeholder="Add context so neighbours can join the conversation..." className="apple-input w-full resize-none rounded-2xl border border-border px-4 py-3 text-sm outline-none" />
- <button type="button" onClick={() => void createPost()} disabled={submitting} className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60"><Send className="h-4 w-4" />Publish discussion</button>
+ <button type="button" onClick={() => void createPost()} disabled={submitting} className="apple-primary-button inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60"><Send className="h-4 w-4" />Publish discussion</button>
  </div>
  </Card>
  )}
@@ -181,7 +194,7 @@ export default function CommunityPage() {
  ) : filteredPosts.map((post) => {
  const postComments = commentsByPost.get(post.id) ?? [];
  return (
- <button key={post.id} type="button" data-interactive="true" onClick={() => setSelectedPostId(post.id)} className="apple-card rounded-3xl border border-border bg-card p-5 text-left">
+ <button key={post.id} type="button" data-interactive="true" onClick={() => setSelectedPostId(post.id)} className={`community-topic apple-card rounded-3xl border p-5 text-left ${selectedPostId === post.id ? "border-primary/45 ring-1 ring-primary/10" : "border-border"}`}>
  <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold capitalize text-primary">{post.category.replace("-", " & ")}</span><span className="text-xs text-muted-foreground">{formatRelativeDate(post.created_at)}</span></div>
  <h2 className="mt-4 text-lg font-bold">{post.title}</h2>
  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{post.body}</p>
@@ -204,7 +217,7 @@ export default function CommunityPage() {
  <h3 className="font-bold">Comments ({selectedComments.length})</h3>
  <div className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">
  {selectedComments.length === 0 ? <p className="text-sm text-muted-foreground">No comments yet. Be the first to respond.</p> : selectedComments.map((comment) => (
- <article key={comment.id} className="rounded-2xl border border-border bg-background p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">{comment.author_name}</p><span className="text-xs text-muted-foreground">{formatRelativeDate(comment.created_at)}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{comment.body}</p></article>
+ <article key={comment.id} className="rounded-2xl border border-border bg-background/55 p-4 backdrop-blur-md"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">{comment.author_name}</p><span className="text-xs text-muted-foreground">{formatRelativeDate(comment.created_at)}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{comment.body}</p></article>
  ))}
  </div>
  <div className="mt-5 flex gap-2"><textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} maxLength={2000} rows={2} placeholder="Add a helpful comment..." className="apple-input min-w-0 flex-1 resize-none rounded-2xl border border-border px-3 py-3 text-sm outline-none" /><button type="button" onClick={() => void createComment()} disabled={submitting || !commentBody.trim()} aria-label="Post comment" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"><Send className="h-5 w-5" /></button></div>
