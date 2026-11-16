@@ -12,7 +12,7 @@ import { PasswordRequirements } from "../components/PasswordRequirements";
 import { isPasswordValid } from "@/lib/password-requirements";
 
 export default function UpdatePasswordPage() {
- const [mode, setMode] = useState<"loading" | "reset" | "update" | "missing">("loading");
+ const [mode, setMode] = useState<"loading" | "setup" | "reset" | "update" | "missing">("loading");
  const [newPassword, setNewPassword] = useState("");
 
  const [currentPassword, setCurrentPassword] = useState("");
@@ -24,19 +24,41 @@ export default function UpdatePasswordPage() {
  const router = useRouter();
 
  useEffect(() => {
- const recoveryLink =
- window.location.search.includes("code=") ||
- window.location.hash.includes("type=recovery");
+ const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+ const queryParams = new URLSearchParams(window.location.search);
+ const linkType = hashParams.get("type") || queryParams.get("type");
+ const setupLink = queryParams.has("code") || queryParams.get("mode") === "setup" || linkType === "invite" || linkType === "signup";
+ const recoveryLink = linkType === "recovery";
+ const invalidLink = Boolean(
+ hashParams.get("error") || hashParams.get("error_code") || queryParams.get("error") || queryParams.get("error_code")
+ );
+
+ let active = true;
+ const resolveMode = async (session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) => {
+ if (!active) return;
+ if (invalidLink) { setMode("missing"); return; }
+ if (setupLink && !session) { setMode("loading"); return; }
+ if (!session) { setMode("missing"); return; }
+
+ const response = await fetch("/api/profile/password-changed", { method: "GET", cache: "no-store" });
+ if (response.ok) {
+ const profileState = await response.json() as { mustChangePassword?: boolean };
+ if (active) setMode(setupLink || profileState.mustChangePassword ? "setup" : recoveryLink ? "reset" : "update");
+ return;
+ }
+
+ const { data } = await supabase.from("profiles").select("must_change_password").eq("id", session.user.id).maybeSingle();
+ if (active) setMode(setupLink || data?.must_change_password ? "setup" : recoveryLink ? "reset" : "update");
+ };
 
  const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
- if (event === "PASSWORD_RECOVERY") {
- setMode("reset");
- } else if (event === "INITIAL_SESSION") {
- setMode(session ? (recoveryLink ? "reset" : "update") : "missing");
- }
+ if (invalidLink) setMode("missing");
+ else if (event === "PASSWORD_RECOVERY" || event === "INITIAL_SESSION" || event === "SIGNED_IN") window.setTimeout(() => { void resolveMode(session); }, 0);
  });
 
- return () => listener.subscription.unsubscribe();
+ void supabase.auth.getSession().then(({ data }) => resolveMode(data.session));
+
+ return () => { active = false; listener.subscription.unsubscribe(); };
  }, []);
 
  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -46,7 +68,7 @@ export default function UpdatePasswordPage() {
  setLoading(true);
 
  if (mode === "missing") {
- toast.error("Your password reset link is missing or has expired. Request a new link.");
+ toast.error("Your activation or password link is missing or has expired. Request a fresh link.");
  setLoading(false);
  return;
  }
@@ -140,7 +162,7 @@ export default function UpdatePasswordPage() {
  return;
  }
 
- toast.success(mode === "reset" ? "Password reset successfully." : "Password updated successfully.");
+ toast.success(mode === "setup" ? "Password created successfully." : mode === "reset" ? "Password reset successfully." : "Password updated successfully.");
 
  setCurrentPassword("");
  setNewPassword("");
@@ -183,7 +205,7 @@ export default function UpdatePasswordPage() {
  Security
  </p>
  <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
- {mode === "reset" ? "Reset Password" : "Update Password"}
+ {mode === "setup" ? "Create Password" : mode === "reset" ? "Reset Password" : "Update Password"}
  </h1>
  </div>
  </div>
@@ -192,7 +214,7 @@ export default function UpdatePasswordPage() {
  {mode === "missing" ? (
  <div className="space-y-4 text-center">
  <p className="text-sm text-muted-foreground">
- Your password reset link is missing or has expired. Return to sign in and request a new link.
+ This activation or password link is missing or has expired. Ask a Super Admin for a fresh link.
  </p>
  <PrimaryButton type="button" onClick={() => router.push("/")}>
  Return to Sign In
@@ -236,7 +258,7 @@ export default function UpdatePasswordPage() {
  autoComplete="new-password"
  />
  <PrimaryButton type="submit" disabled={loading || !isPasswordValid(newPassword) || newPassword !== confirmPassword}>
- {loading ? (mode === "reset" ? "Resetting..." : "Updating...") : (mode === "reset" ? "Reset Password" : "Update Password")}
+ {loading ? (mode === "setup" ? "Creating..." : mode === "reset" ? "Resetting..." : "Updating...") : (mode === "setup" ? "Create Password" : mode === "reset" ? "Reset Password" : "Update Password")}
  </PrimaryButton>
  </>
  )}

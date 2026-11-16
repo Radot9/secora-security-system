@@ -129,9 +129,9 @@
     min-width: 20rem;
     font-synthesis: none;
     background-image:
-      radial-gradient(circle at 9% 5%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 30rem),
-      radial-gradient(circle at 92% 14%, color-mix(in oklch, oklch(0.72 0.12 235) 9%, transparent), transparent 28rem),
-      linear-gradient(160deg, color-mix(in oklch, white 24%, transparent), transparent 42%);
+      radial-gradient(circle at 9% 5%, color-mix(in oklch, var(--primary) 7%, transparent), transparent 30rem),
+      radial-gradient(circle at 92% 14%, color-mix(in oklch, oklch(0.72 0.12 235) 6%, transparent), transparent 28rem),
+      linear-gradient(160deg, color-mix(in oklch, white 10%, transparent), transparent 42%);
     background-attachment: fixed;
   }
   html {
@@ -237,16 +237,16 @@
 
 :where(.rounded-3xl.border.bg-card),
 .apple-card {
-  border-color: color-mix(in oklch, var(--border) 72%, white 18%);
+  border-color: color-mix(in oklch, var(--border) 78%, white 8%);
   background:
-    linear-gradient(145deg, color-mix(in oklch, white 22%, transparent), transparent 42%),
+    linear-gradient(145deg, color-mix(in oklch, white 10%, transparent), transparent 42%),
     color-mix(in oklch, var(--card) 88%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in oklch, white 58%, transparent) inset,
-    0 0 0 1px color-mix(in oklch, white 10%, transparent) inset,
-    0 1rem 2.8rem color-mix(in oklch, black 9%, transparent);
-  -webkit-backdrop-filter: blur(1.35rem) saturate(170%);
-  backdrop-filter: blur(1.35rem) saturate(170%);
+    0 1px 0 color-mix(in oklch, white 28%, transparent) inset,
+    0 0 0 1px color-mix(in oklch, white 5%, transparent) inset,
+    0 0.85rem 2.2rem color-mix(in oklch, black 7%, transparent);
+  -webkit-backdrop-filter: blur(1.35rem) saturate(155%);
+  backdrop-filter: blur(1.35rem) saturate(155%);
 }
 
 .apple-card {
@@ -259,7 +259,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(118deg, color-mix(in oklch, white 18%, transparent), transparent 28% 72%, color-mix(in oklch, var(--primary) 5%, transparent));
+  background: linear-gradient(118deg, color-mix(in oklch, white 7%, transparent), transparent 28% 72%, color-mix(in oklch, var(--primary) 3%, transparent));
   pointer-events: none;
 }
 
@@ -294,15 +294,15 @@
   width: 3rem;
   height: 3rem;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, white 34%, transparent);
+  border: 1px solid color-mix(in oklch, white 22%, transparent);
   border-radius: 1.05rem;
   color: var(--primary-foreground);
   background:
-    linear-gradient(145deg, color-mix(in oklch, white 16%, transparent), transparent 42%),
+    linear-gradient(145deg, color-mix(in oklch, white 9%, transparent), transparent 42%),
     linear-gradient(150deg, color-mix(in oklch, var(--primary) 88%, white), var(--primary));
   box-shadow:
-    0 0.0625rem 0 color-mix(in oklch, white 55%, transparent) inset,
-    0 0.65rem 1.5rem color-mix(in oklch, var(--primary) 28%, transparent);
+    0 0.0625rem 0 color-mix(in oklch, white 32%, transparent) inset,
+    0 0.55rem 1.25rem color-mix(in oklch, var(--primary) 18%, transparent);
 }
 
 .brand-mark::after {
@@ -339,24 +339,24 @@
 
 .apple-primary-button {
   box-shadow:
-    0 0.0625rem 0 color-mix(in oklch, white 24%, transparent) inset,
-    0 0.5rem 1.25rem color-mix(in oklch, var(--primary) 22%, transparent);
+    0 0.0625rem 0 color-mix(in oklch, white 14%, transparent) inset,
+    0 0.45rem 1.1rem color-mix(in oklch, var(--primary) 15%, transparent);
 }
 
 .apple-secondary-button,
 .apple-icon-button {
-  border-color: color-mix(in oklch, var(--border) 76%, white 14%);
-  background: linear-gradient(145deg, color-mix(in oklch, white 18%, transparent), transparent 48%), color-mix(in oklch, var(--card) 72%, transparent);
-  box-shadow: 0 1px 0 color-mix(in oklch, white 48%, transparent) inset, 0 0.45rem 1.2rem color-mix(in oklch, black 6%, transparent);
-  -webkit-backdrop-filter: blur(1rem) saturate(150%);
-  backdrop-filter: blur(1rem) saturate(150%);
+  border-color: color-mix(in oklch, var(--border) 82%, white 7%);
+  background: linear-gradient(145deg, color-mix(in oklch, white 8%, transparent), transparent 48%), color-mix(in oklch, var(--card) 72%, transparent);
+  box-shadow: 0 1px 0 color-mix(in oklch, white 24%, transparent) inset, 0 0.4rem 1rem color-mix(in oklch, black 5%, transparent);
+  -webkit-backdrop-filter: blur(1rem) saturate(140%);
+  backdrop-filter: blur(1rem) saturate(140%);
 }
 
 .apple-input {
   min-height: 3.25rem;
-  background: linear-gradient(145deg, color-mix(in oklch, white 12%, transparent), transparent 52%), color-mix(in oklch, var(--background) 68%, transparent);
+  background: linear-gradient(145deg, color-mix(in oklch, white 6%, transparent), transparent 52%), color-mix(in oklch, var(--background) 68%, transparent);
   box-shadow:
-    0 0.0625rem 0 color-mix(in oklch, white 45%, transparent) inset,
+    0 0.0625rem 0 color-mix(in oklch, white 20%, transparent) inset,
     0 0 0 0 transparent;
   transition:
     background-color 200ms ease,
@@ -407,11 +407,11 @@
 .app-sidebar {
   border-color: color-mix(in oklch, var(--sidebar-border) 70%, white 14%);
   background:
-    linear-gradient(155deg, color-mix(in oklch, white 16%, transparent), transparent 36%),
-    color-mix(in oklch, var(--sidebar) 88%, transparent);
+    linear-gradient(155deg, color-mix(in oklch, white 8%, transparent), transparent 36%),
+    color-mix(in oklch, var(--sidebar) 94%, transparent);
   box-shadow: 0.75rem 0 2rem color-mix(in oklch, black 10%, transparent);
-  -webkit-backdrop-filter: blur(2rem) saturate(165%);
-  backdrop-filter: blur(2rem) saturate(165%);
+  -webkit-backdrop-filter: blur(1.25rem) saturate(125%);
+  backdrop-filter: blur(1.25rem) saturate(125%);
 }
 
 .app-desktop-sidebar {
@@ -545,17 +545,17 @@
 
 .app-toolbar {
   border-bottom: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
-  background: linear-gradient(180deg, color-mix(in oklch, white 12%, transparent), transparent), color-mix(in oklch, var(--card) 78%, transparent);
-  box-shadow: 0 0.65rem 2rem color-mix(in oklch, var(--foreground) 4%, transparent);
-  -webkit-backdrop-filter: blur(1.7rem) saturate(180%);
-  backdrop-filter: blur(1.7rem) saturate(180%);
+  background: linear-gradient(180deg, color-mix(in oklch, white 3%, transparent), transparent), color-mix(in oklch, var(--card) 90%, transparent);
+  box-shadow: 0 0.4rem 1.2rem color-mix(in oklch, var(--foreground) 2%, transparent);
+  -webkit-backdrop-filter: blur(1rem) saturate(120%);
+  backdrop-filter: blur(1rem) saturate(120%);
 }
 
 .community-hero {
   overflow: hidden;
   background:
-    radial-gradient(circle at 88% 10%, color-mix(in oklch, var(--primary) 24%, transparent), transparent 20rem),
-    radial-gradient(circle at 72% 120%, color-mix(in oklch, oklch(0.72 0.12 235) 18%, transparent), transparent 24rem),
+    radial-gradient(circle at 88% 10%, color-mix(in oklch, var(--primary) 16%, transparent), transparent 20rem),
+    radial-gradient(circle at 72% 120%, color-mix(in oklch, oklch(0.72 0.12 235) 11%, transparent), transparent 24rem),
     linear-gradient(135deg, color-mix(in oklch, var(--card) 92%, transparent), color-mix(in oklch, var(--background) 62%, transparent));
 }
 
@@ -564,7 +564,7 @@
   width: 13rem;
   height: 13rem;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--primary) 15%, transparent);
+  background: color-mix(in oklch, var(--primary) 9%, transparent);
   filter: blur(2rem);
   pointer-events: none;
 }
@@ -739,7 +739,7 @@
 .login-orb {
   position: absolute;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--primary) 11%, transparent);
+  background: color-mix(in oklch, var(--primary) 7%, transparent);
   filter: blur(0.15rem);
   pointer-events: none;
 }
@@ -765,15 +765,15 @@
     border-color: color-mix(in oklch, var(--primary) 52%, var(--border));
     box-shadow:
       0 1px 0 color-mix(in oklch, white 5%, transparent) inset,
-      0 0 0 1px color-mix(in oklch, var(--primary) 10%, transparent),
-      0 0.8rem 2rem color-mix(in oklch, black 12%, transparent);
+      0 0 0 1px color-mix(in oklch, var(--primary) 6%, transparent),
+      0 0.7rem 1.7rem color-mix(in oklch, black 9%, transparent);
     transform: translate3d(0, -0.15rem, 0);
   }
 
   .apple-primary-button:hover {
     box-shadow:
-      0 0.0625rem 0 color-mix(in oklch, white 28%, transparent) inset,
-      0 0.75rem 1.7rem color-mix(in oklch, var(--primary) 30%, transparent);
+      0 0.0625rem 0 color-mix(in oklch, white 16%, transparent) inset,
+      0 0.65rem 1.45rem color-mix(in oklch, var(--primary) 20%, transparent);
     transform: translateY(-0.0625rem);
   }
 

@@ -2,6 +2,22 @@ import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorizat
 import { dashboardByRole } from "@/lib/auth/roles";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+export async function GET() {
+ try {
+ const { profile } = await requireApiRole(["super_admin", "admin", "resident", "security"], {
+ allowPasswordChangeRequired: true,
+ allowIncompleteOnboarding: true,
+ });
+
+ return Response.json({
+ role: profile.role,
+ mustChangePassword: profile.must_change_password,
+ });
+ } catch (error) {
+ return authorizationResponse(error) ?? Response.json({ error: "Unable to verify account setup." }, { status: 500 });
+ }
+}
+
 export async function POST() {
  try {
  const { profile } = await requireApiRole(["super_admin", "admin", "resident", "security"], {

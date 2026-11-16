@@ -17,6 +17,7 @@ export function PasswordRequirements({ password }: { password: string }) {
  );
  })}
  </ul>
+ <p className="text-xs leading-5 text-muted-foreground">Uppercase letters, numbers, and symbols are optional. Longer passwords and memorable passphrases are encouraged.</p>
  </div>
  );
 }

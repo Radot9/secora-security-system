@@ -85,6 +85,7 @@ const pageNames: Record<string, string> = {
  "/admin/settings": "Profile & Settings",
  "/admin/super-admin": "Super Admin",
  "/admin/administrators": "Administrators",
+ "/admin/super-admin/resident-onboarding": "Resident Onboarding",
 };
 
 function isActivePath(pathname: string, href: string) {
@@ -214,6 +215,16 @@ export function AdminNavigationShell({
  >
  <UserPlus className="h-5 w-5" />
  <span className="app-sidebar-copy">Administrators</span>
+ </Link>
+ <Link
+ href="/admin/super-admin/resident-onboarding"
+ title={collapsed ? "Resident Onboarding" : undefined}
+ onClick={onNavigate}
+ data-active={isActivePath(pathname, "/admin/super-admin/resident-onboarding")}
+ className="app-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold"
+ >
+ <UsersRound className="h-5 w-5" />
+ <span className="app-sidebar-copy">Resident Onboarding</span>
  </Link>
  </div>
  </div>
