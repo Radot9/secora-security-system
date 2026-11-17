@@ -309,7 +309,7 @@ export default function SuperAdminDashboardPage() {
  <p className="text-sm text-muted-foreground">Administrator access, onboarding, and status checks look clean.</p>
  ) : (
  riskItems.map((item) => (
- <p key={item} className="rounded-2xl bg-background/70 p-3 text-sm text-foreground">
+ <p key={item} className="rounded-2xl bg-background p-3 text-sm text-foreground">
  {item}
  </p>
  ))

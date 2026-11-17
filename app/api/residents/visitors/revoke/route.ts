@@ -1,6 +1,6 @@
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { validateVisitorRevocation } from "@/lib/visitor-status";
+import { revokeVisitorPass, VisitorPassError } from "@/lib/visitors/pass-service";
 
 export async function POST(request: Request) {
  try {
@@ -23,34 +23,18 @@ export async function POST(request: Request) {
  return Response.json({ error: "Resident profile was not found." }, { status: 403 });
  }
 
- const { data: visitor, error: visitorError } = await supabaseAdmin
- .from("visitors")
- .select("id, status")
- .eq("access_code", accessCode)
- .eq("resident_id", resident.id)
- .single();
-
- if (visitorError || !visitor) {
- return Response.json({ error: "Visitor pass was not found." }, { status: 404 });
- }
-
- const transitionError = validateVisitorRevocation(visitor.status);
- if (transitionError) return Response.json({ error: transitionError }, { status: 409 });
-
- const { data: updatedVisitor, error: updateError } = await supabaseAdmin
- .from("visitors")
- .update({ status: "revoked" })
- .eq("id", visitor.id)
- .eq("status", "pending")
- .select("status")
- .single();
-
- if (updateError || !updatedVisitor) {
- return Response.json({ error: "Unable to revoke this access code. Refresh and try again." }, { status: 409 });
- }
+ const updatedVisitor = await revokeVisitorPass({
+  residentId: resident.id,
+  accessCode,
+  actorUserId: user.id,
+  source: "web",
+ });
 
  return Response.json({ visitor: updatedVisitor });
  } catch (error) {
- return authorizationResponse(error) ?? Response.json({ error: "Unable to revoke access code." }, { status: 500 });
+ const authResponse = authorizationResponse(error);
+ if (authResponse) return authResponse;
+ if (error instanceof VisitorPassError) return Response.json({ error: error.message }, { status: error.status });
+ return Response.json({ error: "Unable to revoke access code." }, { status: 500 });
  }
 }

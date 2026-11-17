@@ -1,12 +1,32 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { Outfit, Geist } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
-const geistHeading = Geist({subsets:['latin'],variable:'--font-heading'});
+const geistHeading = localFont({
+  src: [
+    {
+      path: "./fonts/Geist-VariableFont_wght.ttf",
+      weight: "100 900",
+      style: "normal",
+    },
+    {
+      path: "./fonts/Geist-Italic-VariableFont_wght.ttf",
+      weight: "100 900",
+      style: "italic",
+    },
+  ],
+  variable: "--font-heading",
+  display: "swap",
+});
 
-const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
+const outfit = localFont({
+  src: "./fonts/Outfit-VariableFont_wght.ttf",
+  weight: "100 900",
+  variable: "--font-sans",
+  display: "swap",
+});
 
 const themeScript = `
 (function () {

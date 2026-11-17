@@ -24,6 +24,7 @@ The temporary password is defined once in `lib/auth/temporary-password.ts` and e
 - **Privileged writes:** Administrative and security-sensitive mutations use server API routes with `SUPABASE_SERVICE_ROLE_KEY`.
 - **Client reads:** Role-protected pages read scoped data through Supabase browser clients where RLS allows it.
 - **Visitor lifecycle:** Visitor status transitions are centralized in `lib/visitor-status.ts` and enforced by server API routes.
+- **WhatsApp bot:** Meta WhatsApp Cloud API messages are signature-verified, matched to active residents by registered phone number, and processed by `/api/webhooks/whatsapp`.
 
 ## Folder Structure
 
@@ -55,6 +56,16 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ADMIN_REDIRECT_URL=
+NEXT_PUBLIC_SITE_URL=
+WHATSAPP_VERIFY_TOKEN=
+WHATSAPP_APP_SECRET=
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_GRAPH_API_VERSION=
+WHATSAPP_LINK_SECRET=
+WHATSAPP_WORKER_SECRET=
+WHATSAPP_MONTHLY_MESSAGE_LIMIT=900
+ESTATE_SECURITY_CONTACT=
 ```
 
 Notes:
@@ -62,6 +73,13 @@ Notes:
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are safe browser-facing Supabase values.
 - `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it with a `NEXT_PUBLIC_` prefix.
 - `SUPABASE_ADMIN_REDIRECT_URL` is optional locally, but recommended for deployed administrator invitation links.
+- All `WHATSAPP_*` variables are server-only and must never use a `NEXT_PUBLIC_` prefix.
+- `WHATSAPP_VERIFY_TOKEN` is a private value you choose and enter in the Meta webhook configuration.
+- `WHATSAPP_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`, and `WHATSAPP_PHONE_NUMBER_ID` come from the Meta app connected to the estate's WhatsApp Business number.
+- Set `WHATSAPP_GRAPH_API_VERSION` to the active Graph API version configured for the Meta app, including the `v` prefix.
+- `WHATSAPP_LINK_SECRET` and `WHATSAPP_WORKER_SECRET` must be independently generated secrets of at least 32 characters.
+- `WHATSAPP_MONTHLY_MESSAGE_LIMIT` defaults to `900` and is capped at `1000` in code.
+- `ESTATE_SECURITY_CONTACT` is optional; leave it unset rather than inventing contact details.
 
 ## Development Setup
 
@@ -92,6 +110,7 @@ The test suite currently covers:
 - Super Admin protection rules
 - Visitor display status
 - Visitor check-in/check-out/revocation transition rules
+- WhatsApp phone verification, webhook signatures, message parsing, and bot conversation rules
 
 ## Deployment
 
@@ -105,6 +124,15 @@ Required Vercel environment variables:
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SITE_URL
+WHATSAPP_VERIFY_TOKEN
+WHATSAPP_APP_SECRET
+WHATSAPP_ACCESS_TOKEN
+WHATSAPP_PHONE_NUMBER_ID
+WHATSAPP_GRAPH_API_VERSION
+WHATSAPP_LINK_SECRET
+WHATSAPP_WORKER_SECRET
+WHATSAPP_MONTHLY_MESSAGE_LIMIT
 ```
 
 Recommended:
@@ -114,6 +142,38 @@ SUPABASE_ADMIN_REDIRECT_URL
 ```
 
 After updating Vercel environment variables, redeploy the project. A missing `SUPABASE_SERVICE_ROLE_KEY` will block production build/page-data collection because API routes import the server-side admin client.
+
+## WhatsApp Visitor-Pass Bot
+
+The bot uses the official Meta WhatsApp Cloud API. A normal personal WhatsApp number cannot call this webhook directly; the estate number must be registered or connected as a WhatsApp Business Platform number in a Meta app.
+
+Configure the Meta webhook callback as:
+
+```txt
+https://your-domain.example/api/webhooks/whatsapp
+```
+
+Use the same private value for the Meta Verify Token and `WHATSAPP_VERIFY_TOKEN`, then subscribe the WhatsApp Business Account to the `messages` webhook field. Meta signs every POST using the app secret; unsigned or invalid requests are rejected.
+
+Residents interact with the bot as follows:
+
+1. The resident signs in, opens `/residents/settings`, and creates a ten-minute linking code for their WhatsApp number.
+2. The resident sends the one-time `LINK-######` code from that number to the estate bot.
+3. The bot links the verified WhatsApp identity to the active resident account.
+4. The resident uses the interactive menu to generate, list, or revoke visitor passes.
+5. Website and WhatsApp creation use the same server-authoritative visitor-pass service and database function.
+6. Public QR links use a 192-bit random token; the existing six-digit gate code remains compatible with security verification.
+
+The bot accepts `BACK`, `CANCEL`, `RESET`, and `MENU`. WhatsApp validity choices are 2, 6, 12, or 24 hours, and all new passes are capped at 24 hours server-side.
+
+Webhook events are stored before processing. The webhook performs a best-effort post-response drain, while a Hostinger cron job provides durable recovery. Configure the cron job to send an authenticated `POST` request to:
+
+```txt
+https://entriseq.com/api/internal/whatsapp/process
+Authorization: Bearer <WHATSAPP_WORKER_SECRET>
+```
+
+Run it once per minute. The database queue uses idempotent Meta message IDs, bounded retries, and dead-letter status. Processed message bodies are cleared. Outbound messages are transactionally capped at 900 per UTC billing month unless a smaller configured limit is used.
 
 ## Authentication Flow
 

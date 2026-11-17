@@ -1,3 +1,4 @@
+import { SESSION_PREFERENCE_COOKIE, sessionCookieOptions } from "@/lib/auth/session-persistence";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -18,7 +19,7 @@ export async function proxy(request: NextRequest) {
  response = NextResponse.next({ request });
 
  cookiesToSet.forEach(({ name, value, options }) => {
- response.cookies.set(name, value, options);
+ response.cookies.set(name, value, sessionCookieOptions(options, request.cookies.get(SESSION_PREFERENCE_COOKIE)?.value !== "no"));
  });
  },
  },

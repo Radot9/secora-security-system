@@ -17,7 +17,7 @@ export function PasswordRequirements({ password }: { password: string }) {
  );
  })}
  </ul>
- <p className="text-xs leading-5 text-muted-foreground">Uppercase letters, numbers, and symbols are optional. Longer passwords and memorable passphrases are encouraged.</p>
+ <p className="text-xs leading-5 text-muted-foreground">Include an uppercase letter and a special character, such as !, @, or #. Numbers are optional.</p>
  </div>
  );
 }

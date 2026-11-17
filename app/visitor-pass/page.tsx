@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Copy, QrCode, ShieldCheck, Share2 } from "lucide-react";
@@ -9,8 +9,26 @@ import { toast } from "sonner";
 
 function VisitorPassContent() {
  const searchParams = useSearchParams();
- const accessCode = searchParams.get("code")?.trim() ?? "";
- const validCode = /^\d{6,8}$/.test(accessCode);
+ const token = searchParams.get("token")?.trim() ?? "";
+ const [visitor, setVisitor] = useState<{ visitor_name: string; access_code: string; status: string; expires_at: string | null } | null>(null);
+ const [loading, setLoading] = useState(true);
+ const accessCode = visitor?.access_code ?? "";
+
+ useEffect(() => {
+  let active = true;
+  async function loadPass() {
+   if (!/^[a-f0-9]{48}$/i.test(token)) {
+    setLoading(false);
+    return;
+   }
+   const response = await fetch(`/api/visitor-pass/${encodeURIComponent(token)}`, { cache: "no-store" });
+   const result = await response.json();
+   if (active && response.ok) setVisitor(result.visitor);
+   if (active) setLoading(false);
+  }
+  void loadPass();
+  return () => { active = false; };
+ }, [token]);
 
  async function copyCode() {
  await navigator.clipboard.writeText(accessCode);
@@ -32,7 +50,11 @@ function VisitorPassContent() {
  toast.success("Visitor pass link copied.");
  }
 
- if (!validCode) {
+ if (loading) {
+ return <main className="min-h-screen bg-background" />;
+ }
+
+ if (!visitor) {
  return (
  <main className="flex min-h-screen items-center justify-center bg-background px-4 text-center text-foreground">
  <div className="max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm">
@@ -58,6 +80,7 @@ function VisitorPassContent() {
  </header>
 
  <div className="p-6 text-center sm:p-8">
+ <p className="text-lg font-bold text-foreground">{visitor.visitor_name}</p>
  <p className="text-sm text-muted-foreground">Present this QR code at the security gate</p>
  <div className="mx-auto mt-5 w-fit rounded-3xl bg-white p-5 shadow-sm ring-1 ring-border">
  <QRCode value={accessCode} size={230} />
@@ -66,7 +89,10 @@ function VisitorPassContent() {
  <p className="mt-6 text-sm font-medium text-muted-foreground">Access code</p>
  <p className="mt-2 break-all text-4xl font-black tracking-[0.2em]">{accessCode}</p>
  <p className="mt-4 text-sm leading-6 text-muted-foreground">
- Security will verify the status and expiry of this pass before entry.
+  Security will verify the status and expiry of this pass before entry.
+ </p>
+ <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+  Status: {visitor.status.replaceAll("_", " ")} · Expires {visitor.expires_at ? new Date(visitor.expires_at).toLocaleString() : "as configured"}
  </p>
 
  <div className="mt-6 grid gap-3 sm:grid-cols-2">

@@ -6,7 +6,7 @@ import { ArrowRight, LockKeyhole, ScanLine, UsersRound } from "lucide-react";
 
 import { InputField } from "./components/InputField";
 import { resolveEmailLinkSession } from "@/lib/auth/email-link-session";
-import { supabase } from "@/lib/supabase";
+import { setStaySignedIn, supabase } from "@/lib/supabase";
 import { LoadingSpinner } from "./components/ui/LoadingSpinner";
 import { BrandMark } from "./components/ui/BrandMark";
 
@@ -30,6 +30,8 @@ export default function Home() {
  const [email, setEmail] = useState("");
  const [password, setPassword] = useState("");
  const [checkingEmailLink, setCheckingEmailLink] = useState(hasEmailLinkTokens);
+ const [passkeyLoading, setPasskeyLoading] = useState(false);
+ const [staySignedIn, setStaySignedInChoice] = useState(false);
  const [loginLoading, setLoginLoading] = useState(false);
  const [resetLoading, setResetLoading] = useState(false);
 
@@ -138,8 +140,9 @@ export default function Home() {
 
  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
  e.preventDefault();
- if (loginLoading) return;
+ if (loginLoading || passkeyLoading) return;
  setLoginLoading(true);
+ setStaySignedIn(staySignedIn);
 
  const { data, error } = await supabase.auth.signInWithPassword({
  email,
@@ -154,6 +157,20 @@ export default function Home() {
 
  const navigationStarted = await routeAuthenticatedUser(data.user.id, "password");
  if (!navigationStarted) setLoginLoading(false);
+ }
+
+ async function handlePasskeyLogin() {
+  if (loginLoading || passkeyLoading) return;
+  setPasskeyLoading(true);
+  try {
+   if (!window.isSecureContext || !window.PublicKeyCredential) throw new Error("Passkeys are unavailable in this browser. Sign in with your email and password.");
+   setStaySignedIn(staySignedIn);
+   const { data, error } = await supabase.auth.signInWithPasskey();
+   if (error || !data?.user) throw new Error("Passkey sign-in was not completed. Try again or use your email and password.");
+   await routeAuthenticatedUser(data.user.id, "password");
+  } catch (error) {
+   toast.error(error instanceof Error ? error.message : "Unable to sign in with a passkey.");
+  } finally { setPasskeyLoading(false); }
  }
 
  if (checkingEmailLink) {
@@ -252,6 +269,10 @@ export default function Home() {
  autoComplete="current-password"
  />
 
+ <label className="flex items-center gap-3 text-sm font-medium">
+ <input type="checkbox" checked={staySignedIn} onChange={(event) => setStaySignedInChoice(event.target.checked)} className="h-4 w-4 accent-primary" />
+ Stay signed in on this device
+ </label>
  <div className="flex justify-end">
  <button
  type="button"
@@ -265,7 +286,7 @@ export default function Home() {
 
  <button
  type="submit"
- disabled={loginLoading}
+ disabled={loginLoading || passkeyLoading}
  className="apple-primary-button flex min-h-13 w-full items-center justify-center rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
  >
  <span className="inline-flex items-center justify-center gap-2">
@@ -275,6 +296,7 @@ export default function Home() {
  </span>
  </button>
  </form>
+ <button type="button" onClick={() => void handlePasskeyLogin()} disabled={loginLoading || passkeyLoading} className="mt-4 w-full rounded-2xl border border-border px-4 py-3 font-semibold disabled:opacity-50">{passkeyLoading ? "Waiting for your device…" : "Sign in with a passkey"}</button>
  <p className="mt-7 text-center text-xs leading-5 text-muted-foreground">
  Access is restricted to authorized Entriseq accounts.
  </p>

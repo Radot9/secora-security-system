@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { supabase } from "@/lib/supabase";
+import { setStaySignedIn, supabase } from "@/lib/supabase";
 
+import PasskeySetupCard from "../components/profile/PasskeySetupCard";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { PasswordRequirements } from "../components/PasswordRequirements";
-import { isPasswordValid } from "@/lib/password-requirements";
+import { isPasswordValid, passwordRequirementsMessage } from "@/lib/password-requirements";
 
 export default function UpdatePasswordPage() {
  const [mode, setMode] = useState<"loading" | "setup" | "reset" | "update" | "missing">("loading");
@@ -20,14 +21,23 @@ export default function UpdatePasswordPage() {
  const [confirmPassword, setConfirmPassword] = useState("");
 
  const [loading, setLoading] = useState(false);
+ const [formError, setFormError] = useState<string | null>(null);
+ const [progress, setProgress] = useState("Creating password…");
+ const submitting = useRef(false);
 
  const router = useRouter();
+ const [staySignedIn, setStaySignedInChoice] = useState(false);
+ const activationToken = useRef<string | null>(null);
+ const verifiedToken = useRef(false);
+ const [dashboardHref, setDashboardHref] = useState<string | null>(null);
 
  useEffect(() => {
  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
  const queryParams = new URLSearchParams(window.location.search);
  const linkType = hashParams.get("type") || queryParams.get("type");
- const setupLink = queryParams.has("code") || queryParams.get("mode") === "setup" || linkType === "invite" || linkType === "signup";
+ const isActivation = window.location.pathname === "/activate";
+ activationToken.current = isActivation && queryParams.get("type") === "recovery" ? queryParams.get("token_hash") : null;
+ const setupLink = isActivation || queryParams.has("code") || queryParams.get("mode") === "setup" || linkType === "invite" || linkType === "signup";
  const recoveryLink = linkType === "recovery";
  const invalidLink = Boolean(
  hashParams.get("error") || hashParams.get("error_code") || queryParams.get("error") || queryParams.get("error_code")
@@ -37,7 +47,7 @@ export default function UpdatePasswordPage() {
  const resolveMode = async (session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) => {
  if (!active) return;
  if (invalidLink) { setMode("missing"); return; }
- if (setupLink && !session) { setMode("loading"); return; }
+ if (isActivation) { setMode(activationToken.current ? "setup" : "missing"); return; }
  if (!session) { setMode("missing"); return; }
 
  const response = await fetch("/api/profile/password-changed", { method: "GET", cache: "no-store" });
@@ -64,134 +74,76 @@ export default function UpdatePasswordPage() {
  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
  e.preventDefault();
 
- // Stop multiple clicks
+ if (submitting.current || mode === "loading") return;
+ const formData = new FormData(e.currentTarget);
+ const passwordValue = String(formData.get("password") ?? "");
+ const confirmationValue = String(formData.get("confirmation") ?? "");
+ const currentPasswordValue = String(formData.get("currentPassword") ?? "");
+ setFormError(null);
+ submitting.current = true;
  setLoading(true);
+ try {
 
  if (mode === "missing") {
- toast.error("Your activation or password link is missing or has expired. Request a fresh link.");
+ setFormError("Your activation or password link is missing or has expired. Request a fresh link.");
  setLoading(false);
  return;
  }
 
- if (mode === "update" && !currentPassword) {
- toast.error("Current password is missing. Enter your current password to continue.");
+ if (mode === "update" && !currentPasswordValue) {
+ setFormError("Enter your current password to continue.");
  setLoading(false);
  return;
  }
 
- if (!isPasswordValid(newPassword)) {
- toast.error("Password does not meet all requirements.");
+ if (!isPasswordValid(passwordValue) || passwordValue.length > 1024) {
+ setFormError(passwordRequirementsMessage);
  setLoading(false);
  return;
  }
 
  // Check both passwords match
- if (newPassword !== confirmPassword) {
- toast.error("Passwords do not match.");
+ if (passwordValue !== confirmationValue) {
+ setFormError("Passwords do not match. Enter the same password in both fields.");
  setLoading(false);
  return;
  }
 
- if (mode === "update") {
- const {
- data: { user },
- } = await supabase.auth.getUser();
-
- if (!user?.email) {
- toast.error("We could not verify your account. Please sign in again.");
- setLoading(false);
- return;
+ setStaySignedIn(formData.has("staySignedIn"));
+ if (activationToken.current && !verifiedToken.current) {
+  setProgress("Verifying your activation link…");
+  const { error } = await supabase.auth.verifyOtp({ token_hash: activationToken.current, type: "recovery" });
+  if (error) {
+   setFormError("This activation link is invalid, expired, or already used. Ask your administrator for a fresh link.");
+   setLoading(false);
+   return;
+  }
+  verifiedToken.current = true;
  }
 
- const { error: verificationError } = await supabase.auth.signInWithPassword({
- email: user.email,
- password: currentPassword,
+ setProgress("Saving your password…");
+ const response = await fetch("/api/profile/password-changed", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  signal: AbortSignal.timeout(30000),
+  body: JSON.stringify({ password: passwordValue, currentPassword: mode === "update" ? currentPasswordValue : undefined }),
  });
-
- if (verificationError) {
- toast.error("Your current password is incorrect. Please try again.");
- setLoading(false);
- return;
+ const result = await response.json();
+ if (!response.ok) throw new Error(result.error || "Unable to create your password. Please try again.");
+ toast.success(mode === "setup" ? "Password created. Opening your dashboard…" : "Password saved. Opening your dashboard…");
+ // Document navigation ensures the protected dashboard receives the new session cookies.
+ if (mode === "setup" && result.dashboardHref === "/residents") {
+  setDashboardHref(result.dashboardHref);
+ } else { window.location.replace(result.dashboardHref); }
+ } catch (error) {
+  setFormError(error instanceof Error && error.name === "TimeoutError" ? "The request timed out. Check your connection and try again." : error instanceof Error ? error.message : "Unable to save your password. Please try again.");
+  setLoading(false);
+ } finally {
+  submitting.current = false;
  }
  }
 
- // Update the user's password in Supabase Authentication
- const { error } = await supabase.auth.updateUser({
- password: newPassword,
- });
-
- if (error) {
- toast.error(
- error.message.toLowerCase().includes("session")
- ? "Your password reset session has expired. Request a new reset link."
- : error.message
- );
- setLoading(false);
- return;
- }
-
- // Get the currently logged-in user
- const {
- data: { user },
- } = await supabase.auth.getUser();
-
- // Get the user's role from the profiles table
- const { data: profile } = await supabase
- .from("profiles")
- .select("role")
- .eq("id", user?.id)
- .single();
-
- // Privileged profile flags are changed only by an authenticated server route.
- const finalizeResponse = await fetch("/api/profile/password-changed", { method: "POST" });
- const finalizeResult = await finalizeResponse.json();
- if (!finalizeResponse.ok) {
- toast.error(finalizeResult.error);
- setLoading(false);
- return;
- }
-
- if (finalizeResult.shouldSignIn) {
- toast.success("Account created. Sign in to open your dashboard.");
- await supabase.auth.signOut();
- setCurrentPassword("");
- setNewPassword("");
- setConfirmPassword("");
- setLoading(false);
- setTimeout(() => router.push("/"), 1500);
- return;
- }
-
- toast.success(mode === "setup" ? "Password created successfully." : mode === "reset" ? "Password reset successfully." : "Password updated successfully.");
-
- setCurrentPassword("");
- setNewPassword("");
- setConfirmPassword("");
- setLoading(false);
-
- setTimeout(() => {
- switch (profile?.role) {
- case "resident":
- router.push("/residents");
- break;
-
- case "security":
- router.push("/security");
- break;
-
- case "admin":
- router.push(finalizeResult.dashboardHref ?? "/admin");
- break;
-
- case "super_admin":
- router.push(finalizeResult.dashboardHref ?? "/admin/super-admin");
- break;
-
- default:
- router.push("/");
- }
- }, 1500);
- }
+ if (dashboardHref) return <main className="min-h-screen bg-background px-4 py-10 text-foreground"><div className="mx-auto max-w-md"><p className="mb-5 text-center text-sm text-muted-foreground">Your password is saved and you’re signed in.</p><PasskeySetupCard onContinue={() => window.location.replace(dashboardHref)} /></div></main>;
 
  return (
  <main className="min-h-screen bg-background px-4 py-10 text-foreground">
@@ -227,6 +179,7 @@ export default function UpdatePasswordPage() {
  {mode === "update" && (
  <InputField
  id="current-password"
+ name="currentPassword"
  label="Current Password"
  type="password"
  value={currentPassword}
@@ -238,7 +191,8 @@ export default function UpdatePasswordPage() {
 
  <InputField
  id="new-password"
- label="New password"
+ name="password"
+ label={mode === "setup" ? "Password" : "New password"}
  type="password"
  value={newPassword}
  onChange={(event) => setNewPassword(event.target.value)}
@@ -250,14 +204,21 @@ export default function UpdatePasswordPage() {
 
  <InputField
  id="confirm-password"
- label="Confirm new password"
+ name="confirmation"
+ label={mode === "setup" ? "Confirm password" : "Confirm new password"}
  type="password"
  value={confirmPassword}
  onChange={(event) => setConfirmPassword(event.target.value)}
  placeholder="Enter new password again"
  autoComplete="new-password"
  />
- <PrimaryButton type="submit" disabled={loading || !isPasswordValid(newPassword) || newPassword !== confirmPassword}>
+ <label className="flex items-start gap-3 text-sm">
+ <input type="checkbox" name="staySignedIn" checked={staySignedIn} onChange={(event) => setStaySignedInChoice(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" />
+ <span><span className="font-semibold">Stay signed in</span><span className="mt-1 block text-muted-foreground">Use this on your personal device. Leave unchecked on a shared device.</span></span>
+ </label>
+ {formError && <p id="password-form-error" role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{formError}</p>}
+ {loading && <p role="status" className="text-sm text-muted-foreground">{progress}</p>}
+ <PrimaryButton type="submit" disabled={loading}>
  {loading ? (mode === "setup" ? "Creating..." : mode === "reset" ? "Resetting..." : "Updating...") : (mode === "setup" ? "Create Password" : mode === "reset" ? "Reset Password" : "Update Password")}
  </PrimaryButton>
  </>

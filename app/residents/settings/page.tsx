@@ -2,7 +2,9 @@
 
 import { AppShell } from "../../components/ui/AppShell";
 
+import PasskeySetupCard from "@/app/components/profile/PasskeySetupCard";
 import ChangePasswordCard from "@/app/components/profile/ChangePasswordCard";
+import WhatsAppLinkCard from "./WhatsAppLinkCard";
 
 export default function SettingsPage() {
  return (
@@ -15,7 +17,9 @@ export default function SettingsPage() {
  </p>
  </header>
 
+ <PasskeySetupCard />
  <ChangePasswordCard />
+ <WhatsAppLinkCard />
  </div>
  </AppShell>
  );

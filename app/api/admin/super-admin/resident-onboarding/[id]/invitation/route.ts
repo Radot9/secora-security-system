@@ -26,7 +26,8 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/s
  });
  const tokenHash = data?.properties?.hashed_token;
  if (error || !tokenHash) return Response.json({ error: "Unable to generate an activation link. Try again." }, { status: 400 });
- const activationUrl = new URL("/activate", process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin);
+ const siteOrigin = process.env.VERCEL_ENV === "preview" ? new URL(request.url).origin : process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+ const activationUrl = new URL("/activate", siteOrigin);
  activationUrl.searchParams.set("token_hash", tokenHash);
  activationUrl.searchParams.set("type", "recovery");
 

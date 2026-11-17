@@ -300,7 +300,7 @@ export default function AdminPage() {
  {watchItems.length === 0 ? (
  <p className="text-sm text-muted-foreground">Visitor access, resident records, and security staffing look steady.</p>
  ) : (
- watchItems.map((item) => <p key={item} className="rounded-2xl bg-background/70 p-3 text-sm text-foreground">{item}</p>)
+ watchItems.map((item) => <p key={item} className="rounded-2xl bg-background p-3 text-sm text-foreground">{item}</p>)
  )}
  </div>
  </Card>

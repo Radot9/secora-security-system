@@ -85,7 +85,7 @@ export default function AdministratorsPage() {
  <div className="border-b border-border p-6"><h2 className="text-lg font-bold">Administrator accounts</h2></div>
  {loading ? <p className="p-8 text-muted-foreground">Loading administrators...</p> : administrators.length === 0 ? <p className="p-8 text-muted-foreground">No administrators found.</p> : (
  <div className="divide-y divide-border">{administrators.map((admin) => (
- <Link key={admin.id} href={`/admin/administrators/${admin.id}`} className="flex flex-col gap-3 p-6 transition hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between">
+ <Link key={admin.id} href={`/admin/administrators/${admin.id}`} className="flex flex-col gap-3 p-6 transition hover:bg-muted sm:flex-row sm:items-center sm:justify-between">
  <div><p className="font-semibold">{admin.full_name ?? "Profile incomplete"}</p><p className="mt-1 text-sm text-muted-foreground">{admin.email} · {admin.phone ?? "No phone"}</p></div>
  <div className="flex items-center gap-2"><span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">{admin.role === "super_admin" ? "Super Admin" : "Admin"}</span><span className={`rounded-full px-3 py-1 text-xs font-semibold ${admin.is_active ? "bg-emerald-100 text-emerald-700" : "bg-destructive/15 text-destructive"}`}>{admin.is_active ? "Active" : "Inactive"}</span></div>
  </Link>

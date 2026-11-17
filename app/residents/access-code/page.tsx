@@ -21,6 +21,7 @@ type Visitor = {
  plate_number: string | null;
  expires_at: string | null;
  status: string;
+ public_pass_token: string;
 };
 
 function formatDuration(minutes: number | null) {
@@ -111,7 +112,7 @@ function AccessCodeContent() {
 
  const { data, error } = await supabase
  .from("visitors")
- .select("visitor_name, visitor_phone, purpose_of_visit, validity_duration_minutes, plate_number, expires_at, status")
+ .select("visitor_name, visitor_phone, purpose_of_visit, validity_duration_minutes, plate_number, expires_at, status, public_pass_token")
  .eq("access_code", codeToLoad)
  .single();
 
@@ -136,7 +137,7 @@ function AccessCodeContent() {
  }, [requestedAccessCode]);
 
  function getPublicPassUrl() {
- return `${window.location.origin}/visitor-pass?code=${encodeURIComponent(accessCode ?? "")}`;
+ return `${window.location.origin}/visitor-pass?token=${encodeURIComponent(visitor?.public_pass_token ?? "")}`;
  }
 
  async function copyPassInfo() {

@@ -1,3 +1,4 @@
+import { isPasswordValid, passwordRequirementsMessage } from "@/lib/password-requirements";
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 import { dashboardByRole } from "@/lib/auth/roles";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -18,9 +19,9 @@ export async function GET() {
  }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
  try {
- const { profile } = await requireApiRole(["super_admin", "admin", "resident", "security"], {
+ const { profile, supabase } = await requireApiRole(["super_admin", "admin", "resident", "security"], {
  allowPasswordChangeRequired: true,
  allowIncompleteOnboarding: true,
  });
@@ -44,6 +45,22 @@ export async function POST() {
  await supabaseAdmin.from("admin_invitations").update({ status: "expired" }).eq("id", invitation.id);
  return Response.json({ error: "Password changed, but the administrator invitation has expired. Ask a Super Admin to resend it." }, { status: 400 });
  }
+
+ let body: { password?: unknown; currentPassword?: unknown };
+ try { body = await request.json(); } catch { return Response.json({ error: "Invalid request." }, { status: 400 }); }
+ if (typeof body.password !== "string" || !isPasswordValid(body.password) || body.password.length > 1024) {
+  return Response.json({ error: passwordRequirementsMessage }, { status: 400 });
+ }
+ if (typeof body.currentPassword === "string") {
+  const { error } = await supabase.auth.signInWithPassword({ email: profile.email, password: body.currentPassword });
+  if (error) return Response.json({ error: "Your current password is incorrect." }, { status: 400 });
+ }
+ const { error: passwordError } = await supabase.auth.updateUser({ password: body.password });
+ if (passwordError?.code === "same_password") {
+  // A previous request may have saved the password before profile finalization failed.
+  const { error: verificationError } = await supabase.auth.signInWithPassword({ email: profile.email, password: body.password });
+  if (verificationError) return Response.json({ error: "Unable to verify your password. Please try again." }, { status: 400 });
+ } else if (passwordError) return Response.json({ error: "Unable to save your password. Your session may have expired or the password may have been used before." }, { status: 400 });
 
  const { error } = await supabaseAdmin.from("profiles").update({
  full_name: profile.full_name ?? invitation?.full_name ?? null,
@@ -71,7 +88,7 @@ export async function POST() {
  return Response.json({
  success: true,
  dashboardHref: dashboardByRole[profile.role],
- shouldSignIn: Boolean(invitation),
+ shouldSignIn: false,
  });
  } catch (error) {
  return authorizationResponse(error) ?? Response.json({ error: "Unable to finalize password change." }, { status: 500 });

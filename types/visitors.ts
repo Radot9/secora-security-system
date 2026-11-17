@@ -17,4 +17,6 @@ export interface Visitor {
   checked_out_by_name: string | null;
   expires_at: string;
   created_at: string;
+  creation_channel?: "web" | "whatsapp";
+  public_pass_token?: string;
 }

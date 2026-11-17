@@ -156,9 +156,9 @@ export default function CommunityPage() {
  </button>
  </div>
  <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
- <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="text-2xl font-bold tabular-nums">{posts.length}</p><p className="mt-1 text-xs text-muted-foreground">Active discussions</p></div>
- <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="text-2xl font-bold tabular-nums">{comments.length}</p><p className="mt-1 text-xs text-muted-foreground">Neighbour replies</p></div>
- <div className="rounded-2xl border border-white/25 bg-background/45 p-4 backdrop-blur-xl"><p className="flex items-center gap-2 text-sm font-bold"><ShieldCheck className="h-5 w-5 text-primary" />Resident-only</p><p className="mt-2 text-xs text-muted-foreground">A safer space for your estate</p></div>
+ <div className="rounded-2xl border border-border bg-background p-4"><p className="text-2xl font-bold tabular-nums">{posts.length}</p><p className="mt-1 text-xs text-muted-foreground">Active discussions</p></div>
+ <div className="rounded-2xl border border-border bg-background p-4"><p className="text-2xl font-bold tabular-nums">{comments.length}</p><p className="mt-1 text-xs text-muted-foreground">Neighbour replies</p></div>
+ <div className="rounded-2xl border border-border bg-background p-4"><p className="flex items-center gap-2 text-sm font-bold"><ShieldCheck className="h-5 w-5 text-primary" />Resident-only</p><p className="mt-2 text-xs text-muted-foreground">A safer space for your estate</p></div>
  </div>
  </section>
 
@@ -217,7 +217,7 @@ export default function CommunityPage() {
  <h3 className="font-bold">Comments ({selectedComments.length})</h3>
  <div className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">
  {selectedComments.length === 0 ? <p className="text-sm text-muted-foreground">No comments yet. Be the first to respond.</p> : selectedComments.map((comment) => (
- <article key={comment.id} className="rounded-2xl border border-border bg-background/55 p-4 backdrop-blur-md"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">{comment.author_name}</p><span className="text-xs text-muted-foreground">{formatRelativeDate(comment.created_at)}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{comment.body}</p></article>
+ <article key={comment.id} className="rounded-2xl border border-border bg-background p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-bold">{comment.author_name}</p><span className="text-xs text-muted-foreground">{formatRelativeDate(comment.created_at)}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{comment.body}</p></article>
  ))}
  </div>
  <div className="mt-5 flex gap-2"><textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} maxLength={2000} rows={2} placeholder="Add a helpful comment..." className="apple-input min-w-0 flex-1 resize-none rounded-2xl border border-border px-3 py-3 text-sm outline-none" /><button type="button" onClick={() => void createComment()} disabled={submitting || !commentBody.trim()} aria-label="Post comment" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground disabled:opacity-50"><Send className="h-5 w-5" /></button></div>

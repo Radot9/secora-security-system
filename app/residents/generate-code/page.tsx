@@ -23,6 +23,7 @@ import { displayVisitorStatus, visitorStatusClassName } from "@/lib/visitor-stat
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 const MINIMUM_CODE_VALIDITY_MINUTES = 30;
+const MAXIMUM_CODE_VALIDITY_MINUTES = 24 * 60;
 
 function formatExpiry(value: string | null) {
  if (!value) return "No expiry set";
@@ -95,22 +96,6 @@ export default function GenerateCodePage() {
   };
  }, []);
 
- async function generateUniqueAccessCode() {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-   const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-   const { data } = await supabase
-    .from("visitors")
-    .select("id")
-    .eq("access_code", code)
-    .maybeSingle();
-
-   if (!data) return code;
-  }
-
-  return `${Date.now()}`.slice(-8);
- }
-
  async function handleGenerateCode() {
   const trimmedVisitorName = visitorName.trim();
   const trimmedPhoneNumber = phoneNumber.trim();
@@ -159,48 +144,29 @@ export default function GenerateCodePage() {
    return;
   }
 
+  if (parsedValidityMinutes > MAXIMUM_CODE_VALIDITY_MINUTES) {
+   toast.error("Code validity cannot exceed 24 hours.");
+   return;
+  }
+
   setLoading(true);
-
-  const {
-   data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-   toast.error("Please log in again.");
-   setLoading(false);
-   return;
-  }
-
-  const { data: resident, error: residentError } = await supabase
-   .from("residents")
-   .select("*")
-   .eq("user_id", user.id)
-   .maybeSingle();
-
-  if (residentError || !resident) {
-   toast.error("Unable to find your resident profile. Please log in again.");
-   setLoading(false);
-   return;
-  }
-
-  const accessCode = await generateUniqueAccessCode();
-
-  const { error } = await supabase.from("visitors").insert({
-   visitor_name: trimmedVisitorName,
-   visitor_phone: trimmedPhoneNumber,
-   purpose_of_visit: trimmedPurpose,
-   plate_number: trimmedPlateNumber || null,
-   resident_id: resident.id,
-   resident_name: resident.full_name,
-   access_code: accessCode,
-   status: "pending",
-   validity_duration_minutes: parsedValidityMinutes,
-   expires_at: new Date(Date.now() + parsedValidityMinutes * 60 * 1000).toISOString(),
+  const response = await fetch("/api/residents/visitors", {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({
+    requestId: crypto.randomUUID(),
+    visitorName: trimmedVisitorName,
+    visitorPhone: trimmedPhoneNumber,
+    purpose: trimmedPurpose,
+    plateNumber: trimmedPlateNumber || null,
+    validityMinutes: parsedValidityMinutes,
+   }),
   });
+  const result = await response.json();
 
-  if (error) {
+  if (!response.ok) {
    setLoading(false);
-   toast.error(error.message);
+   toast.error(result.error ?? "Unable to generate the visitor pass.");
    return;
   }
 
@@ -213,7 +179,7 @@ export default function GenerateCodePage() {
   setLoading(false);
 
   toast.success("Visitor access code generated.");
-  router.push(`/residents/access-code?code=${accessCode}`);
+  router.push(`/residents/access-code?code=${encodeURIComponent(result.visitor.accessCode)}`);
  }
 
  return (
@@ -314,7 +280,7 @@ export default function GenerateCodePage() {
            <span className="block text-xs text-muted-foreground">Minutes</span>
           </label>
          </div>
-         <p className="text-xs text-muted-foreground">Minimum duration is 30 minutes.</p>
+         <p className="text-xs text-muted-foreground">Duration must be between 30 minutes and 24 hours.</p>
         </div>
 
         <label htmlFor="plate-number" className="space-y-2">
@@ -345,7 +311,7 @@ export default function GenerateCodePage() {
      </Card>
 
      <div className="grid gap-6">
-      <Card className="bg-gradient-to-br from-primary/15 via-card to-card">
+      <Card className="bg-card">
        <ShieldCheck className="h-10 w-10 text-primary" />
        <h2 className="mt-4 text-xl font-bold">How this pass works</h2>
        <div className="mt-5 space-y-4">
