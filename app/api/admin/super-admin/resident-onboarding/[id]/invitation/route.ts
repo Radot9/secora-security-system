@@ -31,7 +31,7 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/s
  activationUrl.searchParams.set("token_hash", tokenHash);
  activationUrl.searchParams.set("type", "recovery");
 
- const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+ const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
  const { error: auditError } = await supabaseAdmin.from("admin_audit_logs").insert({
  actor_id: actorId,
  target_profile_id: profile.id,
