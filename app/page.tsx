@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, LockKeyhole, ScanLine, UsersRound } from "lucide-react";
+import { ArrowRight, LockKeyhole, Mail, ScanLine, UsersRound } from "lucide-react";
 
 import { InputField } from "./components/InputField";
 import { resolveEmailLinkSession } from "@/lib/auth/email-link-session";
@@ -34,6 +34,7 @@ export default function Home() {
  const [staySignedIn, setStaySignedInChoice] = useState(false);
  const [loginLoading, setLoginLoading] = useState(false);
  const [resetLoading, setResetLoading] = useState(false);
+ const [resetSentForEmail, setResetSentForEmail] = useState<string | null>(null);
 
  useEffect(() => {
  if (!hasEmailLinkTokens()) return;
@@ -124,18 +125,25 @@ export default function Home() {
  }
 
  setResetLoading(true);
- const { error } = await supabase.auth.resetPasswordForEmail(email, {
- redirectTo: `${window.location.origin}/update-password`,
+ const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+ redirectTo: `${window.location.origin}/update-password?mode=recovery`,
  });
 
  if (error) {
  setResetLoading(false);
- toast.error(error.message);
+  const message = error.message.toLowerCase();
+  if (message.includes("email rate limit exceeded")) {
+   toast.error("Password reset emails have reached the sending limit. Try again later or contact your administrator.");
+  } else if (message.includes("only request this after")) {
+   toast.error("Please wait at least a minute before requesting another password link.");
+  } else {
+   toast.error(error.message);
+  }
  return;
  }
 
  setResetLoading(false);
- toast.success("Check your email for the password change link.");
+ setResetSentForEmail(email.trim());
  }
 
  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -182,6 +190,27 @@ export default function Home() {
  </div>
  </main>
  );
+ }
+
+ if (resetSentForEmail) {
+  return (
+   <main className="login-shell relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+    <div className="login-orb login-orb--one" aria-hidden="true" />
+    <div className="login-orb login-orb--two" aria-hidden="true" />
+    <section className="apple-card login-panel relative w-full max-w-lg rounded-[2rem] border border-border bg-card p-7 text-center sm:p-10">
+     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Mail className="h-8 w-8" /></div>
+     <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Password reset</p>
+     <h1 className="mt-2 text-3xl font-bold tracking-[-0.035em] text-foreground">Check your email</h1>
+     <p className="mt-4 leading-7 text-muted-foreground">
+      If an Entriseq account uses <span className="font-semibold text-foreground">{resetSentForEmail}</span>, a password change link is on its way. Check that inbox and its spam or junk folder.
+     </p>
+     <p className="mt-3 text-sm leading-6 text-muted-foreground">Open the newest link to choose a new password.</p>
+     <button type="button" onClick={() => setResetSentForEmail(null)} className="apple-primary-button mt-8 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground">
+      Return to sign in
+     </button>
+    </section>
+   </main>
+  );
  }
 
  return (

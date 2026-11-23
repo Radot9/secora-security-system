@@ -37,8 +37,8 @@ export default function UpdatePasswordPage() {
  const linkType = hashParams.get("type") || queryParams.get("type");
  const isActivation = window.location.pathname === "/activate";
  activationToken.current = isActivation && queryParams.get("type") === "recovery" ? queryParams.get("token_hash") : null;
- const setupLink = isActivation || queryParams.has("code") || queryParams.get("mode") === "setup" || linkType === "invite" || linkType === "signup";
- const recoveryLink = linkType === "recovery";
+ const recoveryLink = linkType === "recovery" || queryParams.get("mode") === "recovery";
+ const setupLink = isActivation || (queryParams.has("code") && !recoveryLink) || queryParams.get("mode") === "setup" || linkType === "invite" || linkType === "signup";
  const invalidLink = Boolean(
  hashParams.get("error") || hashParams.get("error_code") || queryParams.get("error") || queryParams.get("error_code")
  );
