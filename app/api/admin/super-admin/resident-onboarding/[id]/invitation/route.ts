@@ -26,7 +26,17 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/s
  });
  const tokenHash = data?.properties?.hashed_token;
  if (error || !tokenHash) return Response.json({ error: "Unable to generate an activation link. Try again." }, { status: 400 });
- const siteOrigin = process.env.VERCEL_ENV === "preview" ? new URL(request.url).origin : process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+ const requestOrigin = new URL(request.url).origin;
+ const configuredSiteOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+ const configuredHost = configuredSiteOrigin ? new URL(configuredSiteOrigin).hostname : "";
+ const isLocalConfiguredOrigin = ["localhost", "127.0.0.1", "::1"].includes(configuredHost);
+ const siteOrigin = process.env.VERCEL_ENV === "preview"
+ ? requestOrigin
+ : process.env.NODE_ENV === "production"
+ ? "https://entriseq.com"
+ : configuredSiteOrigin && !isLocalConfiguredOrigin
+ ? configuredSiteOrigin
+ : "https://entriseq.com";
  const activationUrl = new URL("/activate", siteOrigin);
  activationUrl.searchParams.set("token_hash", tokenHash);
  activationUrl.searchParams.set("type", "recovery");
