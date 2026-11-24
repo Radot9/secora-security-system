@@ -3,6 +3,7 @@
 import { CheckCircle2, Copy, Mail, MessageCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatedDialog } from "./AnimatedDialog";
+import { getPublicSiteOrigin } from "@/lib/site-url";
 
 interface SuccessDialogProps {
  open: boolean;
@@ -29,9 +30,10 @@ export default function SuccessDialog({
  phone,
  accountLabel = "account",
 }: SuccessDialogProps) {
- const websiteUrl =
- process.env.NEXT_PUBLIC_SITE_URL ||
- (typeof window !== "undefined" ? window.location.origin : "");
+ const websiteUrl = getPublicSiteOrigin(
+ process.env.NEXT_PUBLIC_SITE_URL,
+ typeof window !== "undefined" ? window.location.origin : undefined,
+ );
  async function copyCredentials() {
  const credentials = `Welcome to Entriseq Estate Security, ${fullName}!
 
