@@ -2,14 +2,14 @@
 
 import { Save } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { toast } from "sonner";
-import SuccessDialog from "@/app/components/ui/SuccessDialog";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
-import { TEMPORARY_ACCOUNT_PASSWORD } from "@/lib/auth/temporary-password";
 
 export default function NewResidentPage() {
+ const router = useRouter();
  const [loading, setLoading] = useState(false);
 
  const [fullName, setFullName] = useState("");
@@ -19,63 +19,29 @@ export default function NewResidentPage() {
  const [locationType, setLocationType] = useState<"street" | "close">("street");
  const [locationName, setLocationName] = useState("");
 
- const [dialogOpen, setDialogOpen] = useState(false);
-
- const [createdResident, setCreatedResident] = useState<{
- fullName: string;
- email: string;
- phone: string;
- password: string;
- } | null>(null);
-
  async function handleSubmit(e: React.FormEvent) {
  e.preventDefault();
-
  setLoading(true);
 
  try {
  const response = await fetch("/api/admin/create-resident", {
  method: "POST",
- headers: {
- "Content-Type": "application/json",
- },
- body: JSON.stringify({
- fullName,
- email,
- phone,
- houseNumber,
- locationType,
- locationName,
- }),
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ fullName, email, phone, houseNumber, locationType, locationName }),
  });
-
  const result = await response.json();
 
  if (!response.ok) {
  if (result.error?.toLowerCase().includes("already")) {
- toast.warning("A resident with this email address already exists.");
+ toast.warning("A resident or account with this email address already exists.");
  } else {
- toast.error(result.error);
+ toast.error(result.error || "Unable to create resident.");
  }
-
  return;
  }
 
- setCreatedResident({
- fullName,
- email,
- phone,
- password: TEMPORARY_ACCOUNT_PASSWORD,
- });
-
- setFullName("");
- setEmail("");
- setPhone("");
- setHouseNumber("");
- setLocationType("street");
- setLocationName("");
- toast.success("Resident account created successfully.");
- setDialogOpen(true);
+ toast.success("Resident added. Continue to Resident Onboarding to prepare their activation invitation.");
+ router.push("/admin/super-admin/resident-onboarding");
  } catch {
  toast.error("Unable to create resident.");
  } finally {
@@ -83,154 +49,62 @@ export default function NewResidentPage() {
  }
  }
 
- function handleDialogClose() {
- setDialogOpen(false);
-
- setCreatedResident(null);
- }
+ const inputClass = "w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20";
 
  return (
  <AppShell size="default">
  <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
  <PageHeader
  title="Add Resident"
- subtitle="Create a new resident account"
+ subtitle="Save resident details, then continue to Resident Onboarding to prepare their activation invitation."
  />
 
  <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
  <form className="space-y-6" onSubmit={handleSubmit}>
  <div>
- <label className="mb-2 block text-sm font-medium">
- Full Name
- </label>
- <input
-  type="text"
-  value={fullName}
-  onChange={(e) => setFullName(e.target.value)}
-  autoComplete="name"
-  required
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
+ <label className="mb-2 block text-sm font-medium" htmlFor="full-name">Full Name</label>
+ <input id="full-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required className={inputClass} />
  </div>
 
  <div>
- <label className="mb-2 block text-sm font-medium">
- Email Address
- </label>
+ <label className="mb-2 block text-sm font-medium" htmlFor="email">Email Address</label>
+ <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required className={inputClass} />
+ </div>
 
- <input
- type="email"
- value={email}
- onChange={(e) => setEmail(e.target.value)}
- autoComplete="email"
- required
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
+ <div>
+ <label className="mb-2 block text-sm font-medium" htmlFor="phone">Phone Number</label>
+ <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" required className={inputClass} />
  </div>
 
  <div className="grid gap-6 md:grid-cols-2">
  <div>
- <label className="mb-2 block text-sm font-medium">
- Phone Number
- </label>
-
- <input
- type="tel"
- value={phone}
- onChange={(e) => setPhone(e.target.value)}
- autoComplete="tel"
- required
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
- </div>
-
- <div>
- <label className="mb-2 block text-sm font-medium">
- Temporary Password
- </label>
-
- <input
- type="text"
- value={TEMPORARY_ACCOUNT_PASSWORD}
- readOnly
- aria-describedby="temporary-password-help"
- className="w-full rounded-2xl border border-border bg-muted px-4 py-3 font-mono tracking-[0.2em] outline-none"
- />
- <p id="temporary-password-help" className="mt-2 text-xs leading-5 text-muted-foreground">
- Every new account starts with this code and must change it after signing in.
- </p>
- </div>
- </div>
-
- <div className="grid gap-6 md:grid-cols-2">
- <div>
- <label className="mb-2 block text-sm font-medium">
- House Number
- </label>
-
- <input
- type="text"
- value={houseNumber}
- onChange={(e) => setHouseNumber(e.target.value)}
- autoComplete="address-line1"
- required
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
+ <label className="mb-2 block text-sm font-medium" htmlFor="house-number">House Number</label>
+ <input id="house-number" type="text" value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} autoComplete="address-line1" required className={inputClass} />
  </div>
 
  <div className="grid gap-3 sm:grid-cols-[0.8fr_1.2fr]">
  <label>
  <span className="mb-2 block text-sm font-medium">Location Type</span>
- <select
- value={locationType}
- onChange={(event) => setLocationType(event.target.value as "street" | "close")}
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- >
+ <select value={locationType} onChange={(event) => setLocationType(event.target.value as "street" | "close")} className={inputClass}>
  <option value="street">Street</option>
  <option value="close">Close</option>
  </select>
  </label>
 
  <label>
- <span className="mb-2 block text-sm font-medium">
- {locationType === "street" ? "Street Name" : "Close Name"}
- </span>
- <input
- type="text"
- value={locationName}
- onChange={(event) => setLocationName(event.target.value)}
- required
- placeholder={locationType === "street" ? "Example: Ajufo Street" : "Example: Ofili Close"}
- className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
- />
+ <span className="mb-2 block text-sm font-medium">{locationType === "street" ? "Street Name" : "Close Name"}</span>
+ <input type="text" value={locationName} onChange={(event) => setLocationName(event.target.value)} required placeholder={locationType === "street" ? "Example: Ajufo Street" : "Example: Ofili Close"} className={inputClass} />
  </label>
  </div>
  </div>
 
- <button
- type="submit"
- disabled={loading}
- className="inline-flex items-center gap-2 rounded-2xl bg-primary/100 px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
- >
+ <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50">
  {loading ? <LoadingSpinner className="h-5 w-5" /> : <Save className="h-5 w-5" />}
-
- {loading ? "Creating..." : "Create Resident"}
+ {loading ? "Saving..." : "Save and Continue to Onboarding"}
  </button>
  </form>
  </div>
  </div>
-
- <SuccessDialog
- open={dialogOpen}
- onClose={handleDialogClose}
- title="Resident Created"
- description="The resident account has been created successfully."
- fullName={createdResident?.fullName ?? ""}
- email={createdResident?.email ?? ""}
- password={createdResident?.password ?? TEMPORARY_ACCOUNT_PASSWORD}
- phone={createdResident?.phone}
- accountLabel="resident account"
- />
  </AppShell>
  );
 }
