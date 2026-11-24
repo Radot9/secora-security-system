@@ -19,17 +19,3 @@ export function getPublicSiteOrigin(...origins: (string | undefined)[]) {
  return DEFAULT_SITE_ORIGIN;
 }
 
-export function getAdministratorOnboardingRedirect(requestUrl: string) {
- const requestOrigin = new URL(requestUrl).origin;
- const publicOrigin = getPublicSiteOrigin(process.env.NEXT_PUBLIC_SITE_URL, requestOrigin);
- const configuredRedirect = process.env.SUPABASE_ADMIN_REDIRECT_URL?.trim();
- if (configuredRedirect) {
- try {
- const redirect = new URL(configuredRedirect);
- if (!isLoopback(redirect.hostname)) return redirect.toString();
- } catch {
- // Fall back to the public onboarding page if the configured URL is malformed.
- }
- }
- return new URL("/administrator-onboarding", publicOrigin).toString();
-}
