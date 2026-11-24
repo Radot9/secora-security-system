@@ -1,5 +1,6 @@
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getAdministratorOnboardingRedirect } from "@/lib/site-url";
 
 export async function POST(request: Request, context: RouteContext<"/api/admin/administrators/invitations/[id]/resend">) {
  try {
@@ -10,7 +11,7 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
  if (error || !invitation) return Response.json({ error: "Invitation not found." }, { status: 404 });
  if (invitation.status !== "pending") return Response.json({ error: "Only pending invitations can be resent." }, { status: 400 });
 
- const redirectTo = process.env.SUPABASE_ADMIN_REDIRECT_URL ?? `${new URL(request.url).origin}/administrator-onboarding`;
+ const redirectTo = getAdministratorOnboardingRedirect(request.url);
  const { error: resendError } = await supabaseAdmin.auth.resend({
  type: "signup", email: invitation.email, options: { emailRedirectTo: redirectTo },
  });
