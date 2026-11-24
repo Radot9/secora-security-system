@@ -1,5 +1,6 @@
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getAdministratorOnboardingRedirect } from "@/lib/site-url";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
  return Response.json({ error: "An account or pending invitation already exists for this email." }, { status: 409 });
  }
 
- const redirectTo = process.env.SUPABASE_ADMIN_REDIRECT_URL ?? `${new URL(request.url).origin}/administrator-onboarding`;
+ const redirectTo = getAdministratorOnboardingRedirect(request.url);
  const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
  redirectTo,
  data: { full_name: fullName, phone, invited_role: "admin" },
