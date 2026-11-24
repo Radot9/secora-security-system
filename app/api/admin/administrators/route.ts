@@ -1,6 +1,6 @@
 import { authorizationResponse, requireApiRole } from "@/lib/auth/api-authorization";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getAdministratorOnboardingRedirect } from "@/lib/site-url";
+import { getAdministratorOnboardingRedirect } from "@/lib/admin-site-url";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
