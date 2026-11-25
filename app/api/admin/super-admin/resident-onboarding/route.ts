@@ -27,7 +27,7 @@ export async function GET() {
  userIds.length
  ? supabaseAdmin.from("admin_audit_logs").select("action, created_at, actor_id, target_profile_id, metadata")
  .in("target_profile_id", userIds)
- .in("action", ["resident_invitation_generated", "resident_invitation_marked_sent"])
+ .in("action", ["resident_invitation_generated", "resident_invitation_marked_sent", "resident_account_activated"])
  .order("created_at", { ascending: false }).limit(2000)
  : Promise.resolve({ data: [], error: null }),
  ]);
@@ -53,6 +53,7 @@ export async function GET() {
  const events = resident.user_id ? eventsById.get(resident.user_id) ?? [] : [];
  const generated = events.find((event) => event.action === "resident_invitation_generated");
  const sent = events.find((event) => event.action === "resident_invitation_marked_sent");
+ const activatedEvent = events.find((event) => event.action === "resident_account_activated");
  const expiry = typeof generated?.metadata?.expires_at === "string" ? generated.metadata.expires_at : null;
  const expired = Boolean(expiry && Date.parse(expiry) <= Date.now());
  const sentForCurrentLink = Boolean(generated && sent && Date.parse(sent.created_at) >= Date.parse(generated.created_at));
@@ -66,6 +67,7 @@ export async function GET() {
  email: profile?.email ?? resident.email,
  account_active: profile?.is_active ?? resident.is_active,
  activated: profile?.role === "resident" ? !profile.must_change_password : false,
+ activated_at: activatedEvent?.created_at ?? null,
  has_account: Boolean(profile && profile.role === "resident"),
  last_login: lastLogin,
  invitation_status: expired ? "Expired" : sentForCurrentLink ? "Sent" : "Not Sent",

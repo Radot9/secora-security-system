@@ -26,6 +26,7 @@ export async function POST(request: Request) {
  allowIncompleteOnboarding: true,
  });
  const isAdministrator = profile.role === "admin" || profile.role === "super_admin";
+ const activatingResident = profile.role === "resident" && profile.must_change_password;
  const completedAt = new Date().toISOString();
 
  const { data: invitation, error: invitationError } = isAdministrator
@@ -83,6 +84,23 @@ export async function POST(request: Request) {
  action: "administrator_invitation_accepted",
  metadata: { invitation_id: invitation.id, invited_by: invitation.invited_by, finalized_from: "password_change" },
  });
+ }
+
+ if (activatingResident) {
+ const { data: priorActivation, error: priorActivationError } = await supabaseAdmin.from("admin_audit_logs")
+ .select("id").eq("target_profile_id", profile.id).eq("action", "resident_account_activated").limit(1);
+ if (priorActivationError) {
+ console.error("Unable to check prior resident activation notification", priorActivationError);
+ } else if (!priorActivation?.length) {
+ const { error: activationAuditError } = await supabaseAdmin.from("admin_audit_logs").insert({
+ actor_id: profile.id,
+ target_profile_id: profile.id,
+ target_email: profile.email,
+ action: "resident_account_activated",
+ metadata: { activated_at: completedAt },
+ });
+ if (activationAuditError) console.error("Unable to record resident activation notification", activationAuditError);
+ }
  }
 
  return Response.json({

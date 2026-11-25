@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Clipboard, Download, FileUp, Mail, Phone, RefreshCw, Search, Users, X } from "lucide-react";
+import { Bell, Check, ChevronLeft, ChevronRight, Clipboard, Download, FileUp, Mail, Phone, RefreshCw, Search, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/app/components/ui/AppShell";
 import { PageHeader } from "@/app/components/ui/PageHeader";
@@ -10,7 +10,7 @@ import { parseResidentCsv } from "@/lib/resident-onboarding";
 type Resident = {
  id: string; user_id: string | null; full_name: string | null; email: string | null; phone: string | null;
  house_number: string | null; street: string | null; close: string | null; is_active: boolean | null;
- account_active: boolean | null; activated: boolean; has_account: boolean; last_login: string | null;
+ account_active: boolean | null; activated: boolean; activated_at: string | null; has_account: boolean; last_login: string | null;
  invitation_status: "Not Sent" | "Sent" | "Expired"; invitation_expires_at: string | null; invitation_link_valid: boolean;
  sent_at: string | null; sent_by: string | null; sent_by_name: string | null;
 };
@@ -131,6 +131,10 @@ export default function ResidentOnboardingPage() {
  const pageSize = 10;
  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
  const visibleResidents = filtered.slice((page - 1) * pageSize, page * pageSize);
+ const recentActivations = [...residents]
+ .filter((resident) => resident.activated_at)
+ .sort((left, right) => Date.parse(right.activated_at!) - Date.parse(left.activated_at!))
+ .slice(0, 5);
 
  const updateSearch = (value: string) => { setSearch(value); setPage(1); };
  const updateAccountFilter = (value: string) => { setAccountFilter(value); setPage(1); };
@@ -218,6 +222,14 @@ export default function ResidentOnboardingPage() {
  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
  {stats.map(([label, value]) => <section key={label} className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{loading ? "—" : value}</p></section>)}
  </div>
+
+ <section aria-labelledby="recent-activations-heading" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+ <div className="flex items-center justify-between gap-3 border-b border-border p-4 sm:p-5">
+ <div className="flex items-center gap-3"><span className="rounded-xl bg-primary/10 p-2 text-primary"><Bell className="h-5 w-5" /></span><div><h2 id="recent-activations-heading" className="font-bold">Recent resident activations</h2><p className="mt-1 text-sm text-muted-foreground">Residents who have completed account setup.</p></div></div>
+ <div className="flex items-center gap-2"><Status tone={recentActivations.length ? "success" : "muted"}>{recentActivations.length} recent</Status><button type="button" onClick={() => void loadResidents()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-50" aria-label="Refresh resident activations"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh</button></div>
+ </div>
+ {recentActivations.length ? <ul className="divide-y divide-border">{recentActivations.map((resident) => <li key={resident.id} className="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{resident.full_name || "Resident"}</p><p className="text-sm text-muted-foreground">{resident.email || "No email"}</p></div><p className="text-sm text-muted-foreground">Activated {formatDateTime(resident.activated_at)}</p></li>)}</ul> : <p className="px-5 py-4 text-sm text-muted-foreground">No resident activations have been recorded yet.</p>}
+ </section>
 
  <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
  <div className="flex flex-col gap-3 border-b border-border p-4 xl:flex-row xl:items-center">
