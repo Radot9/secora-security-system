@@ -35,7 +35,7 @@ function downloadCsv(residents: Resident[]) {
 
 type ImportInput = { full_name: string; email: string; phone: string; house_number: string; location_name: string; location_type: "street" | "close" };
 
-const normalizeImportHeader = (value: string) => value.normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").replace(/^\\uFEFF/, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const normalizeImportHeader = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/^\uFEFF/, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const importHeaderAliases = {
  full_name: ["full name", "full name cleaned", "resident name", "name", "your name"],
  email: ["email address", "email cleaned", "email", "e mail", "resident email"],
@@ -68,8 +68,8 @@ function mapImportRows(rows: Record<string, string>[]) {
  const houseNumber = getImportValue(row, "house_number") || row.address || "";
  const locationName = getImportValue(row, "location_name");
  const consent = getImportValue(row, "consent");
- if (consent && !/^(?:yes(?:\\s*,?\\s*i\\s+(?:agree|consent))?|i\\s+(?:agree|consent)|true|1|agreed|consented)$/i.test(consent.trim())) { unconsentedCount += 1; continue; }
- if (!fullName.trim() || !/^\\S+@\\S+\\.\\S+$/.test(email) || !phone.trim() || !houseNumber.trim() || !locationName.trim()) { invalidCount += 1; continue; }
+ if (consent && !/^(?:yes(?:\s*,?\s*i\s+(?:agree|consent))?|i\s+(?:agree|consent)|true|1|agreed|consented)$/i.test(consent.trim())) { unconsentedCount += 1; continue; }
+ if (!fullName.trim() || !/^\S+@\S+\.\S+$/.test(email) || !phone.trim() || !houseNumber.trim() || !locationName.trim()) { invalidCount += 1; continue; }
  if (latestByEmail.has(email)) duplicateCount += 1;
  latestByEmail.set(email, { full_name: fullName.trim(), email, phone: phone.trim(), house_number: houseNumber.trim(), location_name: locationName.trim(), location_type: /close/i.test(locationName) ? "close" : "street" });
  }
