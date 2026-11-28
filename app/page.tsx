@@ -125,8 +125,13 @@ export default function Home() {
  }
 
  setResetLoading(true);
+ const resetOrigin = new URL(window.location.origin);
+ const isLocalOrigin = ["localhost", "127.0.0.1", "[::1]"].includes(resetOrigin.hostname.toLowerCase());
+ if (!isLocalOrigin) resetOrigin.protocol = "https:";
+ const resetRedirect = new URL("/update-password", resetOrigin);
+ resetRedirect.searchParams.set("mode", "recovery");
  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
- redirectTo: `${window.location.origin}/update-password?mode=recovery`,
+ redirectTo: resetRedirect.toString(),
  });
 
  if (error) {
